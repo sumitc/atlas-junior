@@ -1073,8 +1073,8 @@ export function AtlasGame() {
         </Link>
       </div>
 
-      {/* ── Debug panel (temporary) ── */}
-      <div className="fixed bottom-7 left-0 right-0 z-40">
+      {/* ── Debug panel (debug builds only) ── */}
+      {process.env.NEXT_PUBLIC_DEBUG_PANEL === "true" && <div className="fixed bottom-7 left-0 right-0 z-40">
         <button
           className="w-full bg-slate-800 py-1 text-xs font-mono text-slate-300"
           onClick={() => setShowDebug((v) => !v)}
@@ -1115,7 +1115,7 @@ export function AtlasGame() {
             </button>
           </div>
         )}
-      </div>
+      </div>}
 
       {/* ── End Game modal ── */}
       {showEndGame ? (

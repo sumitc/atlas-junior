@@ -8,9 +8,11 @@
     "start": "serve out",
     "lint": "eslint",
     "cap:sync": "npm run build && npx cap sync",
+    "cap:sync:release": "NEXT_PUBLIC_DEBUG_PANEL=false npm run build && npx cap sync",
     "cap:open:android": "npx cap open android",
     "cap:open:ios": "npx cap open ios",
     "apk:debug": "cd android && ./gradlew assembleDebug",
+    "apk:release": "cd android && ./gradlew assembleRelease",
     "postinstall": "patch-package"
   },
   "dependencies": {
