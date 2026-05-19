@@ -746,6 +746,10 @@ export function AtlasGame() {
     setShowEndGame(true);
     setEndGameLoading(true);
     setEndGameResult(null);
+    setEndGameSubmitError(false);
+    setEndGameSubmitting(false);
+    setEndGameQualifies(false);
+    setEndGameLeaderboard([]);
     // Default team name = player names joined by "-"
     setEndGameName(game.players.map((p) => p.name).join("-").slice(0, 24));
 
@@ -1152,9 +1156,7 @@ export function AtlasGame() {
               ) : endGameResult ? (
                 /* ── Post-submit ── */
                 <div className="space-y-4">
-                  {endGameResult.entryId === "" ? (
-                    <p className="text-center text-sm text-red-500">Couldn&apos;t save score — check your connection.</p>
-                  ) : endGameResult.onLeaderboard && endGameResult.rank !== null ? (
+                  {endGameResult.onLeaderboard && endGameResult.rank !== null ? (
                     <p className="text-center font-bold text-fuchsia-600">
                       You&apos;re ranked #{endGameResult.rank} all-time!
                     </p>

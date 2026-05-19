@@ -60,8 +60,12 @@ export default async function handler(req, res) {
     const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || "unknown";
     const rateKey = `${RATE_KEY_PREFIX}${ip}`;
     try {
-      const count = await redisCmd("INCR", rateKey);
-      if (Number(count) === 1) await redisCmd("EXPIRE", rateKey, String(RATE_WINDOW_SEC));
+      // Run INCR and EXPIRE in parallel — always set TTL so key never persists forever
+      // if EXPIRE failed on a prior request (transient Upstash error).
+      const [count] = await Promise.all([
+        redisCmd("INCR", rateKey),
+        redisCmd("EXPIRE", rateKey, String(RATE_WINDOW_SEC)),
+      ]);
       if (Number(count) > RATE_LIMIT) {
         return res.status(429).json({ error: "Too many tickets submitted. Please wait a few minutes." });
       }
