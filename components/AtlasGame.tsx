@@ -1141,7 +1141,9 @@ export function AtlasGame() {
               ) : endGameResult ? (
                 /* ── Post-submit ── */
                 <div className="space-y-4">
-                  {endGameResult.rank !== null ? (
+                  {endGameResult.entryId === "" ? (
+                    <p className="text-center text-sm text-red-500">Couldn&apos;t save score — check your connection.</p>
+                  ) : endGameResult.onLeaderboard && endGameResult.rank !== null ? (
                     <p className="text-center font-bold text-fuchsia-600">
                       You&apos;re ranked #{endGameResult.rank} all-time!
                     </p>
@@ -1149,10 +1151,13 @@ export function AtlasGame() {
                     <p className="text-center text-sm text-slate-500">Score saved!</p>
                   )}
                   {endGameLeaderboard.length > 0 && (
-                    <TopThree entries={endGameLeaderboard} highlightId={endGameResult.entryId} />
+                    <TopThree entries={endGameLeaderboard} highlightId={endGameResult.entryId || undefined} />
                   )}
                   <div className="flex gap-3">
-                    <Link href={`/leaderboard?entry=${endGameResult.entryId}`} className={`${primaryButton} flex-1 text-center`}>
+                    <Link
+                      href={endGameResult.entryId ? `/leaderboard?entry=${endGameResult.entryId}` : "/leaderboard"}
+                      className={`${primaryButton} flex-1 text-center`}
+                    >
                       Full leaderboard
                     </Link>
                     <button className={`${secondaryButton} flex-1`} onClick={() => { setShowEndGame(false); returnToSetup(); }} type="button">

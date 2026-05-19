@@ -102,7 +102,7 @@ app.post("/api/leaderboard", async (req, res) => {
   const id = randomUUID();
 
   try {
-    const [added, , rank] = await redisPipeline([
+    const [, , , rank] = await redisPipeline([
       ["ZADD", LB_KEY, "NX", String(safeScore), id],
       // Store metadata; only written once (NX on ZADD guards idempotency)
       ["HSET", `atlas:lb:${id}`, "name", safeName, "score", String(safeScore), "date", safeDate],
