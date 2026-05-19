@@ -1,0 +1,98 @@
+import { randomUUID } from "crypto";
+
+const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "http://localhost:3000";
+
+const LB_KEY = "atlas:leaderboard";
+const MAX_SCORE = 9_999;
+const TOP_N = 10;
+const MAX_STORED = 50; // store more than displayed so ties don't get lost
+
+async function redisCmd(...args) {
+  const res = await fetch(`${UPSTASH_URL}/${args.map(encodeURIComponent).join("/")}`, {
+    headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` },
+  });
+  const json = await res.json();
+  if (json.error) throw new Error(json.error);
+  return json.result;
+}
+
+async function redisPipeline(commands) {
+  const res = await fetch(`${UPSTASH_URL}/pipeline`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${UPSTASH_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(commands),
+  });
+  const json = await res.json();
+  return json.map((r) => r.result);
+}
+
+function setCors(res, origin) {
+  const allowed = [ALLOWED_ORIGIN, "http://localhost:3000", "http://localhost:4000"];
+  const o = allowed.includes(origin) ? origin : ALLOWED_ORIGIN;
+  res.setHeader("Access-Control-Allow-Origin", o);
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+}
+
+export default async function handler(req, res) {
+  setCors(res, req.headers.origin);
+  if (req.method === "OPTIONS") return res.status(200).end();
+
+  if (req.method === "GET") {
+    try {
+      const raw = await redisCmd("ZREVRANGE", LB_KEY, "0", String(TOP_N - 1), "WITHSCORES");
+      if (!raw || raw.length === 0) return res.json({ entries: [] });
+
+      const ids = [];
+      const scores = [];
+      for (let i = 0; i < raw.length; i += 2) {
+        ids.push(raw[i]);
+        scores.push(Number(raw[i + 1]));
+      }
+
+      const pipeline = ids.map((id) => ["HGETALL", `atlas:lb:${id}`]);
+      const metaArr = await redisPipeline(pipeline);
+
+      const entries = ids.map((id, i) => {
+        const meta = metaArr[i] || {};
+        return { id, name: meta.name ?? "Anonymous", score: scores[i], date: meta.date ?? "", rank: i + 1 };
+      });
+
+      return res.json({ entries });
+    } catch (err) {
+      console.error("GET /leaderboard", err);
+      return res.status(500).json({ error: "Could not fetch leaderboard" });
+    }
+  }
+
+  if (req.method === "POST") {
+    const { name, score, date, entryId } = req.body ?? {};
+
+    const safeName = String(name ?? "").trim().slice(0, 24) || "Anonymous";
+    const safeScore = Math.min(Math.max(Math.round(Number(score)), 1), MAX_SCORE);
+    const safeDate = String(date ?? new Date().toISOString().slice(0, 10));
+    const id = /^[a-z0-9-]{8,40}$/.test(String(entryId ?? "")) ? entryId : randomUUID();
+
+    try {
+      const [, , , rank] = await redisPipeline([
+        ["ZADD", LB_KEY, "NX", String(safeScore), id],
+        ["HSET", `atlas:lb:${id}`, "name", safeName, "score", String(safeScore), "date", safeDate],
+        ["ZREMRANGEBYRANK", LB_KEY, "0", String(-(MAX_STORED + 1))],
+        ["ZREVRANK", LB_KEY, id],
+      ]);
+
+      const finalRank = rank !== null ? Number(rank) + 1 : null;
+      return res.json({ entryId: id, rank: finalRank, onLeaderboard: finalRank !== null && finalRank <= TOP_N });
+    } catch (err) {
+      console.error("POST /leaderboard", err);
+      return res.status(500).json({ error: "Could not save score" });
+    }
+  }
+
+  res.status(405).json({ error: "Method not allowed" });
+}

@@ -4,7 +4,7 @@ import { SpeechRecognition } from "@capacitor-community/speech-recognition";
 import { Capacitor } from "@capacitor/core";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { submitScore } from "@/lib/api";
+import { getLeaderboard, submitScore, submitStats, type LeaderboardEntry } from "@/lib/api";
 
 type Player = {
   id: string;
@@ -293,6 +293,27 @@ function getInitialPlayerNames(): string[] {
   return DEFAULT_PLAYER_NAMES;
 }
 
+const MEDALS = ["🥇", "🥈", "🥉"];
+
+function TopThree({ entries, highlightId }: { entries: import("@/lib/api").LeaderboardEntry[]; highlightId?: string }) {
+  const top = entries.slice(0, 3);
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Top 3</p>
+      {top.map((e, i) => (
+        <div
+          key={e.id}
+          className={`flex items-center gap-3 rounded-2xl px-4 py-2.5 ${e.id === highlightId ? "bg-fuchsia-50 ring-2 ring-fuchsia-300" : "bg-slate-50"}`}
+        >
+          <span className="text-xl w-7 text-center">{MEDALS[i]}</span>
+          <span className="flex-1 truncate text-sm font-semibold text-slate-800">{e.name}</span>
+          <span className="text-sm font-mono font-bold text-slate-500">{e.score}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function AtlasGame() {
   const [playerNames, setPlayerNames] = useState(getInitialPlayerNames);
   const [game, setGame] = useState<GameState>(createSetupState);
@@ -317,19 +338,22 @@ export function AtlasGame() {
 
   // End-game modal state
   const [showEndGame, setShowEndGame] = useState(false);
+  const [endGameLoading, setEndGameLoading] = useState(false);
   const [endGameName, setEndGameName] = useState("");
   const [endGameSubmitting, setEndGameSubmitting] = useState(false);
+  const [endGameQualifies, setEndGameQualifies] = useState(false);
+  const [endGameLeaderboard, setEndGameLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [endGameResult, setEndGameResult] = useState<{ rank: number | null; entryId: string; onLeaderboard: boolean } | null>(null);
-  const [endGameEntryId] = useState(() =>
-    typeof crypto !== "undefined" ? crypto.randomUUID() : Math.random().toString(36).slice(2)
-  );
+  const statsSubmittedRef = useRef(false);
 
   const speechSupported = isNativeApp ? nativeSpeechAvailable !== false : browserSpeechSupported;
 
   const currentPlayer =
     game.phase === "playing" ? game.players[game.currentPlayerIndex] : null;
   const hasDraftPlace = draftPlace.trim().length > 0;
-  const totalTurns = game.moves.length;
+  // Score = saved places only (skips don't count toward leaderboard)
+  const savedTurns = game.moves.filter((m) => m.kind === "saved").length;
+  const totalTurns = game.moves.length; // for display ("X turns played")
 
   const calledPlaces = useMemo(
     () =>
@@ -602,6 +626,7 @@ export function AtlasGame() {
     setPlayerNames(names);
     setDraftPlace("");
     updateSpeechMessage("");
+    statsSubmittedRef.current = false;
     setGame(createNewGame(names));
   }
 
@@ -718,23 +743,47 @@ export function AtlasGame() {
   function openEndGame() {
     void stopListening();
     setShowEndGame(true);
+    setEndGameLoading(true);
     setEndGameResult(null);
-    setEndGameName("");
+    // Default team name = player names joined by "-"
+    setEndGameName(game.players.map((p) => p.name).join("-").slice(0, 24));
+
+    // Submit stats once per game (fire-and-forget)
+    if (!statsSubmittedRef.current) {
+      statsSubmittedRef.current = true;
+      void submitStats(totalTurns).catch(() => {});
+    }
+
+    // Fetch leaderboard to check qualification
+    void getLeaderboard()
+      .then((entries) => {
+        setEndGameLeaderboard(entries);
+        // Qualifies if fewer than 10 entries OR our saved-place count beats the last entry
+        const qualifies = entries.length < 10 || savedTurns > (entries[entries.length - 1]?.score ?? 0);
+        setEndGameQualifies(qualifies);
+      })
+      .catch(() => {
+        // Fetch failed — default to showing the name entry (assume qualifies)
+        setEndGameLeaderboard([]);
+        setEndGameQualifies(true);
+      })
+      .finally(() => setEndGameLoading(false));
   }
 
   async function submitToLeaderboard() {
     setEndGameSubmitting(true);
+    const entryId =
+      typeof crypto !== "undefined" ? crypto.randomUUID() : Math.random().toString(36).slice(2);
     try {
       const result = await submitScore({
         name: endGameName.trim() || "Anonymous",
-        score: totalTurns,
+        score: savedTurns,
         date: new Date().toISOString().slice(0, 10),
-        entryId: endGameEntryId,
+        entryId,
       });
       setEndGameResult(result);
     } catch {
-      // Non-fatal — leaderboard submission failure shouldn't block the user
-      setEndGameResult({ rank: null, entryId: endGameEntryId, onLeaderboard: false });
+      setEndGameResult({ rank: null, entryId, onLeaderboard: false });
     } finally {
       setEndGameSubmitting(false);
     }
@@ -742,6 +791,11 @@ export function AtlasGame() {
 
   function returnToSetup() {
     void stopListening();
+    // Silently submit stats if not yet done (e.g. user resets without opening End Game)
+    if (!statsSubmittedRef.current && game.phase === "playing" && game.moves.length > 0) {
+      statsSubmittedRef.current = true;
+      void submitStats(totalTurns).catch(() => {});
+    }
     setDraftPlace("");
     setDuplicateChallenge(null);
     updateSpeechMessage("");
@@ -1066,104 +1120,95 @@ export function AtlasGame() {
       {/* ── End Game modal ── */}
       {showEndGame ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center">
-          <div className="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl">
-            {endGameResult ? (
-              /* Post-submit view */
-              <div className="flex flex-col items-center gap-4 text-center">
-                <span className="text-5xl">{endGameResult.onLeaderboard ? "🏆" : "🎮"}</span>
-                <div>
-                  <p className="text-2xl font-black text-slate-900">
-                    {totalTurns} turn{totalTurns !== 1 ? "s" : ""} played!
-                  </p>
+          <div className="w-full max-w-md rounded-[2rem] bg-white shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-4">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900">
+                  {endGameResult ? (endGameResult.onLeaderboard ? "🏆 Top 10!" : "🎮 Game over!") : "Game over!"}
+                </h2>
+                <p className="mt-0.5 text-sm text-slate-500">
+                  {savedTurns} place{savedTurns !== 1 ? "s" : ""} named
+                  {totalTurns !== savedTurns ? ` · ${totalTurns - savedTurns} skip${totalTurns - savedTurns !== 1 ? "s" : ""}` : ""}
+                </p>
+              </div>
+              <button
+                aria-label="Close"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-lg font-black text-slate-700"
+                onClick={() => setShowEndGame(false)}
+                type="button"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Body — scrollable */}
+            <div className="max-h-[65vh] overflow-y-auto px-6 pb-6 space-y-5">
+              {endGameLoading ? (
+                <div className="flex flex-col items-center gap-3 py-8 text-slate-400">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-fuchsia-200 border-t-fuchsia-600" />
+                  <p className="text-sm">Loading leaderboard…</p>
+                </div>
+              ) : endGameResult ? (
+                /* ── Post-submit ── */
+                <div className="space-y-4">
                   {endGameResult.rank !== null ? (
-                    <p className="mt-1 text-fuchsia-600 font-bold">
-                      You&apos;re ranked #{endGameResult.rank} on the leaderboard!
+                    <p className="text-center font-bold text-fuchsia-600">
+                      You&apos;re ranked #{endGameResult.rank} all-time!
                     </p>
                   ) : (
-                    <p className="mt-1 text-slate-500 text-sm">Score saved — keep playing to climb!</p>
+                    <p className="text-center text-sm text-slate-500">Score saved!</p>
                   )}
-                </div>
-                <div className="flex w-full gap-3">
-                  <Link
-                    href={`/leaderboard?entry=${endGameResult.entryId}`}
-                    className={`${primaryButton} flex-1`}
-                  >
-                    See leaderboard
-                  </Link>
-                  <button
-                    className={`${secondaryButton} flex-1`}
-                    onClick={() => { setShowEndGame(false); returnToSetup(); }}
-                    type="button"
-                  >
-                    New game
-                  </button>
-                </div>
-                <button
-                  className="text-sm text-slate-400 underline underline-offset-2"
-                  onClick={() => setShowEndGame(false)}
-                  type="button"
-                >
-                  Keep playing
-                </button>
-              </div>
-            ) : (
-              /* Name entry view */
-              <>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl font-black text-slate-900">Game over!</h2>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {totalTurns} turn{totalTurns !== 1 ? "s" : ""} played across all players.
-                    </p>
+                  {endGameLeaderboard.length > 0 && (
+                    <TopThree entries={endGameLeaderboard} highlightId={endGameResult.entryId} />
+                  )}
+                  <div className="flex gap-3">
+                    <Link href={`/leaderboard?entry=${endGameResult.entryId}`} className={`${primaryButton} flex-1 text-center`}>
+                      Full leaderboard
+                    </Link>
+                    <button className={`${secondaryButton} flex-1`} onClick={() => { setShowEndGame(false); returnToSetup(); }} type="button">
+                      New game
+                    </button>
                   </div>
-                  <button
-                    aria-label="Close"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-lg font-black text-slate-700"
-                    onClick={() => setShowEndGame(false)}
-                    type="button"
-                  >
-                    ×
-                  </button>
                 </div>
-
-                <div className="mt-5 space-y-4">
-                  <p className="text-sm text-slate-600">
-                    Enter a name to save your score to the leaderboard, or skip.
-                  </p>
+              ) : endGameQualifies ? (
+                /* ── Top 10 entry ── */
+                <div className="space-y-4">
+                  <div className="rounded-2xl bg-fuchsia-50 px-4 py-3 text-center">
+                    <p className="font-bold text-fuchsia-700">🎉 You made the top 10!</p>
+                    <p className="text-xs text-fuchsia-500 mt-0.5">Enter your team name to save your score</p>
+                  </div>
                   <input
                     className="w-full rounded-[1.5rem] border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-fuchsia-300 focus:ring-4 focus:ring-fuchsia-100"
                     maxLength={24}
                     onChange={(e) => setEndGameName(e.target.value)}
-                    placeholder="Your name (optional)"
+                    placeholder="Team name"
                     value={endGameName}
                   />
-                  <button
-                    className={`${primaryButton} w-full`}
-                    disabled={endGameSubmitting}
-                    onClick={submitToLeaderboard}
-                    type="button"
-                  >
+                  <button className={`${primaryButton} w-full`} disabled={endGameSubmitting} onClick={submitToLeaderboard} type="button">
                     {endGameSubmitting ? "Saving…" : "Save to leaderboard"}
                   </button>
+                  {endGameLeaderboard.length > 0 && (
+                    <TopThree entries={endGameLeaderboard} />
+                  )}
                   <div className="flex justify-center gap-4">
-                    <button
-                      className="text-sm text-slate-400 underline underline-offset-2"
-                      onClick={() => { setShowEndGame(false); returnToSetup(); }}
-                      type="button"
-                    >
-                      Skip — new game
-                    </button>
-                    <button
-                      className="text-sm text-slate-400 underline underline-offset-2"
-                      onClick={() => setShowEndGame(false)}
-                      type="button"
-                    >
-                      Keep playing
-                    </button>
+                    <Link href="/leaderboard" className="text-sm text-slate-400 underline underline-offset-2">See full leaderboard</Link>
+                    <button className="text-sm text-slate-400 underline underline-offset-2" onClick={() => { setShowEndGame(false); returnToSetup(); }} type="button">New game</button>
                   </div>
                 </div>
-              </>
-            )}
+              ) : (
+                /* ── Didn't qualify ── */
+                <div className="space-y-4">
+                  {endGameLeaderboard.length > 0 && (
+                    <TopThree entries={endGameLeaderboard} />
+                  )}
+                  <div className="flex gap-3">
+                    <Link href="/leaderboard" className={`${primaryButton} flex-1 text-center`}>Full leaderboard</Link>
+                    <button className={`${secondaryButton} flex-1`} onClick={() => { setShowEndGame(false); returnToSetup(); }} type="button">New game</button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       ) : null}

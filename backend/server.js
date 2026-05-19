@@ -55,11 +55,11 @@ async function redisPipeline(commands) {
 
 const LB_KEY = "atlas:leaderboard";
 const MAX_SCORE = 9_999;
-const TOP_N = 20;
-const MAX_STORED = 100;
+const TOP_N = 10;
+const MAX_STORED = 50;
 
-// GET /leaderboard — top 20 entries with metadata
-app.get("/leaderboard", async (req, res) => {
+// GET /api/leaderboard — top 20 entries with metadata
+app.get("/api/leaderboard", async (req, res) => {
   try {
     // ZREVRANGE with scores → ["id1","15","id2","12",...]
     const raw = await redisCmd("ZREVRANGE", LB_KEY, "0", String(TOP_N - 1), "WITHSCORES");
@@ -95,7 +95,7 @@ app.get("/leaderboard", async (req, res) => {
 });
 
 // POST /leaderboard — submit a game score
-app.post("/leaderboard", async (req, res) => {
+app.post("/api/leaderboard", async (req, res) => {
   const { name, score, date, entryId } = req.body ?? {};
 
   const safeName = String(name ?? "").trim().slice(0, 24) || "Anonymous";
@@ -134,7 +134,7 @@ const ticketsLimiter = rateLimit({
 const VALID_TYPES = { bug: "bug", feature: "enhancement" };
 
 // GET /tickets — list open issues labelled atlas-app
-app.get("/tickets", async (req, res) => {
+app.get("/api/tickets", async (req, res) => {
   try {
     const url = `https://api.github.com/repos/${GITHUB_REPO}/issues?labels=atlas-app&state=open&per_page=30`;
     const ghRes = await fetch(url, {
@@ -167,7 +167,7 @@ app.get("/tickets", async (req, res) => {
 });
 
 // POST /tickets — create a new GitHub issue
-app.post("/tickets", ticketsLimiter, async (req, res) => {
+app.post("/api/tickets", ticketsLimiter, async (req, res) => {
   const { title, body, type } = req.body ?? {};
 
   const safeTitle = String(title ?? "").trim().slice(0, 256);
@@ -203,8 +203,37 @@ app.post("/tickets", ticketsLimiter, async (req, res) => {
   }
 });
 
+// ── Stats ─────────────────────────────────────────────────────────────────────
+
+app.get("/api/stats", async (_req, res) => {
+  try {
+    const [games, turns] = await Promise.all([
+      redisCmd("GET", "atlas:stats:games"),
+      redisCmd("GET", "atlas:stats:turns"),
+    ]);
+    res.json({ games: Number(games ?? 0), turns: Number(turns ?? 0) });
+  } catch (err) {
+    console.error("GET /api/stats", err);
+    res.status(500).json({ error: "Could not fetch stats" });
+  }
+});
+
+app.post("/api/stats", async (req, res) => {
+  const safeTurns = Math.max(0, Math.round(Number(req.body?.turns ?? 0)));
+  try {
+    await Promise.all([
+      redisCmd("INCR", "atlas:stats:games"),
+      safeTurns > 0 ? redisCmd("INCRBY", "atlas:stats:turns", String(safeTurns)) : Promise.resolve(),
+    ]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("POST /api/stats", err);
+    res.status(500).json({ error: "Could not save stats" });
+  }
+});
+
 // ── Health check ──────────────────────────────────────────────────────────────
 
-app.get("/health", (_req, res) => res.json({ ok: true }));
+app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 app.listen(PORT, () => console.log(`Atlas API running on :${PORT}`));

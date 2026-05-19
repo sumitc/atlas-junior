@@ -2,6 +2,9 @@ const BASE =
   process.env.NEXT_PUBLIC_API_URL ??
   (typeof window !== "undefined" ? "http://localhost:3001" : "http://localhost:3001");
 
+// All routes are under /api/ (Vercel serverless functions layout)
+const api = (path: string) => `${BASE}/api${path}`;
+
 export type LeaderboardEntry = {
   id: string;
   name: string;
@@ -25,7 +28,7 @@ export type Ticket = {
 };
 
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
-  const res = await fetch(`${BASE}/leaderboard`);
+  const res = await fetch(api("/leaderboard"));
   if (!res.ok) throw new Error("Could not load leaderboard");
   const data = await res.json();
   return data.entries as LeaderboardEntry[];
@@ -37,7 +40,7 @@ export async function submitScore(params: {
   date: string;
   entryId: string;
 }): Promise<SubmitResult> {
-  const res = await fetch(`${BASE}/leaderboard`, {
+  const res = await fetch(api("/leaderboard"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params),
@@ -46,8 +49,16 @@ export async function submitScore(params: {
   return res.json();
 }
 
+export async function submitStats(turns: number): Promise<void> {
+  await fetch(api("/stats"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ turns }),
+  });
+}
+
 export async function getTickets(): Promise<Ticket[]> {
-  const res = await fetch(`${BASE}/tickets`);
+  const res = await fetch(api("/tickets"));
   if (!res.ok) throw new Error("Could not load tickets");
   const data = await res.json();
   return data.issues as Ticket[];
@@ -58,7 +69,7 @@ export async function submitTicket(params: {
   body: string;
   type: "bug" | "feature";
 }): Promise<{ number: number; url: string }> {
-  const res = await fetch(`${BASE}/tickets`, {
+  const res = await fetch(api("/tickets"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params),
