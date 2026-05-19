@@ -813,8 +813,8 @@ export function AtlasGame() {
 
   return (
     <>
-      <main className="app-safe-area-shell min-h-screen bg-[radial-gradient(circle_at_top,_#fde68a,_#f5d0fe_42%,_#bfdbfe_78%,_#ffffff)] sm:px-6 pb-32">
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
+      <main className="app-safe-area-shell min-h-screen bg-[radial-gradient(circle_at_top,_#fde68a,_#f5d0fe_42%,_#bfdbfe_78%,_#ffffff)] sm:px-6">
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 pb-36">
           <header className="flex items-start justify-between gap-3 rounded-[2rem] bg-white/75 px-5 py-4 shadow-lg shadow-violet-200/50 backdrop-blur sm:px-6">
             <div className="min-w-0 flex-1">
               <p className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
