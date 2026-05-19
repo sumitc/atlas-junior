@@ -1,5 +1,6 @@
 "use client";
 
+import { Capacitor } from "@capacitor/core";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -9,9 +10,11 @@ import { getLeaderboard, type LeaderboardEntry } from "@/lib/api";
 
 function ShareCard({ entry, rank }: { entry: LeaderboardEntry; rank: number }) {
   const [copied, setCopied] = useState(false);
-
+  // In Capacitor, window.location.origin is "http://localhost" — useless as a share link.
+  // Only show sharing on web where the URL is a real public address.
+  const isNative = typeof window !== "undefined" && Capacitor.getPlatform() !== "web";
   const shareUrl =
-    typeof window !== "undefined"
+    typeof window !== "undefined" && !isNative
       ? `${window.location.origin}/leaderboard?entry=${entry.id}`
       : "";
 
@@ -40,12 +43,14 @@ function ShareCard({ entry, rank }: { entry: LeaderboardEntry; rank: number }) {
         {entry.score} turn{entry.score !== 1 ? "s" : ""} &middot;{" "}
         {entry.date ? new Date(entry.date).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : ""}
       </p>
-      <button
-        onClick={share}
-        className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-5 py-2 text-sm font-bold text-white backdrop-blur transition hover:bg-white/30"
-      >
-        {copied ? "✓ Link copied!" : "Share this"}
-      </button>
+      {!isNative && (
+        <button
+          onClick={share}
+          className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-5 py-2 text-sm font-bold text-white backdrop-blur transition hover:bg-white/30"
+        >
+          {copied ? "✓ Link copied!" : "Share this"}
+        </button>
+      )}
     </div>
   );
 }

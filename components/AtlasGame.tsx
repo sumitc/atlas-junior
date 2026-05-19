@@ -341,6 +341,7 @@ export function AtlasGame() {
   const [endGameLoading, setEndGameLoading] = useState(false);
   const [endGameName, setEndGameName] = useState("");
   const [endGameSubmitting, setEndGameSubmitting] = useState(false);
+  const [endGameSubmitError, setEndGameSubmitError] = useState(false);
   const [endGameQualifies, setEndGameQualifies] = useState(false);
   const [endGameLeaderboard, setEndGameLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [endGameResult, setEndGameResult] = useState<{ rank: number | null; entryId: string; onLeaderboard: boolean } | null>(null);
@@ -772,6 +773,7 @@ export function AtlasGame() {
 
   async function submitToLeaderboard() {
     setEndGameSubmitting(true);
+    setEndGameSubmitError(false);
     try {
       const result = await submitScore({
         name: endGameName.trim() || "Anonymous",
@@ -783,7 +785,7 @@ export function AtlasGame() {
       setEndGameLeaderboard(fresh);
       setEndGameResult(result);
     } catch {
-      setEndGameResult({ rank: null, entryId: "", onLeaderboard: false });
+      setEndGameSubmitError(true);
     } finally {
       setEndGameSubmitting(false);
     }
@@ -1181,6 +1183,9 @@ export function AtlasGame() {
                     <p className="font-bold text-fuchsia-700">🎉 You made the top 10!</p>
                     <p className="text-xs text-fuchsia-500 mt-0.5">Enter your team name to save your score</p>
                   </div>
+                  {endGameSubmitError && (
+                    <p className="text-center text-sm text-red-500">Couldn&apos;t save — check your connection and try again.</p>
+                  )}
                   <input
                     className="w-full rounded-[1.5rem] border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-fuchsia-300 focus:ring-4 focus:ring-fuchsia-100"
                     maxLength={24}
@@ -1189,7 +1194,7 @@ export function AtlasGame() {
                     value={endGameName}
                   />
                   <button className={`${primaryButton} w-full`} disabled={endGameSubmitting} onClick={submitToLeaderboard} type="button">
-                    {endGameSubmitting ? "Saving…" : "Save to leaderboard"}
+                    {endGameSubmitting ? "Saving…" : endGameSubmitError ? "Retry" : "Save to leaderboard"}
                   </button>
                   {endGameLeaderboard.length > 0 && (
                     <TopThree entries={endGameLeaderboard} />

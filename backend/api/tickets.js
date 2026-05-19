@@ -10,7 +10,7 @@ function setCors(res) {
 }
 const VALID_TYPES = { bug: "bug", feature: "enhancement" };
 const RATE_KEY_PREFIX = "atlas:ratelimit:tickets:";
-const RATE_LIMIT = 5;
+const RATE_LIMIT = 1;
 const RATE_WINDOW_SEC = 900; // 15 min
 
 async function redisCmd(...args) {
@@ -66,7 +66,7 @@ export default async function handler(req, res) {
         return res.status(429).json({ error: "Too many tickets submitted. Please wait a few minutes." });
       }
     } catch {
-      // If rate limit check fails, allow through
+      return res.status(503).json({ error: "Could not verify rate limit. Please try again shortly." });
     }
 
     const { title, body, type } = req.body ?? {};

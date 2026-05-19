@@ -12,7 +12,7 @@
     "cap:open:android": "npx cap open android",
     "cap:open:ios": "npx cap open ios",
     "apk:debug": "cd android && ./gradlew assembleDebug",
-    "apk:release": "cd android && ./gradlew assembleRelease",
+    "apk:release": "npm run cap:sync:release && cd android && ./gradlew assembleRelease",
     "postinstall": "patch-package"
   },
   "dependencies": {
