@@ -322,6 +322,7 @@ export function AtlasGame() {
   const [speechMessageTone, setSpeechMessageTone] = useState<"neutral" | "error" | "success">(
     "neutral",
   );
+  const [savedFlash, setSavedFlash] = useState(false);
   const [duplicateChallenge, setDuplicateChallenge] = useState<DuplicateChallenge | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -707,7 +708,9 @@ export function AtlasGame() {
       statusMessage: `${placeLabel} saved. ${game.players[nextPlayerIndex].name} now plays ${nextLetter.toUpperCase()}.`,
     });
     setDraftPlace("");
-    updateSpeechMessage(`Saved "${placeLabel}".`, "success");
+    setSavedFlash(true);
+    setTimeout(() => setSavedFlash(false), 2000);
+    updateSpeechMessage("");
   }
 
   function saveTurn(event: FormEvent<HTMLFormElement>) {
@@ -971,25 +974,18 @@ export function AtlasGame() {
                         />
                       </svg>
                     </button>
-                    <p className="text-xs font-semibold text-slate-500">
-                      {isListening ? "Listening… tap to stop" : "Tap to speak"}
-                    </p>
+                    <p className={`text-xs font-semibold ${
+                        speechMessage
+                          ? speechMessageTone === "error"
+                            ? "text-rose-500"
+                            : speechMessageTone === "success"
+                              ? "text-emerald-600"
+                              : "text-sky-600"
+                          : "text-slate-500"
+                      }`}>
+                        {speechMessage || (isListening ? "Listening… tap to stop" : "Tap to speak")}
+                      </p>
                   </div>
-
-                  {/* ── Speech feedback ── */}
-                  {speechMessage ? (
-                    <div
-                      className={`rounded-[1.5rem] border p-3 text-sm font-medium ${
-                        speechMessageTone === "error"
-                          ? "border-rose-200 bg-rose-50 text-rose-700"
-                          : speechMessageTone === "success"
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                            : "border-sky-200 bg-sky-50 text-sky-700"
-                      }`}
-                    >
-                      {speechMessage}
-                    </div>
-                  ) : null}
 
                   {/* ── Text input ── */}
                   <input
@@ -1012,6 +1008,13 @@ export function AtlasGame() {
                   >
                     Save
                   </button>
+
+                  {/* ── Save flash ── */}
+                  {savedFlash && (
+                    <p className="text-center text-sm font-semibold text-emerald-600 animate-pulse">
+                      ✓ Saved
+                    </p>
+                  )}
 
                   {/* ── Duplicate override ── */}
                   {duplicateChallenge ? (
