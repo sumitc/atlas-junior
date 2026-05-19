@@ -778,6 +778,9 @@ export function AtlasGame() {
         score: savedTurns,
         date: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })(),
       });
+      // Refresh leaderboard so the just-saved entry appears in TopThree
+      const fresh = await getLeaderboard().catch(() => endGameLeaderboard);
+      setEndGameLeaderboard(fresh);
       setEndGameResult(result);
     } catch {
       setEndGameResult({ rank: null, entryId: "", onLeaderboard: false });
@@ -1134,9 +1137,15 @@ export function AtlasGame() {
             {/* Body — scrollable */}
             <div className="max-h-[65vh] overflow-y-auto px-6 pb-6 space-y-5">
               {endGameLoading ? (
-                <div className="flex flex-col items-center gap-3 py-8 text-slate-400">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-fuchsia-200 border-t-fuchsia-600" />
-                  <p className="text-sm">Loading leaderboard…</p>
+                <div className="space-y-5">
+                  <div className="flex flex-col items-center gap-3 py-8 text-slate-400">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-fuchsia-200 border-t-fuchsia-600" />
+                    <p className="text-sm">Loading leaderboard…</p>
+                  </div>
+                  {/* Always show escape hatch — network may be slow */}
+                  <button className={`${secondaryButton} w-full`} onClick={() => { setShowEndGame(false); returnToSetup(); }} type="button">
+                    Skip &amp; start new game
+                  </button>
                 </div>
               ) : endGameResult ? (
                 /* ── Post-submit ── */

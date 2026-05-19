@@ -38,6 +38,9 @@ async function redisPipeline(commands) {
     body: JSON.stringify(commands),
   });
   const json = await res.json();
+  for (const item of json) {
+    if (item.error) throw new Error(item.error);
+  }
   return json.map((r) => r.result);
 }
 
@@ -96,8 +99,9 @@ app.post("/api/leaderboard", async (req, res) => {
   const { name, score, date } = req.body ?? {};
 
   const safeName = String(name ?? "").trim().slice(0, 24) || "Anonymous";
-  const safeScore = Math.min(Math.max(Math.round(Number(score)), 1), MAX_SCORE);
-  const safeDate = String(date ?? localDateString());
+  const rawScore = Number(score);
+  const safeScore = Number.isFinite(rawScore) ? Math.min(Math.max(Math.round(rawScore), 0), MAX_SCORE) : 0;
+  const safeDate = /^\d{4}-\d{2}-\d{2}$/.test(String(date ?? "")) ? String(date) : localDateString();
   // Always generate server-side to prevent ID guessing / metadata overwrite
   const id = randomUUID();
 
