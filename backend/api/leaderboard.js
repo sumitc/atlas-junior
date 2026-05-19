@@ -2,12 +2,17 @@ import { randomUUID } from "crypto";
 
 const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "http://localhost:3000";
 
 const LB_KEY = "atlas:leaderboard";
 const MAX_SCORE = 9_999;
 const TOP_N = 10;
 const MAX_STORED = 50; // store more than displayed so ties don't get lost
+
+function setCors(res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+}
 
 async function redisCmd(...args) {
   const res = await fetch(`${UPSTASH_URL}/${args.map(encodeURIComponent).join("/")}`, {
@@ -31,16 +36,13 @@ async function redisPipeline(commands) {
   return json.map((r) => r.result);
 }
 
-function setCors(res, origin) {
-  const allowed = [ALLOWED_ORIGIN, "http://localhost:3000", "http://localhost:4000"];
-  const o = allowed.includes(origin) ? origin : ALLOWED_ORIGIN;
-  res.setHeader("Access-Control-Allow-Origin", o);
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+function localDateString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export default async function handler(req, res) {
-  setCors(res, req.headers.origin);
+  setCors(res);
   if (req.method === "OPTIONS") return res.status(200).end();
 
   if (req.method === "GET") {
@@ -71,12 +73,13 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    const { name, score, date, entryId } = req.body ?? {};
+    const { name, score, date } = req.body ?? {};
 
     const safeName = String(name ?? "").trim().slice(0, 24) || "Anonymous";
     const safeScore = Math.min(Math.max(Math.round(Number(score)), 1), MAX_SCORE);
-    const safeDate = String(date ?? new Date().toISOString().slice(0, 10));
-    const id = /^[a-z0-9-]{8,40}$/.test(String(entryId ?? "")) ? entryId : randomUUID();
+    const safeDate = String(date ?? localDateString());
+    // Always generate server-side to prevent ID guessing / metadata overwrite
+    const id = randomUUID();
 
     try {
       const [, , , rank] = await redisPipeline([

@@ -1,6 +1,5 @@
 const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "http://localhost:3000";
 
 async function redisCmd(...args) {
   const res = await fetch(`${UPSTASH_URL}/${args.map(encodeURIComponent).join("/")}`, {
@@ -11,16 +10,14 @@ async function redisCmd(...args) {
   return json.result;
 }
 
-function setCors(res, origin) {
-  const allowed = [ALLOWED_ORIGIN, "http://localhost:3000", "http://localhost:4000"];
-  const o = allowed.includes(origin) ? origin : ALLOWED_ORIGIN;
-  res.setHeader("Access-Control-Allow-Origin", o);
+function setCors(res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
 export default async function handler(req, res) {
-  setCors(res, req.headers.origin);
+  setCors(res);
   if (req.method === "OPTIONS") return res.status(200).end();
 
   if (req.method === "GET") {

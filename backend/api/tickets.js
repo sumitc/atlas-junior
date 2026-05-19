@@ -2,20 +2,16 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_REPO = process.env.GITHUB_REPO || "sumitc/atlas-junior";
 const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "http://localhost:3000";
 
+function setCors(res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+}
 const VALID_TYPES = { bug: "bug", feature: "enhancement" };
 const RATE_KEY_PREFIX = "atlas:ratelimit:tickets:";
 const RATE_LIMIT = 5;
 const RATE_WINDOW_SEC = 900; // 15 min
-
-function setCors(res, origin) {
-  const allowed = [ALLOWED_ORIGIN, "http://localhost:3000", "http://localhost:4000"];
-  const o = allowed.includes(origin) ? origin : ALLOWED_ORIGIN;
-  res.setHeader("Access-Control-Allow-Origin", o);
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-}
 
 async function redisCmd(...args) {
   const res = await fetch(`${UPSTASH_URL}/${args.map(encodeURIComponent).join("/")}`, {
@@ -27,7 +23,7 @@ async function redisCmd(...args) {
 }
 
 export default async function handler(req, res) {
-  setCors(res, req.headers.origin);
+  setCors(res);
   if (req.method === "OPTIONS") return res.status(200).end();
 
   if (req.method === "GET") {

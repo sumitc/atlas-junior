@@ -758,8 +758,8 @@ export function AtlasGame() {
     void getLeaderboard()
       .then((entries) => {
         setEndGameLeaderboard(entries);
-        // Qualifies if fewer than 10 entries OR our saved-place count beats the last entry
-        const qualifies = entries.length < 10 || savedTurns > (entries[entries.length - 1]?.score ?? 0);
+        // Qualifies if fewer than 10 entries OR our saved-place count meets or beats the last entry
+        const qualifies = entries.length < 10 || savedTurns >= (entries[entries.length - 1]?.score ?? 0);
         setEndGameQualifies(qualifies);
       })
       .catch(() => {
@@ -772,18 +772,15 @@ export function AtlasGame() {
 
   async function submitToLeaderboard() {
     setEndGameSubmitting(true);
-    const entryId =
-      typeof crypto !== "undefined" ? crypto.randomUUID() : Math.random().toString(36).slice(2);
     try {
       const result = await submitScore({
         name: endGameName.trim() || "Anonymous",
         score: savedTurns,
-        date: new Date().toISOString().slice(0, 10),
-        entryId,
+        date: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })(),
       });
       setEndGameResult(result);
     } catch {
-      setEndGameResult({ rank: null, entryId, onLeaderboard: false });
+      setEndGameResult({ rank: null, entryId: "", onLeaderboard: false });
     } finally {
       setEndGameSubmitting(false);
     }
@@ -792,7 +789,7 @@ export function AtlasGame() {
   function returnToSetup() {
     void stopListening();
     // Silently submit stats if not yet done (e.g. user resets without opening End Game)
-    if (!statsSubmittedRef.current && game.phase === "playing" && game.moves.length > 0) {
+    if (!statsSubmittedRef.current && game.phase === "playing") {
       statsSubmittedRef.current = true;
       void submitStats(totalTurns).catch(() => {});
     }
@@ -1132,14 +1129,6 @@ export function AtlasGame() {
                   {totalTurns !== savedTurns ? ` · ${totalTurns - savedTurns} skip${totalTurns - savedTurns !== 1 ? "s" : ""}` : ""}
                 </p>
               </div>
-              <button
-                aria-label="Close"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-lg font-black text-slate-700"
-                onClick={() => setShowEndGame(false)}
-                type="button"
-              >
-                ×
-              </button>
             </div>
 
             {/* Body — scrollable */}

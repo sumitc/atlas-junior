@@ -38,7 +38,6 @@ export async function submitScore(params: {
   name: string;
   score: number;
   date: string;
-  entryId: string;
 }): Promise<SubmitResult> {
   const res = await fetch(api("/leaderboard"), {
     method: "POST",
@@ -50,11 +49,12 @@ export async function submitScore(params: {
 }
 
 export async function submitStats(turns: number): Promise<void> {
-  await fetch(api("/stats"), {
+  const res = await fetch(api("/stats"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ turns }),
   });
+  if (!res.ok) throw new Error("Could not save stats");
 }
 
 export async function getTickets(): Promise<Ticket[]> {

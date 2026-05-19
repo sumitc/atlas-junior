@@ -10,20 +10,10 @@ const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_REPO = process.env.GITHUB_REPO || "sumitc/atlas-junior";
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "http://localhost:3000";
 
 // ── Middleware ────────────────────────────────────────────────────────────────
 
-app.use(
-  cors({
-    origin: (origin, cb) => {
-      // Allow no-origin (native app / curl) and the configured frontend origin
-      const allowed = [ALLOWED_ORIGIN, "http://localhost:3000", "http://localhost:4000"];
-      if (!origin || allowed.includes(origin)) return cb(null, true);
-      cb(new Error("Not allowed by CORS"));
-    },
-  })
-);
+app.use(cors({ origin: "*" }));
 app.use(express.json({ limit: "16kb" }));
 
 // ── Upstash Redis helpers ─────────────────────────────────────────────────────
@@ -49,6 +39,13 @@ async function redisPipeline(commands) {
   });
   const json = await res.json();
   return json.map((r) => r.result);
+}
+
+// ── Date helper ───────────────────────────────────────────────────────────────
+
+function localDateString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 // ── Leaderboard ───────────────────────────────────────────────────────────────
@@ -96,13 +93,13 @@ app.get("/api/leaderboard", async (req, res) => {
 
 // POST /leaderboard — submit a game score
 app.post("/api/leaderboard", async (req, res) => {
-  const { name, score, date, entryId } = req.body ?? {};
+  const { name, score, date } = req.body ?? {};
 
   const safeName = String(name ?? "").trim().slice(0, 24) || "Anonymous";
   const safeScore = Math.min(Math.max(Math.round(Number(score)), 1), MAX_SCORE);
-  const safeDate = String(date ?? new Date().toISOString().slice(0, 10));
-  // Allow client to supply an idempotency key (stable per game); otherwise generate one
-  const id = /^[a-z0-9\-]{8,40}$/.test(String(entryId ?? "")) ? entryId : randomUUID();
+  const safeDate = String(date ?? localDateString());
+  // Always generate server-side to prevent ID guessing / metadata overwrite
+  const id = randomUUID();
 
   try {
     const [added, , rank] = await redisPipeline([
