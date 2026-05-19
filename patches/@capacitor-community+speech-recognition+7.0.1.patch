@@ -1,0 +1,469 @@
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/.transforms/b1f351cce4a6359d69582ace8f6e61de/results.bin b/node_modules/@capacitor-community/speech-recognition/android/build/.transforms/b1f351cce4a6359d69582ace8f6e61de/results.bin
+new file mode 100644
+index 0000000..0d259dd
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/.transforms/b1f351cce4a6359d69582ace8f6e61de/results.bin
+@@ -0,0 +1 @@
++o/classes
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/.transforms/b1f351cce4a6359d69582ace8f6e61de/transformed/classes/classes_dex/classes.dex b/node_modules/@capacitor-community/speech-recognition/android/build/.transforms/b1f351cce4a6359d69582ace8f6e61de/transformed/classes/classes_dex/classes.dex
+new file mode 100644
+index 0000000..74598e1
+Binary files /dev/null and b/node_modules/@capacitor-community/speech-recognition/android/build/.transforms/b1f351cce4a6359d69582ace8f6e61de/transformed/classes/classes_dex/classes.dex differ
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
+new file mode 100644
+index 0000000..33c61cf
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.getcapacitor.community.speechrecognition.speechrecognition" >
++
++    <uses-sdk android:minSdkVersion="23" />
++
++    <uses-permission android:name="android.permission.RECORD_AUDIO" />
++
++    <queries>
++        <intent>
++            <action android:name="android.speech.RecognitionService" />
++        </intent>
++    </queries>
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
+new file mode 100644
+index 0000000..b3c0af9
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
+@@ -0,0 +1,18 @@
++{
++  "version": 3,
++  "artifactType": {
++    "type": "AAPT_FRIENDLY_MERGED_MANIFESTS",
++    "kind": "Directory"
++  },
++  "applicationId": "com.getcapacitor.community.speechrecognition.speechrecognition",
++  "variantName": "debug",
++  "elements": [
++    {
++      "type": "SINGLE",
++      "filters": [],
++      "attributes": [],
++      "outputFile": "AndroidManifest.xml"
++    }
++  ],
++  "elementType": "File"
++}
+\ No newline at end of file
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/aar_main_jar/debug/syncDebugLibJars/classes.jar b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/aar_main_jar/debug/syncDebugLibJars/classes.jar
+new file mode 100644
+index 0000000..283ad93
+Binary files /dev/null and b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/aar_main_jar/debug/syncDebugLibJars/classes.jar differ
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
+new file mode 100644
+index 0000000..1211b1e
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
+@@ -0,0 +1,6 @@
++aarFormatVersion=1.0
++aarMetadataVersion=1.0
++minCompileSdk=1
++minCompileSdkExtension=0
++minAndroidGradlePluginVersion=1.0.0
++coreLibraryDesugaringEnabled=false
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
+new file mode 100644
+index 0000000..9e26dfe
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
+@@ -0,0 +1 @@
++{}
+\ No newline at end of file
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/annotations_typedef_file/debug/extractDebugAnnotations/typedefs.txt b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/annotations_typedef_file/debug/extractDebugAnnotations/typedefs.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar
+new file mode 100644
+index 0000000..6c17a62
+Binary files /dev/null and b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar differ
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar
+new file mode 100644
+index 0000000..eb6f866
+Binary files /dev/null and b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar differ
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt
+new file mode 100644
+index 0000000..f7ac549
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt
+@@ -0,0 +1,3 @@
++int id webview 0x0
++int layout bridge_layout_main 0x0
++int string my_string 0x0
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_bridge_layout_main.xml.flat b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_bridge_layout_main.xml.flat
+new file mode 100644
+index 0000000..ddd98fa
+Binary files /dev/null and b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_bridge_layout_main.xml.flat differ
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/debug-mergeJavaRes/merge-state b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/debug-mergeJavaRes/merge-state
+new file mode 100644
+index 0000000..1c983fc
+Binary files /dev/null and b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/debug-mergeJavaRes/merge-state differ
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+new file mode 100644
+index 0000000..a080681
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+@@ -0,0 +1,2 @@
++#Mon May 18 23:55:41 IST 2026
++com.getcapacitor.community.speechrecognition.speechrecognition.capacitor-community-speech-recognition-main-6\:/layout/bridge_layout_main.xml=/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/packaged_res/debug/packageDebugResources/layout/bridge_layout_main.xml
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/debug/packageDebugResources/merged.dir/values/values.xml b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/debug/packageDebugResources/merged.dir/values/values.xml
+new file mode 100644
+index 0000000..e95bf66
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/debug/packageDebugResources/merged.dir/values/values.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="my_string">Just a simple string</string>
++</resources>
+\ No newline at end of file
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+new file mode 100644
+index 0000000..0f66300
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main" generated-set="main$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/res"><file name="bridge_layout_main" path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/res/layout/bridge_layout_main.xml" qualifiers="" type="layout"/><file path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/res/values/colors.xml" qualifiers=""/><file path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/res/values/styles.xml" qualifiers=""/><file path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/res/values/strings.xml" qualifiers=""><string name="my_string">Just a simple string</string></file></source></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug" generated-set="debug$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/build/generated/res/resValues/debug"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/build/generated/res/resValues/debug"/></dataSet><mergedItems/></merger>
+\ No newline at end of file
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+new file mode 100644
+index 0000000..999a0cd
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/jniLibs"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/debug/jniLibs"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/mergeDebugShaders/merger.xml b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+new file mode 100644
+index 0000000..2639907
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/shaders"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/debug/shaders"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/packageDebugAssets/merger.xml b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/packageDebugAssets/merger.xml
+new file mode 100644
+index 0000000..cd4c350
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/incremental/packageDebugAssets/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/assets"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/debug/assets"/></dataSet><dataSet config="generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/shader_assets/debug/compileDebugShaders/out"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/getcapacitor/community/speechrecognition/Constants.class b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/getcapacitor/community/speechrecognition/Constants.class
+new file mode 100644
+index 0000000..3094bd9
+Binary files /dev/null and b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/getcapacitor/community/speechrecognition/Constants.class differ
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/getcapacitor/community/speechrecognition/Receiver.class b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/getcapacitor/community/speechrecognition/Receiver.class
+new file mode 100644
+index 0000000..af9be6c
+Binary files /dev/null and b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/getcapacitor/community/speechrecognition/Receiver.class differ
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/getcapacitor/community/speechrecognition/SpeechRecognition$SpeechRecognitionListener.class b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/getcapacitor/community/speechrecognition/SpeechRecognition$SpeechRecognitionListener.class
+new file mode 100644
+index 0000000..8d9d903
+Binary files /dev/null and b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/getcapacitor/community/speechrecognition/SpeechRecognition$SpeechRecognitionListener.class differ
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/getcapacitor/community/speechrecognition/SpeechRecognition.class b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/getcapacitor/community/speechrecognition/SpeechRecognition.class
+new file mode 100644
+index 0000000..286d41d
+Binary files /dev/null and b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/getcapacitor/community/speechrecognition/SpeechRecognition.class differ
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
+new file mode 100644
+index 0000000..80ec5cb
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
+@@ -0,0 +1,5 @@
++R_DEF: Internal format may change without notice
++local
++id webview
++layout bridge_layout_main
++string my_string
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
+new file mode 100644
+index 0000000..cd98fe2
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
+@@ -0,0 +1,21 @@
++1<?xml version="1.0" encoding="utf-8"?>
++2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++3    package="com.getcapacitor.community.speechrecognition.speechrecognition" >
++4
++5    <uses-sdk android:minSdkVersion="23" />
++6
++7    <uses-permission android:name="android.permission.RECORD_AUDIO" />
++7-->/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml:4:5-71
++7-->/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml:4:22-68
++8
++9    <queries>
++9-->/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml:5:5-9:15
++10        <intent>
++10-->/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml:6:7-8:16
++11            <action android:name="android.speech.RecognitionService" />
++11-->/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml:7:9-68
++11-->/Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml:7:17-65
++12        </intent>
++13    </queries>
++14
++15</manifest>
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/merged_java_res/debug/mergeDebugJavaResource/feature-capacitor-community-speech-recognition.jar b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/merged_java_res/debug/mergeDebugJavaResource/feature-capacitor-community-speech-recognition.jar
+new file mode 100644
+index 0000000..15cb0ec
+Binary files /dev/null and b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/merged_java_res/debug/mergeDebugJavaResource/feature-capacitor-community-speech-recognition.jar differ
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
+new file mode 100644
+index 0000000..33c61cf
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.getcapacitor.community.speechrecognition.speechrecognition" >
++
++    <uses-sdk android:minSdkVersion="23" />
++
++    <uses-permission android:name="android.permission.RECORD_AUDIO" />
++
++    <queries>
++        <intent>
++            <action android:name="android.speech.RecognitionService" />
++        </intent>
++    </queries>
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
+new file mode 100644
+index 0000000..0637a08
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
+@@ -0,0 +1 @@
++[]
+\ No newline at end of file
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
+new file mode 100644
+index 0000000..08f4ebe
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
+@@ -0,0 +1 @@
++0 Warning/Error
+\ No newline at end of file
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/packaged_res/debug/packageDebugResources/layout/bridge_layout_main.xml b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/packaged_res/debug/packageDebugResources/layout/bridge_layout_main.xml
+new file mode 100644
+index 0000000..56fec15
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/packaged_res/debug/packageDebugResources/layout/bridge_layout_main.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    xmlns:tools="http://schemas.android.com/tools"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    tools:context="com.getcapacitor.BridgeActivity"
++    >
++
++    <WebView
++        android:id="@+id/webview"
++        android:layout_width="fill_parent"
++        android:layout_height="fill_parent" />
++
++</androidx.coordinatorlayout.widget.CoordinatorLayout>
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/packaged_res/debug/packageDebugResources/values/values.xml b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/packaged_res/debug/packageDebugResources/values/values.xml
+new file mode 100644
+index 0000000..e95bf66
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/packaged_res/debug/packageDebugResources/values/values.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="my_string">Just a simple string</string>
++</resources>
+\ No newline at end of file
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar
+new file mode 100644
+index 0000000..7719388
+Binary files /dev/null and b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar differ
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
+new file mode 100644
+index 0000000..f0ee474
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
+@@ -0,0 +1,4 @@
++com.getcapacitor.community.speechrecognition.speechrecognition
++id webview
++layout bridge_layout_main
++string my_string
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/outputs/aar/capacitor-community-speech-recognition-debug.aar b/node_modules/@capacitor-community/speech-recognition/android/build/outputs/aar/capacitor-community-speech-recognition-debug.aar
+new file mode 100644
+index 0000000..548c73c
+Binary files /dev/null and b/node_modules/@capacitor-community/speech-recognition/android/build/outputs/aar/capacitor-community-speech-recognition-debug.aar differ
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/outputs/logs/manifest-merger-debug-report.txt b/node_modules/@capacitor-community/speech-recognition/android/build/outputs/logs/manifest-merger-debug-report.txt
+new file mode 100644
+index 0000000..e516b1b
+--- /dev/null
++++ b/node_modules/@capacitor-community/speech-recognition/android/build/outputs/logs/manifest-merger-debug-report.txt
+@@ -0,0 +1,28 @@
++-- Merging decision tree log ---
++manifest
++ADDED from /Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml:2:3-10:14
++INJECTED from /Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml:2:3-10:14
++	package
++		INJECTED from /Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml
++	xmlns:android
++		ADDED from /Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml:2:13-71
++uses-permission#android.permission.RECORD_AUDIO
++ADDED from /Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml:4:5-71
++	android:name
++		ADDED from /Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml:4:22-68
++queries
++ADDED from /Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml:5:5-9:15
++intent#action:name:android.speech.RecognitionService
++ADDED from /Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml:6:7-8:16
++action#android.speech.RecognitionService
++ADDED from /Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml:7:9-68
++	android:name
++		ADDED from /Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml:7:17-65
++uses-sdk
++INJECTED from /Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
++INJECTED from /Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml
++INJECTED from /Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml
++	android:targetSdkVersion
++		INJECTED from /Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml
++	android:minSdkVersion
++		INJECTED from /Users/sumitc/projects/atlas-junior/node_modules/@capacitor-community/speech-recognition/android/src/main/AndroidManifest.xml
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin b/node_modules/@capacitor-community/speech-recognition/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin
+new file mode 100644
+index 0000000..6fb3c74
+Binary files /dev/null and b/node_modules/@capacitor-community/speech-recognition/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin differ
+diff --git a/node_modules/@capacitor-community/speech-recognition/android/src/main/java/com/getcapacitor/community/speechrecognition/SpeechRecognition.java b/node_modules/@capacitor-community/speech-recognition/android/src/main/java/com/getcapacitor/community/speechrecognition/SpeechRecognition.java
+index a99ea69..64d1c14 100644
+--- a/node_modules/@capacitor-community/speech-recognition/android/src/main/java/com/getcapacitor/community/speechrecognition/SpeechRecognition.java
++++ b/node_modules/@capacitor-community/speech-recognition/android/src/main/java/com/getcapacitor/community/speechrecognition/SpeechRecognition.java
+@@ -86,11 +86,25 @@ public class SpeechRecognition extends Plugin implements Constants {
+ 
+     @PluginMethod
+     public void stop(final PluginCall call) {
+-        try {
+-            stopListening();
+-        } catch (Exception ex) {
+-            call.reject(ex.getLocalizedMessage());
+-        }
++        // stopListening() posts to the WebView thread and returns immediately, so we
++        // must resolve/reject from inside the same posted runnable — otherwise the
++        // Capacitor promise would never settle.
++        bridge.getWebView().post(() -> {
++            try {
++                SpeechRecognition.this.lock.lock();
++                if (SpeechRecognition.this.listening) {
++                    if (speechRecognizer != null) {
++                        speechRecognizer.stopListening();
++                    }
++                    SpeechRecognition.this.listening(false);
++                }
++                call.resolve();
++            } catch (Exception ex) {
++                call.reject(ex.getLocalizedMessage());
++            } finally {
++                SpeechRecognition.this.lock.unlock();
++            }
++        });
+     }
+ 
+     @PluginMethod
+@@ -182,13 +196,18 @@ public class SpeechRecognition extends Plugin implements Constants {
+                     try {
+                         SpeechRecognition.this.lock.lock();
+ 
+-                        if (speechRecognizer != null) {
+-                            speechRecognizer.cancel();
+-                            speechRecognizer.destroy();
+-                            speechRecognizer = null;
++                        // Reset previous partial results so a repeated phrase is not
++                        // suppressed on the first partial event of the new session.
++                        previousPartialResults = new JSONArray();
++
++                        // Reuse the existing SpeechRecognizer instead of destroying and
++                        // recreating it on every start. Destroying/rebinding too quickly
++                        // causes ERROR_SERVER_DISCONNECTED (11) on the second attempt.
++                        if (speechRecognizer == null) {
++                            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(bridge.getActivity());
+                         }
++                        speechRecognizer.cancel();
+ 
+-                        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(bridge.getActivity());
+                         SpeechRecognitionListener listener = new SpeechRecognitionListener();
+                         listener.setCall(call);
+                         listener.setPartialResults(partialResults);
+@@ -214,11 +233,14 @@ public class SpeechRecognition extends Plugin implements Constants {
+                 try {
+                     SpeechRecognition.this.lock.lock();
+                     if (SpeechRecognition.this.listening) {
+-                        speechRecognizer.stopListening();
++                        // Always clear the flag, even if the recognizer is null
++                        if (speechRecognizer != null) {
++                            speechRecognizer.stopListening();
++                        }
+                         SpeechRecognition.this.listening(false);
+                     }
+                 } catch (Exception ex) {
+-                    throw ex;
++                    // swallow — best-effort stop
+                 } finally {
+                     SpeechRecognition.this.lock.unlock();
+                 }
+@@ -280,9 +302,41 @@ public class SpeechRecognition extends Plugin implements Constants {
+ 
+         @Override
+         public void onError(int error) {
+-            SpeechRecognition.this.stopListening();
+-            String errorMssg = getErrorText(error);
++            // All error paths are handled in one WebView post to avoid the race
++            // condition where two posted tasks (recreate + stopListening) would run
++            // sequentially, with the second corrupting the freshly created recognizer.
++            bridge.getWebView().post(() -> {
++                SpeechRecognition.this.lock.lock();
++                try {
++                    if (error == SpeechRecognizer.ERROR_SERVER_DISCONNECTED) {
++                        // Destroy the recognizer so beginListening() recreates it on
++                        // the next start() call — do NOT call startListening() here to
++                        // avoid the race with the stopListening path below.
++                        if (speechRecognizer != null) {
++                            speechRecognizer.destroy();
++                            speechRecognizer = null;
++                        }
++                    } else {
++                        if (speechRecognizer != null && SpeechRecognition.this.listening) {
++                            speechRecognizer.stopListening();
++                        }
++                    }
+ 
++                    // Notify JS that listening ended — critical when start() was called
++                    // with partialResults:true, because call.resolve() was already sent
++                    // and JS will not receive a reject signal.
++                    if (SpeechRecognition.this.listening) {
++                        SpeechRecognition.this.listening(false);
++                        JSObject ret = new JSObject();
++                        ret.put("status", "stopped");
++                        SpeechRecognition.this.notifyListeners(LISTENING_EVENT, ret);
++                    }
++                } finally {
++                    SpeechRecognition.this.lock.unlock();
++                }
++            });
++
++            String errorMssg = getErrorText(error);
+             if (this.call != null) {
+                 call.reject(errorMssg);
+             }

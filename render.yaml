@@ -4,7 +4,28 @@ services:
     runtime: node
     plan: free
     buildCommand: npm install && npm run build
-    startCommand: npm run start -- --hostname 0.0.0.0 --port $PORT
+    startCommand: npm run start -- --listen tcp://0.0.0.0:$PORT
     envVars:
       - key: NODE_VERSION
         value: 22.16.0
+      - key: NEXT_PUBLIC_API_URL
+        value: https://atlas-junior-api.onrender.com
+
+  - type: web
+    name: atlas-junior-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 22.16.0
+      - key: ALLOWED_ORIGIN
+        value: https://atlas-junior.onrender.com
+      - key: GITHUB_REPO
+        value: sumitc/atlas-junior
+      # Set these manually in Render dashboard (secrets):
+      # UPSTASH_REDIS_REST_URL
+      # UPSTASH_REDIS_REST_TOKEN
+      # GITHUB_TOKEN

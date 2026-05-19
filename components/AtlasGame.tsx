@@ -1,6 +1,10 @@
 "use client";
 
+import { SpeechRecognition } from "@capacitor-community/speech-recognition";
+import { Capacitor } from "@capacitor/core";
+import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { submitScore } from "@/lib/api";
 
 type Player = {
   id: string;
@@ -12,6 +16,12 @@ type Move = {
   playerName: string;
   place: string;
   kind: "saved" | "skipped";
+};
+
+type DuplicateChallenge = {
+  draftPlace: string;
+  matchedPlace: string;
+  exact: boolean;
 };
 
 type GameState = {
@@ -76,6 +86,9 @@ const primaryButton =
 const secondaryButton =
   "inline-flex items-center justify-center rounded-full border border-white/60 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition hover:bg-white disabled:cursor-not-allowed disabled:text-slate-300";
 
+const PLAYER_NAMES_STORAGE_KEY = "atlas-player-names";
+const DEFAULT_PLAYER_NAMES = ["Aarav", "Mia"];
+
 function makeId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -92,6 +105,126 @@ function normalizePlaceName(value: string): string {
 
 function createPlaceKey(value: string): string {
   return normalizePlaceName(value).replace(/[^a-z]/g, "");
+}
+
+function getNormalizedTokens(value: string): string[] {
+  return normalizePlaceName(value)
+    .split(" ")
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function levenshteinDistance(first: string, second: string): number {
+  if (first === second) {
+    return 0;
+  }
+
+  if (first.length === 0) {
+    return second.length;
+  }
+
+  if (second.length === 0) {
+    return first.length;
+  }
+
+  const matrix = Array.from({ length: first.length + 1 }, () =>
+    Array<number>(second.length + 1).fill(0),
+  );
+
+  for (let row = 0; row <= first.length; row += 1) {
+    matrix[row][0] = row;
+  }
+
+  for (let column = 0; column <= second.length; column += 1) {
+    matrix[0][column] = column;
+  }
+
+  for (let row = 1; row <= first.length; row += 1) {
+    for (let column = 1; column <= second.length; column += 1) {
+      const substitutionCost = first[row - 1] === second[column - 1] ? 0 : 1;
+
+      matrix[row][column] = Math.min(
+        matrix[row - 1][column] + 1,
+        matrix[row][column - 1] + 1,
+        matrix[row - 1][column - 1] + substitutionCost,
+      );
+    }
+  }
+
+  return matrix[first.length][second.length];
+}
+
+function areLikelySamePlace(first: string, second: string): boolean {
+  const normalizedFirst = normalizePlaceName(first);
+  const normalizedSecond = normalizePlaceName(second);
+
+  if (!normalizedFirst || !normalizedSecond) {
+    return false;
+  }
+
+  if (normalizedFirst === normalizedSecond) {
+    return true;
+  }
+
+  const firstKey = createPlaceKey(first);
+  const secondKey = createPlaceKey(second);
+
+  if (!firstKey || !secondKey || firstKey[0] !== secondKey[0]) {
+    return false;
+  }
+
+  const firstTokens = getNormalizedTokens(first);
+  const secondTokens = getNormalizedTokens(second);
+
+  if (firstTokens.length === secondTokens.length) {
+    const tokenDistances = firstTokens.map((token, index) =>
+      levenshteinDistance(token, secondTokens[index] ?? ""),
+    );
+
+    if (
+      tokenDistances.every((distance, index) => {
+        const longestTokenLength = Math.max(
+          firstTokens[index]?.length ?? 0,
+          secondTokens[index]?.length ?? 0,
+        );
+
+        const similarity = 1 - distance / longestTokenLength;
+
+        return similarity >= 0.84;
+      })
+    ) {
+      return true;
+    }
+  }
+
+  const wholeDistance = levenshteinDistance(firstKey, secondKey);
+  const longestLength = Math.max(firstKey.length, secondKey.length);
+  const similarity = 1 - wholeDistance / longestLength;
+
+  return similarity >= 0.84;
+}
+
+function findLikelyDuplicatePlace(
+  draftPlaceValue: string,
+  pastMoves: Move[],
+): DuplicateChallenge | null {
+  const normalizedDraft = normalizePlaceName(draftPlaceValue);
+
+  for (const move of pastMoves) {
+    if (move.kind !== "saved") {
+      continue;
+    }
+
+    if (areLikelySamePlace(draftPlaceValue, move.place)) {
+      return {
+        draftPlace: draftPlaceValue.trim(),
+        matchedPlace: move.place,
+        exact: normalizePlaceName(move.place) === normalizedDraft,
+      };
+    }
+  }
+
+  return null;
 }
 
 function getLastLetter(value: string): string {
@@ -132,26 +265,71 @@ function getNextPlayerIndex(players: Player[], currentIndex: number): number {
   return (currentIndex + 1) % players.length;
 }
 
+function getInitialPlayerNames(): string[] {
+  if (typeof window === "undefined") {
+    return DEFAULT_PLAYER_NAMES;
+  }
+
+  const savedNames = window.localStorage.getItem(PLAYER_NAMES_STORAGE_KEY);
+
+  if (!savedNames) {
+    return DEFAULT_PLAYER_NAMES;
+  }
+
+  try {
+    const parsedNames = JSON.parse(savedNames);
+
+    if (
+      Array.isArray(parsedNames) &&
+      parsedNames.length >= 2 &&
+      parsedNames.every((name) => typeof name === "string")
+    ) {
+      return parsedNames;
+    }
+  } catch {
+    window.localStorage.removeItem(PLAYER_NAMES_STORAGE_KEY);
+  }
+
+  return DEFAULT_PLAYER_NAMES;
+}
+
 export function AtlasGame() {
-  const [playerNames, setPlayerNames] = useState(["Aarav", "Mia"]);
+  const [playerNames, setPlayerNames] = useState(getInitialPlayerNames);
   const [game, setGame] = useState<GameState>(createSetupState);
   const [draftPlace, setDraftPlace] = useState("");
-  const [speechMessage, setSpeechMessage] = useState(
-    "Tap Listen, say the place name, then save it.",
-  );
+  const [speechMessage, setSpeechMessage] = useState("");
   const [speechMessageTone, setSpeechMessageTone] = useState<"neutral" | "error" | "success">(
     "neutral",
   );
+  const [duplicateChallenge, setDuplicateChallenge] = useState<DuplicateChallenge | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [nativeSpeechAvailable, setNativeSpeechAvailable] = useState<boolean | null>(null);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const [showDebug, setShowDebug] = useState(false);
+  const debugScrollRef = useRef<HTMLDivElement | null>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
-
-  const speechSupported =
+  const placeInputRef = useRef<HTMLInputElement | null>(null);
+  const isNativeApp = typeof window !== "undefined" && Capacitor.getPlatform() !== "web";
+  const browserSpeechSupported =
     typeof window !== "undefined" &&
     (Boolean(window.SpeechRecognition) || Boolean(window.webkitSpeechRecognition));
 
+  // End-game modal state
+  const [showEndGame, setShowEndGame] = useState(false);
+  const [endGameName, setEndGameName] = useState("");
+  const [endGameSubmitting, setEndGameSubmitting] = useState(false);
+  const [endGameResult, setEndGameResult] = useState<{ rank: number | null; entryId: string; onLeaderboard: boolean } | null>(null);
+  const [endGameEntryId] = useState(() =>
+    typeof crypto !== "undefined" ? crypto.randomUUID() : Math.random().toString(36).slice(2)
+  );
+
+  const speechSupported = isNativeApp ? nativeSpeechAvailable !== false : browserSpeechSupported;
+
   const currentPlayer =
     game.phase === "playing" ? game.players[game.currentPlayerIndex] : null;
+  const hasDraftPlace = draftPlace.trim().length > 0;
+  const totalTurns = game.moves.length;
 
   const calledPlaces = useMemo(
     () =>
@@ -165,8 +343,38 @@ export function AtlasGame() {
   useEffect(() => {
     return () => {
       recognitionRef.current?.abort();
+      if (isNativeApp) {
+        void SpeechRecognition.stop();
+        void SpeechRecognition.removeAllListeners();
+      }
     };
-  }, []);
+  }, [isNativeApp]);
+
+  useEffect(() => {
+    if (!isNativeApp) {
+      return;
+    }
+
+    void (async () => {
+      try {
+        const { available } = await SpeechRecognition.available();
+        setNativeSpeechAvailable(available);
+      } catch {
+        setNativeSpeechAvailable(false);
+      }
+    })();
+  }, [isNativeApp]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(
+      PLAYER_NAMES_STORAGE_KEY,
+      JSON.stringify(playerNames),
+    );
+  }, [playerNames]);
 
   function updateSpeechMessage(
     message: string,
@@ -174,6 +382,17 @@ export function AtlasGame() {
   ) {
     setSpeechMessage(message);
     setSpeechMessageTone(tone);
+  }
+
+  function dbg(msg: string) {
+    const ts = new Date().toLocaleTimeString("en-GB", { hour12: false });
+    setDebugLogs((prev) => {
+      const next = [...prev, `${ts} ${msg}`];
+      return next.slice(-60); // keep last 60 lines
+    });
+    setTimeout(() => {
+      debugScrollRef.current?.scrollTo({ top: 999999, behavior: "smooth" });
+    }, 30);
   }
 
   function updatePlayerName(index: number, value: string) {
@@ -190,16 +409,120 @@ export function AtlasGame() {
     setPlayerNames((current) => current.filter((_, currentIndex) => currentIndex !== index));
   }
 
-  function stopListening() {
+  async function stopListening() {
     recognitionRef.current?.stop();
+    recognitionRef.current?.abort();
+
+    // Always clear the UI immediately — do not wait for the plugin to settle,
+    // because if the recognizer is stuck the await would never complete.
     setIsListening(false);
+
+    if (isNativeApp) {
+      dbg("stopListening: calling stop()");
+      try {
+        await SpeechRecognition.stop();
+        dbg("stopListening: stop() done");
+      } catch (e) {
+        dbg(`stopListening: stop error ${String(e)}`);
+      }
+      try {
+        await SpeechRecognition.removeAllListeners();
+        dbg("stopListening: done");
+      } catch (e) {
+        dbg(`stopListening: removeAllListeners error ${String(e)}`);
+      }
+    }
   }
 
-  function startListening() {
+  async function startListening() {
+    setDuplicateChallenge(null);
+
+    if (isNativeApp) {
+      try {
+        dbg("startListening: checking available()");
+        const { available } = await SpeechRecognition.available();
+        setNativeSpeechAvailable(available);
+        dbg(`startListening: available=${available}`);
+
+        if (!available) {
+          updateSpeechMessage(
+            "Speech input is not available on this device, so type the place name instead.",
+            "error",
+          );
+          placeInputRef.current?.focus();
+          return;
+        }
+
+        dbg("startListening: checking permissions");
+        const currentPermissions = await SpeechRecognition.checkPermissions();
+        const grantedPermissions =
+          currentPermissions.speechRecognition === "granted"
+            ? currentPermissions
+            : await SpeechRecognition.requestPermissions();
+        dbg(`startListening: permission=${grantedPermissions.speechRecognition}`);
+
+        if (grantedPermissions.speechRecognition !== "granted") {
+          updateSpeechMessage(
+            "Microphone access was blocked. Allow it in app permissions or type the place name instead.",
+            "error",
+          );
+          placeInputRef.current?.focus();
+          return;
+        }
+
+        dbg("startListening: removeAllListeners");
+        await SpeechRecognition.removeAllListeners();
+        await SpeechRecognition.addListener("partialResults", ({ matches }) => {
+          const transcript = matches?.[0]?.trim() ?? "";
+          dbg(`partialResults: "${transcript}"`);
+          setDraftPlace(transcript);
+          updateSpeechMessage(
+            transcript ? `I heard: "${transcript}"` : "I am still listening...",
+          );
+        });
+        await SpeechRecognition.addListener("listeningState", ({ status }) => {
+          dbg(`listeningState: ${status}`);
+          setIsListening(status === "started");
+          if (status === "stopped") {
+            // If recognition ended with no transcript, give the user clear feedback
+            setDraftPlace((current) => {
+              if (!current.trim()) {
+                updateSpeechMessage("Didn't catch that — tap Listen to try again.");
+              }
+              return current;
+            });
+          }
+        });
+
+        setDraftPlace("");
+        updateSpeechMessage("Listening...");
+        setIsListening(true);
+        dbg("startListening: calling start()");
+        await SpeechRecognition.start({
+          language: "en-US",
+          maxResults: 1,
+          partialResults: true,
+          popup: false,
+        });
+        dbg("startListening: start() resolved");
+      } catch (e) {
+        dbg(`startListening: CATCH ${String(e)}`);
+        setIsListening(false);
+        updateSpeechMessage(
+          "I could not start the microphone in the app. Allow mic access or type the place name instead.",
+          "error",
+        );
+        placeInputRef.current?.focus();
+      }
+      return;
+    }
+
     if (!speechSupported) {
       updateSpeechMessage(
-        "Speech input is not available here, so type the place name instead.",
+        "Speech input is not available in this browser, so type the place name instead.",
+        "error",
       );
+      placeInputRef.current?.focus();
       return;
     }
 
@@ -207,8 +530,10 @@ export function AtlasGame() {
 
     if (!Recognition) {
       updateSpeechMessage(
-        "Speech input is not available here, so type the place name instead.",
+        "Speech input is not available in this browser, so type the place name instead.",
+        "error",
       );
+      placeInputRef.current?.focus();
       return;
     }
 
@@ -250,8 +575,18 @@ export function AtlasGame() {
     recognitionRef.current = recognition;
     setDraftPlace("");
     updateSpeechMessage("Listening...");
-    setIsListening(true);
-    recognition.start();
+
+    try {
+      recognition.start();
+      setIsListening(true);
+    } catch {
+      setIsListening(false);
+      updateSpeechMessage(
+        "I could not start the microphone. Allow mic access or type the place name instead.",
+        "error",
+      );
+      placeInputRef.current?.focus();
+    }
   }
 
   function startGame(event: FormEvent<HTMLFormElement>) {
@@ -266,13 +601,11 @@ export function AtlasGame() {
 
     setPlayerNames(names);
     setDraftPlace("");
-    updateSpeechMessage("Tap Listen, say the place name, then save it.");
+    updateSpeechMessage("");
     setGame(createNewGame(names));
   }
 
-  function saveTurn(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
+  function saveTurnInternal(overrideDuplicateWarning = false) {
     if (game.phase !== "playing" || !currentPlayer) {
       return;
     }
@@ -281,11 +614,13 @@ export function AtlasGame() {
     const placeKey = createPlaceKey(draftPlace);
 
     if (!placeKey) {
+      setDuplicateChallenge(null);
       updateSpeechMessage("No place name is ready yet. Listen again or type it.", "error");
       return;
     }
 
     if (!placeKey.startsWith(game.requiredLetter)) {
+      setDuplicateChallenge(null);
       updateSpeechMessage(
         `This turn must start with ${game.requiredLetter.toUpperCase()}.`,
         "error",
@@ -293,9 +628,22 @@ export function AtlasGame() {
       return;
     }
 
-    if (game.usedPlaceKeys.includes(placeKey)) {
+    const likelyDuplicatePlace = findLikelyDuplicatePlace(draftPlace, game.moves);
+
+    if (!overrideDuplicateWarning && (game.usedPlaceKeys.includes(placeKey) || likelyDuplicatePlace)) {
+      const challenge =
+        likelyDuplicatePlace ??
+        ({
+          draftPlace: draftPlace.trim(),
+          matchedPlace: draftPlace.trim(),
+          exact: true,
+        } satisfies DuplicateChallenge);
+
+      setDuplicateChallenge(challenge);
       updateSpeechMessage(
-        `"${draftPlace.trim()}" was already called out.`,
+        challenge.exact
+          ? `"${draftPlace.trim()}" was already called out. You can still save anyway if this is truly a different place.`
+          : `"${draftPlace.trim()}" looks like "${challenge.matchedPlace}", which was already called out. You can still save anyway if this is truly different.`,
         "error",
       );
       return;
@@ -304,6 +652,7 @@ export function AtlasGame() {
     const nextLetter = getLastLetter(normalized);
 
     if (!nextLetter) {
+      setDuplicateChallenge(null);
       updateSpeechMessage(
         "I could not find the next letter. Try saying the place again.",
         "error",
@@ -314,6 +663,7 @@ export function AtlasGame() {
     const nextPlayerIndex = getNextPlayerIndex(game.players, game.currentPlayerIndex);
     const placeLabel = draftPlace.trim();
 
+    setDuplicateChallenge(null);
     setGame({
       ...game,
       currentPlayerIndex: nextPlayerIndex,
@@ -332,6 +682,11 @@ export function AtlasGame() {
     });
     setDraftPlace("");
     updateSpeechMessage(`Saved "${placeLabel}".`, "success");
+  }
+
+  function saveTurn(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    saveTurnInternal(false);
   }
 
   function skipTurn() {
@@ -355,34 +710,61 @@ export function AtlasGame() {
       ],
       statusMessage: `${currentPlayer.name} skipped. ${game.players[nextPlayerIndex].name} still needs ${game.requiredLetter.toUpperCase()}.`,
     });
+    setDuplicateChallenge(null);
     setDraftPlace("");
     updateSpeechMessage("Turn skipped.");
   }
 
+  function openEndGame() {
+    void stopListening();
+    setShowEndGame(true);
+    setEndGameResult(null);
+    setEndGameName("");
+  }
+
+  async function submitToLeaderboard() {
+    setEndGameSubmitting(true);
+    try {
+      const result = await submitScore({
+        name: endGameName.trim() || "Anonymous",
+        score: totalTurns,
+        date: new Date().toISOString().slice(0, 10),
+        entryId: endGameEntryId,
+      });
+      setEndGameResult(result);
+    } catch {
+      // Non-fatal — leaderboard submission failure shouldn't block the user
+      setEndGameResult({ rank: null, entryId: endGameEntryId, onLeaderboard: false });
+    } finally {
+      setEndGameSubmitting(false);
+    }
+  }
+
   function returnToSetup() {
-    stopListening();
+    void stopListening();
     setDraftPlace("");
-    updateSpeechMessage("Tap Listen, say the place name, then save it.");
+    setDuplicateChallenge(null);
+    updateSpeechMessage("");
     setGame(createSetupState());
   }
 
   return (
     <>
-      <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#fde68a,_#f5d0fe_42%,_#bfdbfe_78%,_#ffffff)] px-4 py-5 sm:px-6">
+      <main className="app-safe-area-shell min-h-screen bg-[radial-gradient(circle_at_top,_#fde68a,_#f5d0fe_42%,_#bfdbfe_78%,_#ffffff)] sm:px-6">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
-          <header className="flex items-center justify-between rounded-[2rem] bg-white/75 px-5 py-4 shadow-lg shadow-violet-200/50 backdrop-blur sm:px-6">
-            <div>
+          <header className="flex items-start justify-between gap-3 rounded-[2rem] bg-white/75 px-5 py-4 shadow-lg shadow-violet-200/50 backdrop-blur sm:px-6">
+            <div className="min-w-0 flex-1">
               <p className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
                 Atlas
               </p>
-              <p className="text-sm font-medium text-slate-500">
-                A colourful place-name game for kids
+              <p className="truncate text-sm font-medium text-slate-500">
+                Colourful place-name game
               </p>
             </div>
 
             <button
               aria-label="About Atlas"
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-violet-600 text-xl font-black text-white shadow-lg shadow-violet-300/60 transition hover:bg-violet-500"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-600 text-lg font-black text-white shadow-lg shadow-violet-300/60 transition hover:bg-violet-500"
               onClick={() => setIsAboutOpen(true)}
               type="button"
             >
@@ -409,7 +791,7 @@ export function AtlasGame() {
                 {playerNames.map((name, index) => (
                   <div
                     className="flex items-center gap-3 rounded-[1.5rem] bg-gradient-to-r from-amber-100 via-pink-100 to-cyan-100 p-3"
-                    key={`${index}-${name}`}
+                    key={index}
                   >
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-violet-600 shadow">
                       {index + 1}
@@ -454,19 +836,23 @@ export function AtlasGame() {
                   <p className="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">
                     Current player
                   </p>
-                  <p className="mt-1 text-2xl font-black text-slate-900">
+                  <p
+                    className="animate-turn-pop mt-1 text-2xl font-black text-slate-900"
+                    key={currentPlayer?.id ?? "no-player"}
+                  >
                     {currentPlayer?.name}
                   </p>
                   <p className="mt-1 text-sm text-slate-600">{game.statusMessage}</p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="-mx-1 overflow-x-auto pb-2">
+                <div className="flex w-max items-center gap-2 px-1">
                 {game.players.map((player, index) => (
                   <span
-                    className={`rounded-full px-4 py-2 text-sm font-bold shadow-sm ${
+                    className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold shadow-sm ${
                       index === game.currentPlayerIndex
-                        ? "bg-fuchsia-600 text-white"
+                        ? "animate-turn-pop bg-fuchsia-600 text-white"
                         : "bg-white/80 text-slate-700"
                     }`}
                     key={player.id}
@@ -474,59 +860,120 @@ export function AtlasGame() {
                     {player.name}
                   </span>
                 ))}
+                  <span className="mx-1 h-8 w-px shrink-0 bg-slate-300" aria-hidden="true" />
+                  <button
+                    className={`${secondaryButton} shrink-0 whitespace-nowrap`}
+                    onClick={returnToSetup}
+                    type="button"
+                  >
+                    Reset & players
+                  </button>
+                  <button
+                    className={`${secondaryButton} shrink-0 whitespace-nowrap`}
+                    onClick={openEndGame}
+                    type="button"
+                  >
+                    End game
+                  </button>
+                </div>
               </div>
 
               <article className="rounded-[2rem] bg-white/85 p-5 shadow-xl shadow-violet-200/60 backdrop-blur sm:p-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h2 className="text-2xl font-black text-slate-900">Listen</h2>
-                    <p className="mt-1 text-sm text-slate-600">
-                      Say the place, check the text, then save it.
+                <form className="space-y-4" onSubmit={saveTurn}>
+                  {/* ── Mic button ── */}
+                  <div className="flex flex-col items-center gap-2 py-3">
+                    <button
+                      type="button"
+                      onClick={isListening ? stopListening : startListening}
+                      className={`relative flex h-20 w-20 items-center justify-center rounded-full shadow-lg transition-all ${
+                        isListening
+                          ? "bg-rose-500 text-white"
+                          : "bg-fuchsia-600 text-white hover:bg-fuchsia-500"
+                      }`}
+                    >
+                      {isListening && (
+                        <span className="absolute inset-0 animate-ping rounded-full bg-rose-400 opacity-50" />
+                      )}
+                      {/* Microphone icon */}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2}
+                        stroke="currentColor"
+                        className="relative z-10 h-9 w-9"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 0 1 6 0v8.25a3 3 0 0 1-3 3Z"
+                        />
+                      </svg>
+                    </button>
+                    <p className="text-xs font-semibold text-slate-500">
+                      {isListening ? "Listening… tap to stop" : "Tap to speak"}
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      className={secondaryButton}
-                      onClick={isListening ? stopListening : startListening}
-                      type="button"
+                  {/* ── Speech feedback ── */}
+                  {speechMessage ? (
+                    <div
+                      className={`rounded-[1.5rem] border p-3 text-sm font-medium ${
+                        speechMessageTone === "error"
+                          ? "border-rose-200 bg-rose-50 text-rose-700"
+                          : speechMessageTone === "success"
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-sky-200 bg-sky-50 text-sky-700"
+                      }`}
                     >
-                      {isListening ? "Stop" : "Listen"}
-                    </button>
-                    <button className={secondaryButton} onClick={skipTurn} type="button">
-                      Skip
-                    </button>
-                    <button className={secondaryButton} onClick={returnToSetup} type="button">
-                      Reset & players
-                    </button>
-                  </div>
-                </div>
+                      {speechMessage}
+                    </div>
+                  ) : null}
 
-                <form className="mt-5 space-y-4" onSubmit={saveTurn}>
+                  {/* ── Text input ── */}
                   <input
                     autoCapitalize="words"
                     autoComplete="off"
                     className="w-full rounded-[1.5rem] border border-white bg-white px-5 py-4 text-lg font-semibold text-slate-900 outline-none transition focus:border-fuchsia-300 focus:ring-4 focus:ring-fuchsia-100"
-                    onChange={(event) => setDraftPlace(event.target.value)}
-                    placeholder={`This turn needs ${game.requiredLetter.toUpperCase()}...`}
+                    onChange={(event) => {
+                      setDraftPlace(event.target.value);
+                      setDuplicateChallenge(null);
+                    }}
+                    placeholder={`Needs ${game.requiredLetter.toUpperCase()}…`}
+                    ref={placeInputRef}
                     value={draftPlace}
                   />
 
-                  <div
-                    className={`rounded-[1.5rem] border p-4 text-sm font-medium ${
-                      speechMessageTone === "error"
-                        ? "border-rose-200 bg-rose-50 text-rose-700"
-                        : speechMessageTone === "success"
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                          : "border-sky-200 bg-sky-50 text-sky-700"
-                    }`}
+                  {/* ── Save ── */}
+                  <button
+                    className={`${hasDraftPlace ? primaryButton : secondaryButton} w-full`}
+                    type="submit"
                   >
-                    {speechMessage}
-                  </div>
-
-                  <button className={`${primaryButton} w-full sm:w-auto`} type="submit">
-                    Save place
+                    Save
                   </button>
+
+                  {/* ── Duplicate override ── */}
+                  {duplicateChallenge ? (
+                    <button
+                      className={`${primaryButton} w-full`}
+                      onClick={() => saveTurnInternal(true)}
+                      type="button"
+                    >
+                      Save anyway
+                    </button>
+                  ) : null}
+
+                  {/* ── Skip ── */}
+                  <div className="text-center">
+                    <button
+                      className="text-sm text-slate-400 underline underline-offset-2 transition hover:text-slate-600"
+                      onClick={skipTurn}
+                      type="button"
+                    >
+                      Skip turn
+                    </button>
+                  </div>
                 </form>
               </article>
 
@@ -562,6 +1009,165 @@ export function AtlasGame() {
         </div>
       </main>
 
+      {/* ── Navigation links ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-center gap-6 bg-white/70 py-2 backdrop-blur text-xs text-slate-400">
+        <Link href="/leaderboard" className="hover:text-fuchsia-600 transition">
+          🏆 Leaderboard
+        </Link>
+        <Link href="/support" className="hover:text-slate-600 transition">
+          Support
+        </Link>
+      </div>
+
+      {/* ── Debug panel (temporary) ── */}
+      <div className="fixed bottom-7 left-0 right-0 z-40">
+        <button
+          className="w-full bg-slate-800 py-1 text-xs font-mono text-slate-300"
+          onClick={() => setShowDebug((v) => !v)}
+          type="button"
+        >
+          {showDebug ? "▼ hide debug" : "▲ show debug"} ({debugLogs.length} lines)
+        </button>
+        {showDebug && (
+          <div
+            ref={debugScrollRef}
+            className="h-48 overflow-y-auto bg-slate-900 px-3 py-2"
+          >
+            {debugLogs.length === 0 && (
+              <p className="text-xs font-mono text-slate-500">No logs yet. Tap Listen.</p>
+            )}
+            {debugLogs.map((line, i) => (
+              <p className="text-xs font-mono text-green-300 leading-5" key={i}>{line}</p>
+            ))}
+          </div>
+        )}
+        {showDebug && (
+          <div className="flex gap-2 bg-slate-900 px-3 pb-3">
+            <button
+              className="rounded bg-slate-700 px-3 py-1 text-xs font-mono text-white"
+              onClick={() => {
+                void navigator.clipboard?.writeText(debugLogs.join("\n"));
+              }}
+              type="button"
+            >
+              Copy logs
+            </button>
+            <button
+              className="rounded bg-slate-700 px-3 py-1 text-xs font-mono text-white"
+              onClick={() => setDebugLogs([])}
+              type="button"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── End Game modal ── */}
+      {showEndGame ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center">
+          <div className="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl">
+            {endGameResult ? (
+              /* Post-submit view */
+              <div className="flex flex-col items-center gap-4 text-center">
+                <span className="text-5xl">{endGameResult.onLeaderboard ? "🏆" : "🎮"}</span>
+                <div>
+                  <p className="text-2xl font-black text-slate-900">
+                    {totalTurns} turn{totalTurns !== 1 ? "s" : ""} played!
+                  </p>
+                  {endGameResult.rank !== null ? (
+                    <p className="mt-1 text-fuchsia-600 font-bold">
+                      You&apos;re ranked #{endGameResult.rank} on the leaderboard!
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-slate-500 text-sm">Score saved — keep playing to climb!</p>
+                  )}
+                </div>
+                <div className="flex w-full gap-3">
+                  <Link
+                    href={`/leaderboard?entry=${endGameResult.entryId}`}
+                    className={`${primaryButton} flex-1`}
+                  >
+                    See leaderboard
+                  </Link>
+                  <button
+                    className={`${secondaryButton} flex-1`}
+                    onClick={() => { setShowEndGame(false); returnToSetup(); }}
+                    type="button"
+                  >
+                    New game
+                  </button>
+                </div>
+                <button
+                  className="text-sm text-slate-400 underline underline-offset-2"
+                  onClick={() => setShowEndGame(false)}
+                  type="button"
+                >
+                  Keep playing
+                </button>
+              </div>
+            ) : (
+              /* Name entry view */
+              <>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-900">Game over!</h2>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {totalTurns} turn{totalTurns !== 1 ? "s" : ""} played across all players.
+                    </p>
+                  </div>
+                  <button
+                    aria-label="Close"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-lg font-black text-slate-700"
+                    onClick={() => setShowEndGame(false)}
+                    type="button"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div className="mt-5 space-y-4">
+                  <p className="text-sm text-slate-600">
+                    Enter a name to save your score to the leaderboard, or skip.
+                  </p>
+                  <input
+                    className="w-full rounded-[1.5rem] border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-fuchsia-300 focus:ring-4 focus:ring-fuchsia-100"
+                    maxLength={24}
+                    onChange={(e) => setEndGameName(e.target.value)}
+                    placeholder="Your name (optional)"
+                    value={endGameName}
+                  />
+                  <button
+                    className={`${primaryButton} w-full`}
+                    disabled={endGameSubmitting}
+                    onClick={submitToLeaderboard}
+                    type="button"
+                  >
+                    {endGameSubmitting ? "Saving…" : "Save to leaderboard"}
+                  </button>
+                  <div className="flex justify-center gap-4">
+                    <button
+                      className="text-sm text-slate-400 underline underline-offset-2"
+                      onClick={() => { setShowEndGame(false); returnToSetup(); }}
+                      type="button"
+                    >
+                      Skip — new game
+                    </button>
+                    <button
+                      className="text-sm text-slate-400 underline underline-offset-2"
+                      onClick={() => setShowEndGame(false)}
+                      type="button"
+                    >
+                      Keep playing
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
+
       {isAboutOpen ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center">
           <div className="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl">
@@ -587,7 +1193,7 @@ export function AtlasGame() {
               <p>1. Say <strong>Atlas</strong> and let the first player start with <strong>A</strong>.</p>
               <p>2. Each new place must start with the last letter of the previous place.</p>
               <p>3. If the same place was already saved before, the app will show an error.</p>
-              <p>4. Tap <strong>Listen</strong> to capture the spoken place, then save it.</p>
+              <p>4. Tap the <strong>microphone</strong> button to speak the place name, then tap <strong>Save</strong>.</p>
               <p>5. If speech is not available, just type the place name instead.</p>
             </div>
           </div>

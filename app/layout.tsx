@@ -8,14 +8,19 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Atlas Junior",
+  title: "Atlas",
   description:
     "A mobile-friendly kids Atlas web app that listens to spoken place names and saves turns.",
+  icons: {
+    icon: "/app-icon-512.png",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

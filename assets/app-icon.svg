@@ -1,0 +1,19 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="atlasBg" x1="128" y1="96" x2="896" y2="928" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FDE68A"/>
+      <stop offset="0.45" stop-color="#E879F9"/>
+      <stop offset="1" stop-color="#60A5FA"/>
+    </linearGradient>
+    <linearGradient id="atlasRing" x1="238" y1="190" x2="742" y2="826" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#FEF3C7" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="224" fill="url(#atlasBg)"/>
+  <circle cx="512" cy="512" r="294" fill="url(#atlasRing)" fill-opacity="0.92"/>
+  <circle cx="512" cy="512" r="224" fill="#7C3AED" fill-opacity="0.12"/>
+  <path d="M512 238C625.77 238 718 330.23 718 444C718 584.6 553.63 709.08 521.79 732.08C516.03 736.22 507.97 736.22 502.21 732.08C470.37 709.08 306 584.6 306 444C306 330.23 398.23 238 512 238Z" fill="#7C3AED"/>
+  <circle cx="512" cy="444" r="86" fill="#FDE68A"/>
+  <path d="M520.42 343L619 607H552.31L533.55 553.4H428.87L410.11 607H343L441.15 343H520.42ZM516.76 503.79L481.28 402.37L445.66 503.79H516.76Z" fill="#0F172A"/>
+</svg>

@@ -26,9 +26,33 @@ npm run lint
 npm run build
 ```
 
+## Capacitor mobile packaging
+
+The project is configured for Capacitor with a static exported web bundle in `out/`.
+
+```bash
+npm install
+npm run cap:sync
+```
+
+Useful commands:
+
+```bash
+npm run cap:open:android
+npm run cap:open:ios
+npm run apk:debug
+```
+
+For a Play Store release bundle after signing is configured:
+
+```bash
+cd android
+./gradlew bundleRelease
+```
+
 ## Deploy on Render
 
-This repo includes a `render.yaml` blueprint for a Node web service.
+This repo includes a `render.yaml` blueprint for a simple Node service that serves the exported `out/` directory.
 
 1. Push the repo to GitHub
 2. In Render, choose **New +** -> **Blueprint**
@@ -37,5 +61,5 @@ This repo includes a `render.yaml` blueprint for a Node web service.
 
 ```bash
 Build: npm install && npm run build
-Start: npm run start -- --hostname 0.0.0.0 --port $PORT
+Start: npm run start -- --listen tcp://0.0.0.0:$PORT
 ```

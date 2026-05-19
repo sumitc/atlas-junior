@@ -23,6 +23,9 @@
 # misc
 .DS_Store
 *.pem
+android/local.properties
+android/keystore.properties
+android/app/release-upload-keystore.jks
 
 # debug
 npm-debug.log*
