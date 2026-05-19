@@ -44,9 +44,11 @@ hit for leaderboard, stats, and support tickets.
 - \`npm run cap:sync\`         → next build + npx cap sync  (debug builds, includes debug panel)
 - \`npm run cap:sync:release\` → same but NEXT_PUBLIC_DEBUG_PANEL=false (strips debug panel)
 - \`npm run apk:debug\`        → gradle assembleDebug
-- \`npm run apk:release\`      → gradle assembleRelease (app store)
+- \`npm run apk:release\`      → chains cap:sync:release then gradle assembleRelease
 - APK output: android/app/build/outputs/apk/debug/app-debug.apk
 - JAVA_HOME must be set: \$(brew --prefix openjdk@21)
+- ⚠️  Always cap:sync BEFORE assembleDebug/Release — stale JS otherwise ships in APK.
+- ⚠️  apk:release MUST chain cap:sync:release internally (it does — don't run them separately).
 
 ### Key env vars (.env.local — gitignored)
 - NEXT_PUBLIC_API_URL=https://atlas-junior.vercel.app  (baked at build time)
@@ -58,6 +60,7 @@ hit for leaderboard, stats, and support tickets.
 - app/page.tsx                   → home / game entry point
 - app/leaderboard/page.tsx       → leaderboard view
 - app/support/page.tsx           → support ticket form
+- app/globals.css                → global styles + .app-safe-area-shell definition
 
 ### CORS note
 Capacitor WebView origin is "http://localhost" — NOT a real domain.
@@ -69,6 +72,29 @@ Backend must use CORS * (origin whitelist breaks the app).
 - partialResults listener + listeningState listener
 - stopListening(): always clears UI immediately, then awaits plugin (never blocks UI)
 - dbg() helper logs to the in-app debug panel (gated by NEXT_PUBLIC_DEBUG_PANEL)
+
+### Debug panel
+- Gated by: {process.env.NEXT_PUBLIC_DEBUG_PANEL === "true" && <div>…</div>}
+- This is a compile-time check — next build bakes the value from env at build time
+- CLI env var (NEXT_PUBLIC_DEBUG_PANEL=false npm run build) overrides .env.local
+- Debug panel is intentionally kept in debug builds and stripped from release builds
+- DO NOT remove it from the codebase — it is very useful during device testing
+
+### UI layout notes
+- Fixed bottom bar: nav links (bottom-0, ~32px) + debug toggle (bottom-7, ~28px)
+- app-safe-area-shell sets padding-bottom via CSS (for notch/safe-area)
+- ⚠️  GOTCHA: Never put Tailwind padding classes on the same element as app-safe-area-shell
+  — they both set padding-bottom and one will silently override the other.
+  Solution: apply bottom padding (pb-36 etc.) to the INNER content div, not to <main>.
+- Info/about button uses ℹ symbol (not ? — that was confusing)
+- Share button hidden in native Capacitor builds (window.location.origin = "http://localhost")
+
+### Mic area UI (current design)
+- Mic button → dynamic caption below it (replaces separate speech feedback box)
+- Caption shows: "Tap to speak" / "Listening… tap to stop" / "I heard: Delhi" / error message
+- Caption colour reflects tone: green=success, red=error, blue=neutral
+- Text input below for manual edits
+- Save → "✓ Saved" flashes below Save button for 2s via savedFlash state + setTimeout
 
 ---
 
@@ -86,6 +112,9 @@ Backend must use CORS * (origin whitelist breaks the app).
 - UPSTASH_REDIS_REST_TOKEN  → Must be READ-WRITE token (not read-only!)
 - GITHUB_TOKEN              → Fine-grained PAT, Issues: Read+write on sumitc/atlas-junior
 - GITHUB_REPO               → sumitc/atlas-junior
+- ⚠️  GOTCHA: Upstash has separate read-only and read-write REST tokens. If POST /api/stats
+  returns {"error":"Could not save stats"} and Vercel logs show "NOPERM this user has…",
+  the token is read-only. Replace with the main REST token from Upstash dashboard.
 
 ### API endpoints
 | Method | Path              | Purpose                                      |
@@ -98,7 +127,7 @@ Backend must use CORS * (origin whitelist breaks the app).
 | POST   | /api/tickets      | Create GitHub Issue { subject, body, platform, appVersion } |
 
 ### Redis key schema (prefix: atlas:)
-- atlas:lb           → Sorted set. Member = UUID, score = savedTurns (lower = better rank)
+- atlas:lb           → Sorted set. Member = UUID, score = savedTurns (HIGHER = better)
 - atlas:lb:{id}      → Hash. Fields: name, score, date
 - atlas:stats:games  → Integer counter (total games played)
 - atlas:stats:turns  → Integer counter (total turns across all games)
@@ -108,18 +137,25 @@ Backend must use CORS * (origin whitelist breaks the app).
 Pipeline order: [ZADD NX, HSET, ZREMRANGEBYRANK, ZREVRANK]
 Destructure:    [,        ,     ,                  rank  ]  → index [3]
 - ZADD NX: won't overwrite existing member (UUIDs always fresh so effectively always adds)
-- ZREMRANGEBYRANK: prunes to top 10 (removes rank 10+)
+- ZREMRANGEBYRANK: prunes to top 10 (removes rank 10+, i.e. lowest scores)
 - ZREVRANK: returns 0-based rank (0 = best). Add 1 for display.
-- Score sorting: ZADD stores savedTurns as score. Lower score = lower rank number = better.
-  But Redis ZRANGEBYSCORE returns lowest first. Leaderboard uses ZREVRANGE (NOT ZREVRANGEBYSCORE)
-  which returns HIGHEST score first — this would be WRONG if lower is better.
-  ⚠️  Double-check GET /api/leaderboard sort direction is correct for your scoring semantics.
-
-### Score semantics
-- score = savedTurns = number of moves that were NOT skips (higher = more places named = better)
-- Redis sorted set stores savedTurns; ZREVRANGE returns highest first (rank 1 = highest score)
+- Score: ZADD stores savedTurns. ZREVRANGE returns HIGHEST first → rank 1 = most places = best.
+- Server generates UUID for entryId (never trust client-supplied entryId).
 - Qualification: entries.length < 10 || savedTurns >= entries[entries.length-1].score
   (>= handles ties correctly — ties qualify)
+
+### Score semantics (IMPORTANT)
+- score = savedTurns = number of moves where kind === "saved" (skips are excluded)
+- HIGHER savedTurns = more places named = BETTER
+- Redis ZREVRANGE returns highest score first → rank 1 = best player
+- Do NOT confuse with "lower is better" — it is HIGHER IS BETTER
+
+### Rate limiting (tickets.js) — lessons learned
+- RATE_LIMIT = 1 per RATE_WINDOW_SEC = 900 (15 min per IP)
+- ⚠️  GOTCHA: Original code only called EXPIRE when count === 1. If EXPIRE failed transiently
+  after INCR, the key had NO TTL → permanent rate-limit for that IP (can never submit again).
+  Fix: Promise.all([INCR, EXPIRE]) — always sets TTL on every request (sliding window, acceptable).
+- Catch block must return 503 (fail closed), never fail open (allow through on Redis error).
 
 ### Stats
 - Fire-and-forget from client (.catch(() => {}))
@@ -130,6 +166,7 @@ Destructure:    [,        ,     ,                  rank  ]  → index [3]
 ### Support tickets
 - Rate limit: 1 per IP per 15 min (Redis TTL key)
 - GitHub label required: "atlas-app" (must exist in repo for tickets to appear)
+  → Create with: gh label create "atlas-app" --repo sumitc/atlas-junior --color "0075ca"
 - Creates GitHub Issue via REST API
 
 ---
@@ -143,12 +180,17 @@ Destructure:    [,        ,     ,                  rank  ]  → index [3]
    c. Fetch current leaderboard
    d. Compute qualification: savedTurns qualifies if top-10
    e. Show end-game modal (no close/dismiss button — it is FINAL)
+   f. ⚠️  openEndGame() MUST reset ALL modal state (not just result/loading):
+      endGameResult, endGameLoading, endGameName, endGameSubmitting, endGameSubmitError,
+      endGameResultRefetched — stale state from a previous game will corrupt the next.
 3. If qualifies:
    a. Show team name input (default = playerNames.join(" - "))
    b. User edits name, taps Submit
    c. submitToLeaderboard() → POST /api/leaderboard
-   d. Re-fetch leaderboard to show updated board with new entry highlighted
-   e. "Skip & start new game" button available during loading (escape hatch)
+   d. On error: set endGameSubmitError=true (form stays visible, button becomes "Retry")
+      ⚠️  Do NOT repurpose endGameResult for errors — it kills the form UI.
+   e. On success: re-fetch leaderboard, show updated board with new entry highlighted
+   f. "Skip & start new game" button available during loading (escape hatch)
 4. User taps "New game" → returnToSetup() → startGame() (resets statsSubmittedRef)
 
 ---
@@ -158,21 +200,63 @@ Destructure:    [,        ,     ,                  rank  ]  → index [3]
   Cosmetic data leak at small scale — acceptable.
 - Stats fire-and-forget: can be lost on network failure. Acceptable for analytics.
 - Debug panel in APK: floating "show debug" button visible in debug builds. Intentional.
-- No offline queue for leaderboard submissions. If POST fails, score is lost.
+- No offline queue for leaderboard submissions. If POST fails, score is lost (Retry button shown).
 - ZADD NX is technically dead code (UUIDs always fresh) but kept as belt-and-suspenders.
+- Rate limit is sliding window (Promise.all always resets TTL) — acceptable for 1/15min limit.
+
+---
+
+## Gotchas / hard-won lessons (read before touching anything)
+
+### CSS
+1. app-safe-area-shell vs Tailwind padding:
+   app-safe-area-shell in globals.css sets padding-bottom. If you also put a Tailwind pb-* class
+   on the SAME element, one silently overrides the other (CSS cascade order).
+   → Always put bottom padding on the INNER content div, not on the element with app-safe-area-shell.
+
+2. Tailwind JIT only includes classes that appear in source files literally.
+   Dynamic class names (template literals) may not be picked up — use full class names.
+
+### Capacitor
+3. window.location.origin = "http://localhost" inside the APK.
+   Any feature that builds a URL from origin (share, deep link) is broken in native builds.
+   → Check Capacitor.getPlatform() !== "web" and hide/disable such features in native.
+
+4. JAVA_HOME must be set when running Gradle on macOS with Homebrew:
+   JAVA_HOME=$(brew --prefix openjdk@21) ./gradlew assembleDebug
+
+5. cap:sync MUST run before every APK build to copy latest web assets into the Android project.
+   cap:sync:release runs next build with NEXT_PUBLIC_DEBUG_PANEL=false — compile-time strip.
+
+### React state
+6. Never repurpose a result/data state variable to signal error conditions.
+   Use a separate boolean (e.g. endGameSubmitError). Overloading result with error shapes
+   causes defensive code to miss checks and kills UI branches that depend on result being set.
+
+7. Any modal/overlay opened multiple times must reset ALL its state on open, not just the main
+   data fields. Easy to miss endGameSubmitting, endGameSubmitError etc. when adding new state.
+
+### Redis / Vercel
+8. Upstash read-only token: GET commands work but INCR/ZADD/HSET fail with NOPERM.
+   The Upstash dashboard shows two tokens — always use the Read-Write REST token.
+
+9. INCR then EXPIRE in separate Redis calls: if EXPIRE fails, the key has no TTL.
+   Use Promise.all([INCR, EXPIRE]) to always set TTL, even if it creates a sliding window.
+
+10. Vercel root directory must be set to "backend/" for serverless functions to deploy correctly.
+    vercel.json needs only { "version": 2 } — do not add rewrites or builds.
 
 ---
 
 ## Common commands
 
 \`\`\`bash
-# Build and sync debug APK
+# Build and sync debug APK (full pipeline)
 cd ~/projects/atlas-junior
 npm run cap:sync
 JAVA_HOME=\$(brew --prefix openjdk@21) npm run apk:debug
 
-# Build release APK (strips debug panel)
-npm run cap:sync:release
+# Build release APK (strips debug panel — cap:sync:release is chained automatically)
 JAVA_HOME=\$(brew --prefix openjdk@21) npm run apk:release
 
 # Check backend health
@@ -181,7 +265,7 @@ curl https://atlas-junior.vercel.app/api/health
 # Check leaderboard
 curl https://atlas-junior.vercel.app/api/leaderboard
 
-# Test stats write
+# Test stats write (will fail with NOPERM if token is read-only)
 curl -X POST https://atlas-junior.vercel.app/api/stats \\
   -H "Content-Type: application/json" -d '{"turns":5}'
 
@@ -194,6 +278,9 @@ vercel logs --limit 30
 
 # List Vercel env vars
 vercel env ls
+
+# Create atlas-app label (needed for support tickets)
+gh label create "atlas-app" --repo sumitc/atlas-junior --color "0075ca" --description "Atlas Junior in-app feedback"
 \`\`\`
 `;
 
@@ -233,13 +320,17 @@ Key facts:
 - Frontend (Next.js static export + Capacitor): ${PROJECT_DIR}
 - Backend (Vercel serverless): ${BACKEND_URL}
 - All game logic is local. Server is only called for leaderboard, stats, and support tickets.
-- Score = savedTurns (moves excluding skips). Lower = better.
+- Score = savedTurns (moves excluding skips). HIGHER IS BETTER. ZREVRANGE = rank 1 = best.
 - CORS must be * — Capacitor WebView origin is http://localhost.
 - NEXT_PUBLIC_API_URL is baked at build time. Must rebuild APK after changing.
-- Debug panel is gated by NEXT_PUBLIC_DEBUG_PANEL=true in .env.local.
+- Debug panel: gated by NEXT_PUBLIC_DEBUG_PANEL=true (.env.local). Keep in debug, strip for release.
 - GitHub label "atlas-app" must exist in sumitc/atlas-junior for support tickets.
 - Vercel token must be READ-WRITE (not read-only) for Redis writes to work.
-Call atlas_junior_get_context for the full architecture reference.
+- CSS GOTCHA: never put Tailwind pb-* on same element as app-safe-area-shell — put it on inner div.
+- Capacitor GOTCHA: window.location.origin = "http://localhost" — hide URL-based features in native.
+- State GOTCHA: openEndGame() must reset ALL modal state, not just result/loading.
+- Redis GOTCHA: always Promise.all([INCR, EXPIRE]) — separate calls risk TTL-less keys.
+Call atlas_junior_get_context for the full architecture reference including all gotchas.
 `,
       };
     },
