@@ -97,7 +97,7 @@ export default async function handler(req, res) {
 
       console.log(`POST /leaderboard id=${id} safeName=${safeName} readback=${JSON.stringify(readback)}`);
       const finalRank = rank !== null ? Number(rank) + 1 : null;
-      return res.json({ entryId: id, rank: finalRank, onLeaderboard: finalRank !== null && finalRank <= TOP_N, _readback: readback });
+      return res.json({ entryId: id, rank: finalRank, onLeaderboard: finalRank !== null && finalRank <= TOP_N });
     } catch (err) {
       console.error("POST /leaderboard", err);
       return res.status(500).json({ error: "Could not save score" });
