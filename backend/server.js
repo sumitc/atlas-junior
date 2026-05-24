@@ -51,6 +51,17 @@ function localDateString() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+// ── Redis helpers ─────────────────────────────────────────────────────────────
+
+// Upstash REST returns HGETALL as a flat alternating array ["k","v","k","v",...]
+// Convert to a plain object so callers can do meta.name, meta.date etc.
+function hgetallToObject(arr) {
+  const obj = {};
+  if (!Array.isArray(arr)) return obj;
+  for (let i = 0; i + 1 < arr.length; i += 2) obj[arr[i]] = arr[i + 1];
+  return obj;
+}
+
 // ── Leaderboard ───────────────────────────────────────────────────────────────
 
 const LB_KEY = "atlas:leaderboard";
@@ -77,7 +88,7 @@ app.get("/api/leaderboard", async (req, res) => {
     const metaArr = await redisPipeline(pipeline);
 
     const entries = ids.map((id, i) => {
-      const meta = metaArr[i] || {};
+      const meta = hgetallToObject(metaArr[i]);
       return {
         id,
         name: meta.name ?? "Anonymous",
