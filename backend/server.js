@@ -69,7 +69,7 @@ const MAX_SCORE = 9_999;
 const TOP_N = 10;
 const MAX_STORED = 50;
 
-// GET /api/leaderboard — top 20 entries with metadata
+// GET /api/leaderboard — top entries with metadata
 app.get("/api/leaderboard", async (req, res) => {
   try {
     // ZREVRANGE with scores → ["id1","15","id2","12",...]
@@ -83,17 +83,18 @@ app.get("/api/leaderboard", async (req, res) => {
       scores.push(Number(raw[i + 1]));
     }
 
-    // Batch HGETALL for each entry
-    const pipeline = ids.map((id) => ["HGETALL", `atlas:lb:${id}`]);
+    // HMGET only the two fields we need — avoids HGETALL flat-array ambiguity
+    const pipeline = ids.map((id) => ["HMGET", `atlas:lb:${id}`, "name", "date"]);
     const metaArr = await redisPipeline(pipeline);
+    // Each result: [nameValue, dateValue] (null if key/field missing)
 
     const entries = ids.map((id, i) => {
-      const meta = hgetallToObject(metaArr[i]);
+      const [name, date] = Array.isArray(metaArr[i]) ? metaArr[i] : [];
       return {
         id,
-        name: meta.name ?? "Anonymous",
+        name: name ?? "Anonymous",
         score: scores[i],
-        date: meta.date ?? "",
+        date: date ?? "",
         rank: i + 1,
       };
     });
@@ -117,14 +118,16 @@ app.post("/api/leaderboard", async (req, res) => {
   const id = randomUUID();
 
   try {
-    const [, , , rank] = await redisPipeline([
+    const [, , , rank, readback] = await redisPipeline([
       ["ZADD", LB_KEY, "NX", String(safeScore), id],
-      // Store metadata; only written once (NX on ZADD guards idempotency)
       ["HSET", `atlas:lb:${id}`, "name", safeName, "score", String(safeScore), "date", safeDate],
-      // Trim to MAX_STORED lowest scores (keeps leaderboard bounded)
       ["ZREMRANGEBYRANK", LB_KEY, "0", String(-(MAX_STORED + 1))],
       ["ZREVRANK", LB_KEY, id],
+      ["HMGET", `atlas:lb:${id}`, "name", "date"],
     ]);
+
+    // Diagnostic log — tells us whether HSET actually persisted
+    console.log(`POST /leaderboard id=${id} safeName=${safeName} readback=${JSON.stringify(readback)}`);
 
     const finalRank = rank !== null ? Number(rank) + 1 : null;
     res.json({ entryId: id, rank: finalRank, onLeaderboard: finalRank !== null && finalRank <= TOP_N });
