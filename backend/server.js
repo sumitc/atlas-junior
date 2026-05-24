@@ -130,7 +130,8 @@ app.post("/api/leaderboard", async (req, res) => {
     console.log(`POST /leaderboard id=${id} safeName=${safeName} readback=${JSON.stringify(readback)}`);
 
     const finalRank = rank !== null ? Number(rank) + 1 : null;
-    res.json({ entryId: id, rank: finalRank, onLeaderboard: finalRank !== null && finalRank <= TOP_N });
+    // readback included temporarily to diagnose write persistence
+    res.json({ entryId: id, rank: finalRank, onLeaderboard: finalRank !== null && finalRank <= TOP_N, _readback: readback });
   } catch (err) {
     console.error("POST /leaderboard", err);
     res.status(500).json({ error: "Could not save score" });
