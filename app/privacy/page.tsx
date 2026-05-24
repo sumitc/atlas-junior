@@ -5,7 +5,7 @@ export const metadata = {
   description: "Privacy policy for the Atlas Junior geography word game app.",
 };
 
-const CONTACT_EMAIL = "support@fibuladreams.com";
+const CONTACT_EMAIL = "develop.sumit@gmail.com";
 const LAST_UPDATED = "24 May 2025";
 
 export default function PrivacyPage() {
