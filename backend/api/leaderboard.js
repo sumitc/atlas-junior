@@ -60,12 +60,13 @@ export default async function handler(req, res) {
         scores.push(Number(raw[i + 1]));
       }
 
-      const pipeline = ids.map((id) => ["HGETALL", `atlas:lb:${id}`]);
+      const pipeline = ids.map((id) => ["HMGET", `atlas:lb:${id}`, "name", "date"]);
       const metaArr = await redisPipeline(pipeline);
+      // HMGET returns [nameVal, dateVal] — null if field missing
 
       const entries = ids.map((id, i) => {
-        const meta = metaArr[i] || {};
-        return { id, name: meta.name ?? "Anonymous", score: scores[i], date: meta.date ?? "", rank: i + 1 };
+        const [name, date] = Array.isArray(metaArr[i]) ? metaArr[i] : [];
+        return { id, name: name ?? "Anonymous", score: scores[i], date: date ?? "", rank: i + 1 };
       });
 
       return res.json({ entries });
@@ -86,15 +87,17 @@ export default async function handler(req, res) {
     const id = randomUUID();
 
     try {
-      const [, , , rank] = await redisPipeline([
+      const [, , , rank, readback] = await redisPipeline([
         ["ZADD", LB_KEY, "NX", String(safeScore), id],
         ["HSET", `atlas:lb:${id}`, "name", safeName, "score", String(safeScore), "date", safeDate],
         ["ZREMRANGEBYRANK", LB_KEY, "0", String(-(MAX_STORED + 1))],
         ["ZREVRANK", LB_KEY, id],
+        ["HMGET", `atlas:lb:${id}`, "name", "date"],
       ]);
 
+      console.log(`POST /leaderboard id=${id} safeName=${safeName} readback=${JSON.stringify(readback)}`);
       const finalRank = rank !== null ? Number(rank) + 1 : null;
-      return res.json({ entryId: id, rank: finalRank, onLeaderboard: finalRank !== null && finalRank <= TOP_N });
+      return res.json({ entryId: id, rank: finalRank, onLeaderboard: finalRank !== null && finalRank <= TOP_N, _readback: readback });
     } catch (err) {
       console.error("POST /leaderboard", err);
       return res.status(500).json({ error: "Could not save score" });
