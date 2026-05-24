@@ -12,7 +12,8 @@
     "cap:open:android": "npx cap open android",
     "cap:open:ios": "npx cap open ios",
     "apk:debug": "cd android && ./gradlew assembleDebug",
-    "apk:release": "npm run cap:sync:release && cd android && ./gradlew assembleRelease",
+    "aab:release": "npm run cap:sync:release && cd android && ./gradlew bundleRelease && echo \"\n✅ AAB ready: android/app/build/outputs/bundle/release/app-release.aab\n📝 Release notes: android/app/src/main/play/release-notes/en-US/default.txt\n📋 Changelog:    CHANGELOG.md\"",
+    "apk:release": "npm run cap:sync:release && cd android && ./gradlew assembleRelease && echo \"\n✅ APK ready: android/app/build/outputs/apk/release/app-release.apk\n📝 Release notes: android/app/src/main/play/release-notes/en-US/default.txt\n📋 Changelog:    CHANGELOG.md\"",
     "postinstall": "patch-package"
   },
   "dependencies": {

@@ -1,0 +1,7 @@
+🌍 Welcome to Atlas Junior — v1.0.0!
+
+Name places that start with the given letter — countries, cities, rivers, anything goes! Take turns with friends and see who can name the most.
+
+• Tap the mic and speak your answer, or type it in
+• Leaderboard to compare scores with others
+• Works great for family game nights and road trips
