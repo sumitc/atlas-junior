@@ -1,0 +1,101 @@
+<svg width="1024" height="500" viewBox="0 0 1024 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background gradient matching the app -->
+    <radialGradient id="bgGrad" cx="30%" cy="20%" r="80%">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="42%" stop-color="#F5D0FE"/>
+      <stop offset="78%" stop-color="#BFDBFE"/>
+      <stop offset="100%" stop-color="#FFFFFF"/>
+    </radialGradient>
+
+    <!-- Icon gradient -->
+    <linearGradient id="iconBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="45%" stop-color="#E879F9"/>
+      <stop offset="100%" stop-color="#60A5FA"/>
+    </linearGradient>
+    <linearGradient id="iconRing" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#FEF3C7" stop-opacity="0.9"/>
+    </linearGradient>
+
+    <!-- Pill shadow -->
+    <filter id="pillShadow" x="-10%" y="-20%" width="120%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#00000018"/>
+    </filter>
+    <!-- Icon shadow -->
+    <filter id="iconShadow" x="-15%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#7C3AED33"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="500" fill="url(#bgGrad)"/>
+
+  <!-- Subtle background letter blobs -->
+  <text x="780" y="420" font-size="200" font-family="Arial Black,sans-serif" font-weight="900" fill="#7C3AED" fill-opacity="0.05" text-anchor="middle">Z</text>
+  <text x="950" y="180" font-size="140" font-family="Arial Black,sans-serif" font-weight="900" fill="#E879F9" fill-opacity="0.07" text-anchor="middle">B</text>
+  <text x="60" y="460" font-size="160" font-family="Arial Black,sans-serif" font-weight="900" fill="#60A5FA" fill-opacity="0.07" text-anchor="middle">M</text>
+
+  <!-- ─── App Icon (left side) ─── -->
+  <g transform="translate(80, 90)" filter="url(#iconShadow)">
+    <!-- Icon base: 320×320 scaled from 1024×1024 SVG = scale 0.3125 -->
+    <g transform="scale(0.3125)">
+      <rect width="1024" height="1024" rx="224" fill="url(#iconBg)"/>
+      <circle cx="512" cy="512" r="294" fill="url(#iconRing)" fill-opacity="0.92"/>
+      <circle cx="512" cy="512" r="224" fill="#7C3AED" fill-opacity="0.12"/>
+      <path d="M512 238C625.77 238 718 330.23 718 444C718 584.6 553.63 709.08 521.79 732.08C516.03 736.22 507.97 736.22 502.21 732.08C470.37 709.08 306 584.6 306 444C306 330.23 398.23 238 512 238Z" fill="#7C3AED"/>
+      <circle cx="512" cy="444" r="86" fill="#FDE68A"/>
+      <path d="M520.42 343L619 607H552.31L533.55 553.4H428.87L410.11 607H343L441.15 343H520.42ZM516.76 503.79L481.28 402.37L445.66 503.79H516.76Z" fill="#0F172A"/>
+    </g>
+  </g>
+
+  <!-- ─── Right side: title + tagline ─── -->
+  <!-- App name -->
+  <text x="450" y="175" font-size="86" font-family="Arial Black,sans-serif" font-weight="900" fill="#0F172A" letter-spacing="-2">Atlas</text>
+  <text x="450" y="268" font-size="86" font-family="Arial Black,sans-serif" font-weight="900" fill="#7C3AED" letter-spacing="-2">Junior</text>
+
+  <!-- Tagline -->
+  <text x="452" y="318" font-size="26" font-family="Arial,sans-serif" font-weight="500" fill="#475569">Name places. Take turns. Win.</text>
+
+  <!-- ─── Place name pills ─── -->
+  <!-- Row 1 -->
+  <g filter="url(#pillShadow)">
+    <rect x="450" y="348" width="130" height="40" rx="20" fill="#FDE68A"/>
+    <text x="515" y="374" font-size="18" font-family="Arial,sans-serif" font-weight="700" fill="#1E293B" text-anchor="middle">Angola</text>
+  </g>
+  <g filter="url(#pillShadow)">
+    <rect x="594" y="348" width="130" height="40" rx="20" fill="#F9A8D4"/>
+    <text x="659" y="374" font-size="18" font-family="Arial,sans-serif" font-weight="700" fill="#1E293B" text-anchor="middle">Brazil</text>
+  </g>
+  <g filter="url(#pillShadow)">
+    <rect x="738" y="348" width="140" height="40" rx="20" fill="#A5F3FC"/>
+    <text x="808" y="374" font-size="18" font-family="Arial,sans-serif" font-weight="700" fill="#1E293B" text-anchor="middle">Cairo</text>
+  </g>
+
+  <!-- Row 2 -->
+  <g filter="url(#pillShadow)">
+    <rect x="450" y="402" width="150" height="40" rx="20" fill="#C4B5FD"/>
+    <text x="525" y="428" font-size="18" font-family="Arial,sans-serif" font-weight="700" fill="#1E293B" text-anchor="middle">Denver</text>
+  </g>
+  <g filter="url(#pillShadow)">
+    <rect x="614" y="402" width="140" height="40" rx="20" fill="#BBF7D0"/>
+    <text x="684" y="428" font-size="18" font-family="Arial,sans-serif" font-weight="700" fill="#1E293B" text-anchor="middle">Egypt</text>
+  </g>
+  <g filter="url(#pillShadow)">
+    <rect x="768" y="402" width="136" height="40" rx="20" fill="#FED7AA"/>
+    <text x="836" y="428" font-size="18" font-family="Arial,sans-serif" font-weight="700" fill="#1E293B" text-anchor="middle">France</text>
+  </g>
+
+  <!-- ─── Letter badge row (decorative) ─── -->
+  <g transform="translate(450, 456)">
+    <circle cx="24"  cy="20" r="20" fill="#7C3AED"/><text x="24"  y="27" font-size="20" font-family="Arial Black,sans-serif" font-weight="900" fill="white" text-anchor="middle">A</text>
+    <circle cx="76"  cy="20" r="20" fill="#E879F9"/><text x="76"  y="27" font-size="20" font-family="Arial Black,sans-serif" font-weight="900" fill="white" text-anchor="middle">B</text>
+    <circle cx="128" cy="20" r="20" fill="#60A5FA"/><text x="128" y="27" font-size="20" font-family="Arial Black,sans-serif" font-weight="900" fill="white" text-anchor="middle">C</text>
+    <circle cx="180" cy="20" r="20" fill="#34D399"/><text x="180" y="27" font-size="20" font-family="Arial Black,sans-serif" font-weight="900" fill="white" text-anchor="middle">D</text>
+    <circle cx="232" cy="20" r="20" fill="#FB923C"/><text x="232" y="27" font-size="20" font-family="Arial Black,sans-serif" font-weight="900" fill="white" text-anchor="middle">E</text>
+    <circle cx="284" cy="20" r="20" fill="#F472B6"/><text x="284" y="27" font-size="20" font-family="Arial Black,sans-serif" font-weight="900" fill="white" text-anchor="middle">F</text>
+    <circle cx="336" cy="20" r="20" fill="#A78BFA"/><text x="336" y="27" font-size="20" font-family="Arial Black,sans-serif" font-weight="900" fill="white" text-anchor="middle">G</text>
+    <circle cx="388" cy="20" r="20" fill="#38BDF8"/><text x="388" y="27" font-size="20" font-family="Arial Black,sans-serif" font-weight="900" fill="white" text-anchor="middle">H</text>
+  </g>
+</svg>
