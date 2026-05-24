@@ -229,8 +229,8 @@
           <div class="lb-row">
             <span class="lb-medal">${MEDALS[i] ?? "#" + (i+1)}</span>
             <span class="lb-name">${escHtml(e.name)}</span>
-            <span class="lb-score">${e.score} places</span>
             ${e.date ? `<span class="lb-date">${e.date}</span>` : ""}
+            <span class="lb-score">${e.score} turns</span>
           </div>`).join("");
       } catch {
         body.innerHTML = '<div class="lb-empty">Could not load — try again later.</div>';
