@@ -86,6 +86,9 @@ const primaryButton =
 const secondaryButton =
   "inline-flex items-center justify-center rounded-full border border-white/60 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition hover:bg-white disabled:cursor-not-allowed disabled:text-slate-300";
 
+const endGameButton =
+  "inline-flex items-center justify-center rounded-full border border-slate-400 bg-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:text-slate-300";
+
 const PLAYER_NAMES_STORAGE_KEY = "atlas-player-names";
 const DEFAULT_PLAYER_NAMES = ["Aarav", "Mia"];
 
@@ -950,14 +953,7 @@ export function AtlasGame() {
                 ))}
                   <span className="mx-1 h-8 w-px shrink-0 bg-slate-300" aria-hidden="true" />
                   <button
-                    className={`${secondaryButton} shrink-0 whitespace-nowrap`}
-                    onClick={returnToSetup}
-                    type="button"
-                  >
-                    Reset & players
-                  </button>
-                  <button
-                    className={`${secondaryButton} shrink-0 whitespace-nowrap`}
+                    className={`${endGameButton} shrink-0 whitespace-nowrap`}
                     onClick={openEndGame}
                     type="button"
                   >
