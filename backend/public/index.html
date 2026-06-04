@@ -106,6 +106,25 @@
     .lb-empty { text-align: center; color: #94a3b8; font-size: 0.9rem; padding: 1rem 0; }
     .lb-loading { text-align: center; color: #94a3b8; font-size: 0.85rem; padding: 1rem 0; }
 
+    .alpha-banner {
+      display: flex; align-items: center; gap: 1.25rem;
+      background: linear-gradient(135deg, #fdf4ff, #eff6ff);
+      border: 2px solid #e879f9;
+      border-radius: 1.75rem;
+      padding: 1.5rem 1.75rem;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 4px 24px #e879f918;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .alpha-banner:hover { box-shadow: 0 8px 32px #e879f930; transform: translateY(-2px); }
+    .alpha-banner img { width: 100px; height: 100px; flex-shrink: 0; border-radius: 0.75rem; }
+    @media(max-width:480px){ .alpha-banner img { width: 72px; height: 72px; } }
+    .alpha-text { display: flex; flex-direction: column; gap: 0.25rem; }
+    .alpha-label { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #c026d3; }
+    .alpha-title { font-size: 1.15rem; font-weight: 900; color: #0f172a; }
+    .alpha-sub { font-size: 0.85rem; color: #64748b; line-height: 1.5; }
+
     .footer {
       text-align: center; font-size: 0.8rem; color: #94a3b8;
       display: flex; justify-content: center; gap: 1.2rem; flex-wrap: wrap;
@@ -117,6 +136,15 @@
 </head>
 <body>
   <div class="container">
+
+    <a class="alpha-banner" href="https://play.google.com/apps/testing/com.fibuladreams.atlas" target="_blank" rel="noreferrer">
+      <img src="alpha-qr.png" alt="QR code to join alpha" />
+      <div class="alpha-text">
+        <span class="alpha-label">🚀 Alpha Access — Free!</span>
+        <span class="alpha-title">Try the Android app now</span>
+        <span class="alpha-sub">Scan the QR code or tap to join the testing programme on Google Play.</span>
+      </div>
+    </a>
 
     <div class="hero">
       <div class="logo">🌍</div>
