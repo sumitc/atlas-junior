@@ -1076,6 +1076,21 @@ export function AtlasGame() {
         <Link href="/support" className="hover:text-slate-600 transition">
           Support
         </Link>
+        <button
+          className="hover:text-fuchsia-600 transition"
+          onClick={() => {
+            if (navigator.share) {
+              void navigator.share({
+                title: "Atlas Junior",
+                text: "Try out Atlas Junior app with your kid!",
+                url: "https://play.google.com/store/apps/details?id=com.fibuladreams.atlas",
+              });
+            }
+          }}
+          type="button"
+        >
+          📤 Share
+        </button>
       </div>
 
       {/* ── Debug panel (debug builds only) ── */}
