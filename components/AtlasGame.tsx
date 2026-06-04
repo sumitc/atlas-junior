@@ -818,31 +818,6 @@ export function AtlasGame() {
     <>
       <main className="app-safe-area-shell min-h-screen bg-[radial-gradient(circle_at_top,_#fde68a,_#f5d0fe_42%,_#bfdbfe_78%,_#ffffff)] sm:px-6">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 pb-36">
-          {/* Alpha invite banner */}
-          <a
-            href="https://play.google.com/apps/testing/com.fibuladreams.atlas"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-4 rounded-[2rem] bg-white/80 px-5 py-4 shadow-lg shadow-fuchsia-200/50 backdrop-blur transition hover:bg-white sm:px-6"
-          >
-            <img
-              src="/alpha-qr.png"
-              alt="Scan to join Alpha"
-              className="h-16 w-16 shrink-0 rounded-xl sm:h-20 sm:w-20"
-            />
-            <div className="min-w-0">
-              <p className="text-sm font-black uppercase tracking-widest text-fuchsia-600">
-                🚀 Join the Alpha
-              </p>
-              <p className="mt-0.5 text-base font-bold text-slate-900">
-                Try Atlas on Android
-              </p>
-              <p className="mt-0.5 text-xs text-slate-500">
-                Scan the QR code or tap to join the Play Store testing programme
-              </p>
-            </div>
-          </a>
-
           <header className="flex items-start justify-between gap-3 rounded-[2rem] bg-white/75 px-5 py-4 shadow-lg shadow-violet-200/50 backdrop-blur sm:px-6">
             <div className="min-w-0 flex-1">
               <p className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
