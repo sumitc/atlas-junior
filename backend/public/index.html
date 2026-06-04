@@ -17,14 +17,15 @@
 
     .hero {
       background: rgba(255,255,255,0.85);
-      border-radius: 1.75rem;
-      padding: 2.5rem 2rem;
-      text-align: center;
-      box-shadow: 0 8px 32px #7c3aed18;
+      border-radius: 1.25rem;
+      padding: 0.9rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+      box-shadow: 0 4px 16px #7c3aed12;
     }
-    .logo { font-size: 3rem; margin-bottom: 0.5rem; }
-    .hero h1 { font-size: 2.4rem; font-weight: 900; color: #0f172a; letter-spacing: -1px; }
-    .hero .tagline { color: #7c3aed; font-weight: 600; font-size: 1.05rem; margin: 0.4rem 0 1.2rem; }
+    .hero-left { display: flex; align-items: center; gap: 0.6rem; }
+    .logo { font-size: 1.6rem; }
+    .hero h1 { font-size: 1.15rem; font-weight: 900; color: #0f172a; letter-spacing: -0.3px; }
+    .hero .tagline { color: #7c3aed; font-weight: 600; font-size: 0.8rem; }
     .status-pill {
       display: inline-flex; align-items: center; gap: 0.4rem;
       background: #f0fdf4; border: 1px solid #bbf7d0;
@@ -137,6 +138,17 @@
 <body>
   <div class="container">
 
+    <div class="hero">
+      <div class="hero-left">
+        <span class="logo">🌍</span>
+        <div>
+          <h1>Atlas Junior</h1>
+          <p class="tagline">The geography word game for the whole family</p>
+        </div>
+      </div>
+      <div class="status-pill"><span class="dot"></span> Live</div>
+    </div>
+
     <a class="alpha-banner" href="https://play.google.com/apps/testing/com.fibuladreams.atlas" target="_blank" rel="noreferrer">
       <img src="alpha-qr.png" alt="QR code to join alpha" />
       <div class="alpha-text">
@@ -145,13 +157,6 @@
         <span class="alpha-sub">Scan the QR code or tap to join the testing programme on Google Play.</span>
       </div>
     </a>
-
-    <div class="hero">
-      <div class="logo">🌍</div>
-      <h1>Atlas Junior</h1>
-      <p class="tagline">The geography word game for the whole family</p>
-      <div class="status-pill"><span class="dot"></span> All systems up</div>
-    </div>
 
     <div class="card">
       <div class="card-title">🎮 How to play</div>
