@@ -2,6 +2,7 @@
 
 import { SpeechRecognition } from "@capacitor-community/speech-recognition";
 import { Capacitor } from "@capacitor/core";
+import { Share } from "@capacitor/share";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { getLeaderboard, submitScore, submitStats, type LeaderboardEntry } from "@/lib/api";
@@ -1079,13 +1080,12 @@ export function AtlasGame() {
         <button
           className="hover:text-fuchsia-600 transition"
           onClick={() => {
-            if (navigator.share) {
-              void navigator.share({
-                title: "Atlas Junior",
-                text: "Try out Atlas Junior app with your kid!",
-                url: "https://play.google.com/store/apps/details?id=com.fibuladreams.atlas",
-              });
-            }
+            void Share.share({
+              title: "Atlas Junior",
+              text: "Try out Atlas Junior app with your kid!",
+              url: "https://play.google.com/store/apps/details?id=com.fibuladreams.atlas",
+              dialogTitle: "Share Atlas Junior",
+            });
           }}
           type="button"
         >
