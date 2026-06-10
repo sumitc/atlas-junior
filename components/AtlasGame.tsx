@@ -363,9 +363,10 @@ export function AtlasGame() {
   const currentPlayer =
     game.phase === "playing" ? game.players[game.currentPlayerIndex] : null;
   const hasDraftPlace = draftPlace.trim().length > 0;
-  // Score = saved places only (skips don't count toward leaderboard)
+  const placeKeyOk = hasDraftPlace && createPlaceKey(draftPlace).startsWith(game.requiredLetter);
+  // Score counts only saved moves (skipped moves were removed)
   const savedTurns = game.moves.filter((m) => m.kind === "saved").length;
-  const totalTurns = game.moves.length; // for display ("X turns played")
+  const totalTurns = game.moves.length;
 
   const calledPlaces = useMemo(
     () =>
@@ -415,8 +416,13 @@ export function AtlasGame() {
   // Load places dictionary in background when component mounts
   useEffect(() => { void loadPlaces(); }, []);
 
-  // Clear place-check warning when user edits the input
-  useEffect(() => { setPlaceCheck(null); }, [draftPlace]);
+  // Clear all validation state when user edits the input (fixes stale duplicateChallenge bug)
+  useEffect(() => {
+    setPlaceCheck(null);
+    setDuplicateChallenge(null);
+    updateSpeechMessage("");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftPlace]);
 
   function updateSpeechMessage(
     message: string,
@@ -750,32 +756,6 @@ export function AtlasGame() {
     saveTurnInternal({});
   }
 
-  function skipTurn() {
-    if (game.phase !== "playing" || !currentPlayer) {
-      return;
-    }
-
-    const nextPlayerIndex = getNextPlayerIndex(game.players, game.currentPlayerIndex);
-
-    setGame({
-      ...game,
-      currentPlayerIndex: nextPlayerIndex,
-      moves: [
-        ...game.moves,
-        {
-          id: makeId(),
-          playerName: currentPlayer.name,
-          place: "Skipped",
-          kind: "skipped",
-        },
-      ],
-      statusMessage: `${currentPlayer.name} skipped. ${game.players[nextPlayerIndex].name} still needs ${game.requiredLetter.toUpperCase()}.`,
-    });
-    setDuplicateChallenge(null);
-    setDraftPlace("");
-    updateSpeechMessage("Turn skipped.");
-  }
-
   function openEndGame() {
     void stopListening();
     setShowEndGame(true);
@@ -1019,20 +999,25 @@ export function AtlasGame() {
                     className="w-full rounded-[1.5rem] border border-white bg-white px-5 py-4 text-lg font-semibold text-slate-900 outline-none transition focus:border-fuchsia-300 focus:ring-4 focus:ring-fuchsia-100"
                     onChange={(event) => {
                       setDraftPlace(event.target.value);
-                      setDuplicateChallenge(null);
                     }}
                     placeholder={`Needs ${game.requiredLetter.toUpperCase()}…`}
                     ref={placeInputRef}
                     value={draftPlace}
                   />
 
-                  {/* ── Save ── */}
-                  <button
-                    className={`${hasDraftPlace ? primaryButton : secondaryButton} w-full`}
-                    type="submit"
-                  >
-                    Save
-                  </button>
+                  {/* ── Save (only when letter is correct and no pending check) ── */}
+                  {hasDraftPlace && placeKeyOk && !placeCheck && !duplicateChallenge && (
+                    <button className={`${primaryButton} w-full`} type="submit">
+                      Save
+                    </button>
+                  )}
+
+                  {/* ── Letter hint (reactive, no click needed) ── */}
+                  {hasDraftPlace && !placeKeyOk && (
+                    <p className="text-center text-sm font-semibold text-rose-500">
+                      Must start with {game.requiredLetter.toUpperCase()}
+                    </p>
+                  )}
 
                   {/* ── Save flash ── */}
                   {savedFlash && (
@@ -1042,7 +1027,7 @@ export function AtlasGame() {
                   )}
 
                   {/* ── Duplicate override ── */}
-                  {duplicateChallenge ? (
+                  {duplicateChallenge && (
                     <button
                       className={`${primaryButton} w-full`}
                       onClick={() => saveTurnInternal({ skipDuplicateCheck: true })}
@@ -1050,7 +1035,7 @@ export function AtlasGame() {
                     >
                       Save anyway
                     </button>
-                  ) : null}
+                  )}
 
                   {/* ── Place-check feedback ── */}
                   {placeCheck?.status === "suggest" && (
@@ -1086,17 +1071,6 @@ export function AtlasGame() {
                       </button>
                     </div>
                   )}
-
-                  {/* ── Skip ── */}
-                  <div className="text-center">
-                    <button
-                      className="text-sm text-slate-400 underline underline-offset-2 transition hover:text-slate-600"
-                      onClick={skipTurn}
-                      type="button"
-                    >
-                      Skip turn
-                    </button>
-                  </div>
                 </form>
               </article>
 
