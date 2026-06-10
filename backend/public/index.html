@@ -74,7 +74,15 @@
     .oss-box .celebrate { font-size: 2rem; margin-bottom: 0.5rem; }
     .oss-box h2 { font-size: 1.2rem; font-weight: 800; color: #4c1d95; margin-bottom: 0.4rem; }
     .oss-box p { color: #6d28d9; font-size: 0.9rem; line-height: 1.6; margin-bottom: 1rem; }
-    .gh-btn {
+    .play-btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: linear-gradient(135deg, #7c3aed, #a855f7); color: white; border-radius: 999px;
+      padding: 0.7rem 1.5rem; font-weight: 800; font-size: 1rem;
+      text-decoration: none; box-shadow: 0 4px 14px #7c3aed40;
+    }
+    .play-btn:hover { background: linear-gradient(135deg, #6d28d9, #9333ea); }
+
+    .alpha-links { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-top: 0.5rem; }
       display: inline-flex; align-items: center; gap: 0.5rem;
       background: #7c3aed; color: white; border-radius: 999px;
       padding: 0.65rem 1.4rem; font-weight: 700; font-size: 0.95rem;
@@ -171,6 +179,7 @@
         <span class="alpha-title">Try the Android app</span>
         <span class="alpha-sub">Scan the QR code from another device, or tap below:</span>
         <div class="alpha-links">
+          <a class="play-btn" href="/game">🎮 Play in browser</a>
           <a href="https://play.google.com/store/apps/details?id=com.fibuladreams.atlas" target="_blank" rel="noreferrer">App on Play Store ↗</a>
         </div>
       </div>

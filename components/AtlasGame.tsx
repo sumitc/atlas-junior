@@ -6,6 +6,7 @@ import { Share } from "@capacitor/share";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { getLeaderboard, submitScore, submitStats, type LeaderboardEntry } from "@/lib/api";
+import { findSuggestion, isKnownPlace, loadPlaces } from "@/lib/places";
 
 type Player = {
   id: string;
@@ -24,6 +25,10 @@ type DuplicateChallenge = {
   matchedPlace: string;
   exact: boolean;
 };
+
+type PlaceCheckState =
+  | { status: "suggest"; suggestion: string }
+  | { status: "unknown" };
 
 type GameState = {
   phase: "setup" | "playing";
@@ -328,6 +333,7 @@ export function AtlasGame() {
   );
   const [savedFlash, setSavedFlash] = useState(false);
   const [duplicateChallenge, setDuplicateChallenge] = useState<DuplicateChallenge | null>(null);
+  const [placeCheck, setPlaceCheck] = useState<PlaceCheckState | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [nativeSpeechAvailable, setNativeSpeechAvailable] = useState<boolean | null>(null);
@@ -405,6 +411,12 @@ export function AtlasGame() {
       JSON.stringify(playerNames),
     );
   }, [playerNames]);
+
+  // Load places dictionary in background when component mounts
+  useEffect(() => { void loadPlaces(); }, []);
+
+  // Clear place-check warning when user edits the input
+  useEffect(() => { setPlaceCheck(null); }, [draftPlace]);
 
   function updateSpeechMessage(
     message: string,
@@ -636,22 +648,28 @@ export function AtlasGame() {
     setGame(createNewGame(names));
   }
 
-  function saveTurnInternal(overrideDuplicateWarning = false) {
+  function saveTurnInternal({ skipDuplicateCheck = false, skipPlaceCheck = false, overridePlace }: { skipDuplicateCheck?: boolean; skipPlaceCheck?: boolean; overridePlace?: string } = {}) {
     if (game.phase !== "playing" || !currentPlayer) {
       return;
     }
 
-    const normalized = normalizePlaceName(draftPlace);
-    const placeKey = createPlaceKey(draftPlace);
+    // overridePlace lets callers (e.g. "Yes ✓" button) pass the accepted value
+    // directly, bypassing stale React state for draftPlace
+    const placeValue = overridePlace ?? draftPlace;
+
+    const normalized = normalizePlaceName(placeValue);
+    const placeKey = createPlaceKey(placeValue);
 
     if (!placeKey) {
       setDuplicateChallenge(null);
+      setPlaceCheck(null);
       updateSpeechMessage("No place name is ready yet. Listen again or type it.", "error");
       return;
     }
 
     if (!placeKey.startsWith(game.requiredLetter)) {
       setDuplicateChallenge(null);
+      setPlaceCheck(null);
       updateSpeechMessage(
         `This turn must start with ${game.requiredLetter.toUpperCase()}.`,
         "error",
@@ -659,24 +677,33 @@ export function AtlasGame() {
       return;
     }
 
-    const likelyDuplicatePlace = findLikelyDuplicatePlace(draftPlace, game.moves);
+    const likelyDuplicatePlace = findLikelyDuplicatePlace(placeValue, game.moves);
 
-    if (!overrideDuplicateWarning && (game.usedPlaceKeys.includes(placeKey) || likelyDuplicatePlace)) {
+    if (!skipDuplicateCheck && (game.usedPlaceKeys.includes(placeKey) || likelyDuplicatePlace)) {
       const challenge =
         likelyDuplicatePlace ??
         ({
-          draftPlace: draftPlace.trim(),
-          matchedPlace: draftPlace.trim(),
+          draftPlace: placeValue.trim(),
+          matchedPlace: placeValue.trim(),
           exact: true,
         } satisfies DuplicateChallenge);
 
       setDuplicateChallenge(challenge);
+      setPlaceCheck(null);
       updateSpeechMessage(
         challenge.exact
-          ? `"${draftPlace.trim()}" was already called out. You can still save anyway if this is truly a different place.`
-          : `"${draftPlace.trim()}" looks like "${challenge.matchedPlace}", which was already called out. You can still save anyway if this is truly different.`,
+          ? `"${placeValue.trim()}" was already called out. You can still save anyway if this is truly a different place.`
+          : `"${placeValue.trim()}" looks like "${challenge.matchedPlace}", which was already called out. You can still save anyway if this is truly different.`,
         "error",
       );
+      return;
+    }
+
+    // Place dictionary check — only if not overriding
+    if (!skipPlaceCheck && !isKnownPlace(placeValue)) {
+      const suggestion = findSuggestion(placeValue);
+      setDuplicateChallenge(null);
+      setPlaceCheck(suggestion ? { status: "suggest", suggestion } : { status: "unknown" });
       return;
     }
 
@@ -692,9 +719,10 @@ export function AtlasGame() {
     }
 
     const nextPlayerIndex = getNextPlayerIndex(game.players, game.currentPlayerIndex);
-    const placeLabel = draftPlace.trim();
+    const placeLabel = placeValue.trim();
 
     setDuplicateChallenge(null);
+    setPlaceCheck(null);
     setGame({
       ...game,
       currentPlayerIndex: nextPlayerIndex,
@@ -719,7 +747,7 @@ export function AtlasGame() {
 
   function saveTurn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    saveTurnInternal(false);
+    saveTurnInternal({});
   }
 
   function skipTurn() {
@@ -1017,12 +1045,47 @@ export function AtlasGame() {
                   {duplicateChallenge ? (
                     <button
                       className={`${primaryButton} w-full`}
-                      onClick={() => saveTurnInternal(true)}
+                      onClick={() => saveTurnInternal({ skipDuplicateCheck: true })}
                       type="button"
                     >
                       Save anyway
                     </button>
                   ) : null}
+
+                  {/* ── Place-check feedback ── */}
+                  {placeCheck?.status === "suggest" && (
+                    <div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800 space-y-2">
+                      <p>Did you mean <strong>{placeCheck.suggestion}</strong>?</p>
+                      <div className="flex gap-2">
+                        <button
+                          className="flex-1 rounded-xl bg-amber-200 px-3 py-1.5 font-semibold hover:bg-amber-300"
+                          onClick={() => saveTurnInternal({ overridePlace: placeCheck.suggestion, skipPlaceCheck: true })}
+                          type="button"
+                        >
+                          Yes ✓
+                        </button>
+                        <button
+                          className="flex-1 rounded-xl bg-white border border-amber-300 px-3 py-1.5 font-semibold hover:bg-amber-50"
+                          onClick={() => saveTurnInternal({ skipPlaceCheck: true })}
+                          type="button"
+                        >
+                          Save mine →
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {placeCheck?.status === "unknown" && (
+                    <div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800 space-y-2">
+                      <p>&#34;{draftPlace.trim()}&#34; isn&#39;t in our map.</p>
+                      <button
+                        className="w-full rounded-xl bg-white border border-amber-300 px-3 py-1.5 font-semibold hover:bg-amber-50"
+                        onClick={() => saveTurnInternal({ skipPlaceCheck: true })}
+                        type="button"
+                      >
+                        Save anyway →
+                      </button>
+                    </div>
+                  )}
 
                   {/* ── Skip ── */}
                   <div className="text-center">
