@@ -332,6 +332,7 @@ export function AtlasGame() {
     "neutral",
   );
   const [savedFlash, setSavedFlash] = useState(false);
+  const [flyingWord, setFlyingWord] = useState<string | null>(null);
   const [duplicateChallenge, setDuplicateChallenge] = useState<DuplicateChallenge | null>(null);
   const [placeCheck, setPlaceCheck] = useState<PlaceCheckState | null>(null);
   const [isListening, setIsListening] = useState(false);
@@ -757,7 +758,9 @@ export function AtlasGame() {
     });
     setDraftPlace("");
     setSavedFlash(true);
+    setFlyingWord(placeLabel);
     setTimeout(() => setSavedFlash(false), 2000);
+    setTimeout(() => setFlyingWord(null), 900);
     updateSpeechMessage("");
   }
 
@@ -835,6 +838,35 @@ export function AtlasGame() {
 
   return (
     <>
+      {/* Flying-word animation keyframes */}
+      <style>{`
+        @keyframes wordFlyDown {
+          0%   { opacity: 1; transform: translateY(0) scale(1); }
+          60%  { opacity: 0.7; transform: translateY(140px) scale(0.85); }
+          100% { opacity: 0; transform: translateY(220px) scale(0.7); }
+        }
+      `}</style>
+
+      {/* Floating chip that flies toward Past places on save */}
+      {flyingWord && (
+        <div
+          style={{
+            position: "fixed",
+            top: "38%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 100,
+            pointerEvents: "none",
+          }}
+        >
+          <span
+            style={{ display: "block", animation: "wordFlyDown 0.9s cubic-bezier(0.4,0,1,1) forwards" }}
+            className="rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 py-2 text-sm font-extrabold text-white shadow-xl shadow-fuchsia-300/50 whitespace-nowrap"
+          >
+            {flyingWord} ↓
+          </span>
+        </div>
+      )}
       <main className="app-safe-area-shell min-h-screen bg-[radial-gradient(circle_at_top,_#fde68a,_#f5d0fe_42%,_#bfdbfe_78%,_#ffffff)] sm:px-6">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 pb-36">
           <header className="flex items-start justify-between gap-3 rounded-[2rem] bg-white/75 px-5 py-4 shadow-lg shadow-violet-200/50 backdrop-blur sm:px-6">
