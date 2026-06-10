@@ -342,6 +342,8 @@ export function AtlasGame() {
   const debugScrollRef = useRef<HTMLDivElement | null>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const placeInputRef = useRef<HTMLInputElement | null>(null);
+  // Tracks the latest speech transcript so listeningState/onend handlers can auto-save
+  const latestTranscriptRef = useRef("");
   const isNativeApp = typeof window !== "undefined" && Capacitor.getPlatform() !== "web";
   const browserSpeechSupported =
     typeof window !== "undefined" &&
@@ -523,6 +525,7 @@ export function AtlasGame() {
         await SpeechRecognition.addListener("partialResults", ({ matches }) => {
           const transcript = matches?.[0]?.trim() ?? "";
           dbg(`partialResults: "${transcript}"`);
+          latestTranscriptRef.current = transcript;
           setDraftPlace(transcript);
           updateSpeechMessage(
             transcript ? `I heard: "${transcript}"` : "I am still listening...",
@@ -532,20 +535,19 @@ export function AtlasGame() {
           dbg(`listeningState: ${status}`);
           setIsListening(status === "started");
           if (status === "stopped") {
-            // If recognition ended with no transcript, give the user clear feedback
-            setDraftPlace((current) => {
-              if (!current.trim()) {
-                updateSpeechMessage("Didn't catch that — tap Listen to try again.");
-              }
-              return current;
-            });
+            const transcript = latestTranscriptRef.current;
+            if (transcript) {
+              // Auto-save for audio — no Save button tap needed
+              saveTurnInternal({ overridePlace: transcript });
+            } else {
+              updateSpeechMessage("Didn't catch that — tap Listen to try again.");
+            }
           }
         });
 
+        latestTranscriptRef.current = "";
         setDraftPlace("");
         updateSpeechMessage("Listening...");
-        setIsListening(true);
-        dbg("startListening: calling start()");
         await SpeechRecognition.start({
           language: "en-US",
           maxResults: 1,
@@ -600,10 +602,17 @@ export function AtlasGame() {
         .join(" ")
         .trim();
 
+      const isFinal = event.results[event.results.length - 1]?.isFinal ?? false;
+      latestTranscriptRef.current = transcript;
       setDraftPlace(transcript);
       updateSpeechMessage(
         transcript ? `I heard: "${transcript}"` : "I am still listening...",
       );
+
+      if (isFinal && transcript) {
+        // Auto-save for audio — no Save button tap needed
+        saveTurnInternal({ overridePlace: transcript });
+      }
     };
 
     recognition.onerror = (event) => {
@@ -621,6 +630,7 @@ export function AtlasGame() {
     };
 
     recognitionRef.current = recognition;
+    latestTranscriptRef.current = "";
     setDraftPlace("");
     updateSpeechMessage("Listening...");
 

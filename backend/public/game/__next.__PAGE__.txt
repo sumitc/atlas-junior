@@ -1,6 +1,6 @@
 1:"$Sreact.fragment"
-2:I[58593,["/game/_next/static/chunks/01xlw8hd842-c.js","/game/_next/static/chunks/0d3shmwh5_nmn.js","/game/_next/static/chunks/16d3pdymx3_c..js"],"AtlasGame"]
+2:I[58593,["/game/_next/static/chunks/01xlw8hd842-c.js","/game/_next/static/chunks/0d3shmwh5_nmn.js","/game/_next/static/chunks/0e3~yg66en.z0.js"],"AtlasGame"]
 3:I[97367,["/game/_next/static/chunks/01xlw8hd842-c.js","/game/_next/static/chunks/0d3shmwh5_nmn.js"],"OutletBoundary"]
 4:"$Sreact.suspense"
-0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{}],[["$","script","script-0",{"src":"/game/_next/static/chunks/16d3pdymx3_c..js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"F2Eph5_SWZUAu89SDqHIr"}
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{}],[["$","script","script-0",{"src":"/game/_next/static/chunks/0e3~yg66en.z0.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"j9wndYLAjmPspGs7DPmAH"}
 5:null
