@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getTickets, submitTicket, type Ticket } from "@/lib/api";
+import { APP_VERSION } from "@/lib/version";
 
 type SubmitState = "idle" | "submitting" | "done" | "error";
 
@@ -261,13 +262,16 @@ export default function SupportPage() {
         )}
 
         {/* Footer */}
-        <div className="flex justify-center gap-6 text-sm text-slate-400">
-          <Link href="/" className="hover:text-slate-600">
-            Play
-          </Link>
-          <Link href="/leaderboard" className="hover:text-slate-600">
-            Leaderboard
-          </Link>
+        <div className="flex items-center text-sm text-slate-400">
+          <div className="flex flex-1 justify-center gap-6">
+            <Link href="/" className="hover:text-slate-600">
+              Play
+            </Link>
+            <Link href="/leaderboard" className="hover:text-slate-600">
+              Leaderboard
+            </Link>
+          </div>
+          <span className="text-slate-300">v{APP_VERSION}</span>
         </div>
       </div>
     </main>

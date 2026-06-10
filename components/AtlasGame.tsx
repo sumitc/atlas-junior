@@ -7,6 +7,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { getLeaderboard, submitScore, submitStats, type LeaderboardEntry } from "@/lib/api";
 import { findSuggestion, isKnownPlace, loadPlaces } from "@/lib/places";
+import { APP_VERSION } from "@/lib/version";
 
 type Player = {
   id: string;
@@ -1149,27 +1150,30 @@ export function AtlasGame() {
       </main>
 
       {/* ── Navigation links ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-center gap-6 bg-white/70 py-2 backdrop-blur text-xs text-slate-400">
-        <Link href="/leaderboard" className="hover:text-fuchsia-600 transition">
-          🏆 Leaderboard
-        </Link>
-        <Link href="/support" className="hover:text-slate-600 transition">
-          Support
-        </Link>
-        <button
-          className="hover:text-fuchsia-600 transition"
-          onClick={() => {
-            void Share.share({
-              title: "Atlas Junior",
-              text: "Try out Atlas Junior app with your kid!",
-              url: "https://play.google.com/store/apps/details?id=com.fibuladreams.atlas",
-              dialogTitle: "Share Atlas Junior",
-            });
-          }}
-          type="button"
-        >
-          📤 Share
-        </button>
+      <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center bg-white/70 py-2 backdrop-blur text-xs text-slate-400">
+        <div className="flex flex-1 justify-center gap-6">
+          <Link href="/leaderboard" className="hover:text-fuchsia-600 transition">
+            🏆 Leaderboard
+          </Link>
+          <Link href="/support" className="hover:text-slate-600 transition">
+            Support
+          </Link>
+          <button
+            className="hover:text-fuchsia-600 transition"
+            onClick={() => {
+              void Share.share({
+                title: "Atlas Junior",
+                text: "Try out Atlas Junior app with your kid!",
+                url: "https://play.google.com/store/apps/details?id=com.fibuladreams.atlas",
+                dialogTitle: "Share Atlas Junior",
+              });
+            }}
+            type="button"
+          >
+            📤 Share
+          </button>
+        </div>
+        <span className="pr-3 text-slate-300">v{APP_VERSION}</span>
       </div>
 
       {/* ── Debug panel (debug builds only) ── */}

@@ -3,6 +3,7 @@
 import { Capacitor } from "@capacitor/core";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { APP_VERSION } from "@/lib/version";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { getLeaderboard, type LeaderboardEntry } from "@/lib/api";
 
@@ -182,13 +183,16 @@ export default function LeaderboardPage() {
         </Suspense>
 
         {/* Footer links */}
-        <div className="mt-8 flex justify-center gap-6 text-sm text-slate-400">
-          <Link href="/" className="hover:text-slate-600">
-            Play
-          </Link>
-          <Link href="/support" className="hover:text-slate-600">
-            Support
-          </Link>
+        <div className="mt-8 flex items-center text-sm text-slate-400">
+          <div className="flex flex-1 justify-center gap-6">
+            <Link href="/" className="hover:text-slate-600">
+              Play
+            </Link>
+            <Link href="/support" className="hover:text-slate-600">
+              Support
+            </Link>
+          </div>
+          <span className="text-slate-300">v{APP_VERSION}</span>
         </div>
       </div>
     </main>
