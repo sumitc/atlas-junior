@@ -32,11 +32,15 @@ export default function SupportPage() {
   const [submittedUrl, setSubmittedUrl] = useState<string | null>(null);
   const [submittedNumber, setSubmittedNumber] = useState<number | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [resolved, setResolved] = useState<Ticket[]>([]);
   const [ticketsLoading, setTicketsLoading] = useState(true);
 
   useEffect(() => {
     getTickets()
-      .then(setTickets)
+      .then(({ issues, resolved: done }) => {
+        setTickets(issues);
+        setResolved(done);
+      })
       .catch(() => {})
       .finally(() => setTicketsLoading(false));
   }, []);
@@ -51,7 +55,7 @@ export default function SupportPage() {
       setSubmittedNumber(result.number);
       setSubmitState("done");
       // Reload tickets list to include the new one
-      getTickets().then(setTickets).catch(() => {});
+      getTickets().then(({ issues, resolved: done }) => { setTickets(issues); setResolved(done); }).catch(() => {});
     } catch {
       setSubmitState("error");
     }
@@ -217,6 +221,44 @@ export default function SupportPage() {
             ))}
           </div>
         </article>
+
+        {/* Resolved tickets list */}
+        {!ticketsLoading && resolved.length > 0 && (
+          <article className="rounded-[2rem] bg-white/70 p-5 shadow-xl shadow-emerald-200/40 backdrop-blur sm:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-lg font-black text-slate-900">✅ Resolved</h2>
+              <span className="rounded-full bg-gradient-to-r from-emerald-200 to-teal-200 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-700">
+                {resolved.length}
+              </span>
+            </div>
+            <div className="mt-4 space-y-0.5">
+              {resolved.map((ticket) => (
+                <a
+                  key={ticket.number}
+                  className="flex items-start gap-3 rounded-[1.25rem] p-3 transition hover:bg-emerald-50/60"
+                  href={ticket.url}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  <span className="mt-0.5 text-slate-300">#{ticket.number}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-slate-500 line-through decoration-slate-300">
+                      {ticket.title}
+                    </p>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {ticket.labels
+                        .filter((l) => l !== "atlas-app")
+                        .map((l) => (
+                          <TicketLabel key={l} name={l} />
+                        ))}
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-emerald-400">✓</span>
+                </a>
+              ))}
+            </div>
+          </article>
+        )}
 
         {/* Footer */}
         <div className="flex justify-center gap-6 text-sm text-slate-400">

@@ -23,8 +23,10 @@ export type Ticket = {
   number: number;
   title: string;
   url: string;
+  state: string;
   labels: string[];
   createdAt: string;
+  closedAt: string | null;
 };
 
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
@@ -57,11 +59,11 @@ export async function submitStats(turns: number): Promise<void> {
   if (!res.ok) throw new Error("Could not save stats");
 }
 
-export async function getTickets(): Promise<Ticket[]> {
+export async function getTickets(): Promise<{ issues: Ticket[]; resolved: Ticket[] }> {
   const res = await fetch(api("/tickets"));
   if (!res.ok) throw new Error("Could not load tickets");
   const data = await res.json();
-  return data.issues as Ticket[];
+  return { issues: (data.issues ?? []) as Ticket[], resolved: (data.resolved ?? []) as Ticket[] };
 }
 
 export async function submitTicket(params: {

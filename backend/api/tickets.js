@@ -28,27 +28,31 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     try {
-      const url = `https://api.github.com/repos/${GITHUB_REPO}/issues?labels=atlas-app&state=open&per_page=30`;
-      const ghRes = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${GITHUB_TOKEN}`,
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
+      const [openRes, closedRes] = await Promise.all([
+        fetch(`https://api.github.com/repos/${GITHUB_REPO}/issues?labels=atlas-app&state=open&per_page=30`, {
+          headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+        }),
+        fetch(`https://api.github.com/repos/${GITHUB_REPO}/issues?labels=atlas-app&state=closed&per_page=30&sort=updated&direction=desc`, {
+          headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+        }),
+      ]);
+      if (!openRes.ok) throw new Error(`GitHub ${openRes.status}`);
+      if (!closedRes.ok) throw new Error(`GitHub ${closedRes.status}`);
+
+      const toIssue = (i) => ({
+        number: i.number,
+        title: i.title,
+        url: i.html_url,
+        state: i.state,
+        labels: i.labels.map((l) => l.name),
+        createdAt: i.created_at,
+        closedAt: i.closed_at ?? null,
       });
-      if (!ghRes.ok) throw new Error(`GitHub ${ghRes.status}`);
-      const data = await ghRes.json();
-      const issues = data
-        .filter((i) => !i.pull_request)
-        .map((i) => ({
-          number: i.number,
-          title: i.title,
-          url: i.html_url,
-          state: i.state,
-          labels: i.labels.map((l) => l.name),
-          createdAt: i.created_at,
-        }));
-      return res.json({ issues });
+
+      const open = (await openRes.json()).filter((i) => !i.pull_request).map(toIssue);
+      const closed = (await closedRes.json()).filter((i) => !i.pull_request).map(toIssue);
+
+      return res.json({ issues: open, resolved: closed });
     } catch (err) {
       console.error("GET /tickets", err);
       return res.status(500).json({ error: "Could not fetch tickets" });
