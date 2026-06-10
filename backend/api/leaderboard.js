@@ -66,7 +66,7 @@ export default async function handler(req, res) {
 
       const entries = ids.map((id, i) => {
         const [name, date] = Array.isArray(metaArr[i]) ? metaArr[i] : [];
-        return { id, name: name ?? "Anonymous", score: scores[i], date: date ?? "", rank: i + 1 };
+        return { id, name: name ?? "Anonymous", score: Math.floor(scores[i]), date: date ?? "", rank: i + 1 };
       });
 
       return res.json({ entries });
@@ -85,10 +85,15 @@ export default async function handler(req, res) {
     const safeDate = /^\d{4}-\d{2}-\d{2}$/.test(String(date ?? "")) ? String(date) : localDateString();
     // Always generate server-side to prevent ID guessing / metadata overwrite
     const id = randomUUID();
+    // Tie-breaker: older entries rank higher when scores are equal.
+    // Fractional part = (MAX_TS - now) / MAX_TS → always < 1, so never inflates a lower score.
+    const MAX_TS = 9_999_999_999_999;
+    const tieBreaker = (MAX_TS - Date.now()) / MAX_TS;
+    const redisScore = safeScore + tieBreaker;
 
     try {
       const [, , , rank, readback] = await redisPipeline([
-        ["ZADD", LB_KEY, "NX", String(safeScore), id],
+        ["ZADD", LB_KEY, "NX", String(redisScore), id],
         ["HSET", `atlas:lb:${id}`, "name", safeName, "score", String(safeScore), "date", safeDate],
         ["ZREMRANGEBYRANK", LB_KEY, "0", String(-(MAX_STORED + 1))],
         ["ZREVRANK", LB_KEY, id],
