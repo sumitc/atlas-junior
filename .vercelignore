@@ -1,0 +1,8 @@
+node_modules/
+.next/
+out/
+.places-cache/
+android/
+*.apk
+*.aab
+*.zip
