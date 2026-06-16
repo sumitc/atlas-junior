@@ -1,65 +1,152 @@
 # Atlas Junior
 
-A mobile-friendly Next.js web app for kids to play Atlas on one phone or tablet.
+A turn-based kids geography word-chain game. Players take turns naming places that start with the last letter of the previous place. Supports voice input, offline place validation, a global leaderboard, and in-app support.
 
-## How it works
+Available as:
+- **Android app** — [Google Play Store](https://play.google.com/store/apps/details?id=com.fibuladreams.atlas)
+- **Web app** — [atlas-junior.vercel.app/game](https://atlas-junior.vercel.app/game)
 
-- The round starts with the letter **A**
-- Each turn can use the microphone to hear the place name
-- The heard text is shown on screen for the players to confirm or edit
-- Saving a place moves the game to the next player and the next required letter
-- The app tracks the round chain, scores, and repeated place names
+---
+
+## Architecture overview
+
+```
+atlas-junior/                  ← Next.js app (frontend + Capacitor source)
+├── app/                       ← Next.js App Router pages
+│   ├── page.tsx               ← game (renders AtlasGame component)
+│   ├── leaderboard/page.tsx
+│   ├── support/page.tsx
+│   └── privacy/page.tsx
+├── components/
+│   └── AtlasGame.tsx          ← all game logic, speech recognition, UI (~1400 lines)
+├── lib/
+│   ├── api.ts                 ← typed API client (leaderboard, tickets)
+│   ├── places.ts              ← offline place validation (loads places.json)
+│   └── version.ts             ← APP_VERSION — single source of truth
+├── public/
+│   └── places.json            ← 142k GeoNames place keys, ~6.4MB (offline dict)
+├── scripts/
+│   ├── build-places-db.mjs    ← downloads GeoNames, builds places.json
+│   └── test-places.mjs        ← 27 functional tests for place validation
+├── android/                   ← Capacitor Android project
+│   └── app/build.gradle       ← versionCode + versionName
+├── backend/                   ← Vercel project root
+│   ├── api/
+│   │   ├── leaderboard.js     ← Upstash Redis leaderboard (GET + POST)
+│   │   ├── tickets.js         ← GitHub Issues support tickets (GET + POST)
+│   │   └── stats.js
+│   ├── public/
+│   │   ├── index.html         ← landing page
+│   │   └── game/              ← static Next.js export for /game route (committed)
+│   └── vercel.json            ← rewrites for /game sub-routes
+├── capacitor.config.ts        ← webDir: "out"
+├── next.config.ts             ← conditional basePath via NEXT_PUBLIC_BASE_PATH
+└── .vercelignore              ← excludes node_modules, android, .places-cache, etc.
+```
+
+---
+
+## Dual-build pattern (CRITICAL)
+
+The same Next.js codebase produces **two different builds**:
+
+| Build | Command | basePath | Output | Used by |
+|-------|---------|----------|--------|---------|
+| Capacitor (APK) | `npm run build` | _(none)_ | `out/` | `cap sync android` |
+| Web game | `npm run build:web` | `/game` | `out/` → `backend/public/game/` | Vercel |
+
+**⚠️ Never run `deploy:web` before building the APK.**
+`deploy:web` writes `/game`-prefixed paths into `out/`. If Capacitor copies those files, all CSS and JS paths break in the webview (app renders as unstyled plain HTML).
+
+**Always re-run `npm run build` (no basePath) immediately before `cap sync`.**
+
+---
 
 ## Run locally
 
 ```bash
 npm install
-npm run dev
+npm run dev        # Next.js dev server at http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+---
 
-## Checks
+## Build the Android APK / AAB
+
+Java 21 is required (Capacitor sets `VERSION_21` in the Gradle config). macOS default is often Java 17.
+
+```bash
+# 1. Build Next.js — plain, no basePath
+npm run build
+
+# 2. Sync to Android
+npx cap sync android
+
+# 3. Build (always prefix with Java 21)
+cd android
+JAVA_HOME=$(brew --prefix openjdk@21) ./gradlew assembleRelease bundleRelease
+```
+
+Outputs:
+- `android/app/build/outputs/apk/release/app-release.apk`
+- `android/app/build/outputs/bundle/release/app-release.aab`
+
+### Version bump checklist
+1. `lib/version.ts` — update `APP_VERSION`
+2. `android/app/build.gradle` — increment `versionCode`, update `versionName` to match
+
+---
+
+## Deploy the web game to Vercel
+
+```bash
+# Build with /game basePath + copy static export to backend/public/game/
+npm run deploy:web
+
+# Push — Vercel auto-deploys from changes to backend/
+git add -A && git commit -m "..." && git push
+```
+
+If Vercel auto-deploy is stuck, check for zombie deployments:
+```bash
+npx vercel ls --prod
+# If any show "Initializing" for 10+ min, cancel it:
+npx vercel remove <deployment-url> --yes
+```
+
+---
+
+## Places dictionary
+
+The game validates place names offline using a bundled GeoNames dictionary.
+
+```bash
+# Rebuild from scratch (downloads ~700MB to .places-cache/, takes 5-10 min first run)
+node scripts/build-places-db.mjs
+
+# Run validation tests (27 tests)
+node scripts/test-places.mjs
+```
+
+The `.places-cache/` directory is gitignored. `public/places.json` (the output) **is** committed.
+
+---
+
+## Key features (current — v1.0.8)
+
+- **Voice input** — tap microphone, speak a place name; auto-saves when mic stops
+- **Offline place validation** — 142k GeoNames places; fuzzy "Did you mean?" suggestions (Levenshtein ≤ 2)
+- **Smart Save button** — only appears when the word starts with the right letter and passes validation
+- **Flying word animation** — fuchsia chip animates downward on save so players notice even when the list is off-screen
+- **Global leaderboard** — Upstash Redis; ties favour the older entry (fractional score tie-breaker)
+- **Support page** — open GitHub Issues as tickets; resolved issues shown in a separate section
+- **Version footer** — `v{APP_VERSION}` shown right-aligned on all pages (web + APK)
+
+---
+
+## Linting and type checks
 
 ```bash
 npm run lint
-npm run build
-```
-
-## Capacitor mobile packaging
-
-The project is configured for Capacitor with a static exported web bundle in `out/`.
-
-```bash
-npm install
-npm run cap:sync
-```
-
-Useful commands:
-
-```bash
-npm run cap:open:android
-npm run cap:open:ios
-npm run apk:debug
-```
-
-For a Play Store release bundle after signing is configured:
-
-```bash
-cd android
-./gradlew bundleRelease
-```
-
-## Deploy on Render
-
-This repo includes a `render.yaml` blueprint for a simple Node service that serves the exported `out/` directory.
-
-1. Push the repo to GitHub
-2. In Render, choose **New +** -> **Blueprint**
-3. Select this repository
-4. Render will use:
-
-```bash
-Build: npm install && npm run build
-Start: npm run start -- --listen tcp://0.0.0.0:$PORT
+npm run build   # includes TypeScript check
 ```
