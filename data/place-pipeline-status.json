@@ -1,13 +1,55 @@
 {
-  "updatedAt": null,
+  "updatedAt": "2026-06-19T19:09:57.052Z",
   "source": "redis",
   "endpoint": "/api/place-pipeline",
-  "openRequests": [],
+  "openRequests": [
+    {
+      "id": "1a660d3b-db4d-4e2e-b926-1d7f5b985cb0",
+      "requestedName": "Hooghly",
+      "requestedKey": "hooghly",
+      "canonicalName": null,
+      "status": "review",
+      "source": "manual",
+      "reason": "Queued for review.",
+      "createdAt": "2026-06-19T19:09:57.052Z",
+      "updatedAt": "2026-06-19T19:09:57.052Z",
+      "details": {
+        "playerName": "legacy",
+        "turnLetter": "h",
+        "platform": "web",
+        "appVersion": "1.0.14",
+        "savedTurns": 0,
+        "totalTurns": 0,
+        "suggestion": ""
+      }
+    }
+  ],
   "approvedCountries": [],
-  "needsReview": [],
+  "needsReview": [
+    {
+      "id": "1a660d3b-db4d-4e2e-b926-1d7f5b985cb0",
+      "requestedName": "Hooghly",
+      "requestedKey": "hooghly",
+      "canonicalName": null,
+      "status": "review",
+      "source": "manual",
+      "reason": "Queued for review.",
+      "createdAt": "2026-06-19T19:09:57.052Z",
+      "updatedAt": "2026-06-19T19:09:57.052Z",
+      "details": {
+        "playerName": "legacy",
+        "turnLetter": "h",
+        "platform": "web",
+        "appVersion": "1.0.14",
+        "savedTurns": 0,
+        "totalTurns": 0,
+        "suggestion": ""
+      }
+    }
+  ],
   "totals": {
-    "open": 0,
+    "open": 1,
     "approved": 0,
-    "review": 0
+    "review": 1
   }
 }

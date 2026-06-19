@@ -113,6 +113,20 @@ function publicRecord(record) {
   };
 }
 
+function recordKey(record) {
+  return String(record?.requestedKey ?? record?.requestedName ?? record?.id ?? "").toLowerCase();
+}
+
+function mergeRecords(primary, secondary) {
+  const merged = new Map();
+  for (const record of [...secondary, ...primary]) {
+    const key = recordKey(record);
+    if (!key) continue;
+    merged.set(key, record);
+  }
+  return [...merged.values()];
+}
+
 function buildStatus(records) {
   const openRequests = records
     .filter((record) => record.status !== "approved")
@@ -200,8 +214,15 @@ function extractRequestedName(body) {
 
 async function loadStatus() {
   try {
-    const records = await loadRecordsFromRedis();
-    return buildStatus(records);
+    const liveRecords = await loadRecordsFromRedis();
+    const fallback = readFallbackStatus();
+    const fallbackRecords = [
+      ...(Array.isArray(fallback.openRequests) ? fallback.openRequests : []),
+      ...(Array.isArray(fallback.approvedCountries) ? fallback.approvedCountries : []),
+      ...(Array.isArray(fallback.needsReview) ? fallback.needsReview : []),
+    ];
+
+    return buildStatus(mergeRecords(liveRecords, fallbackRecords));
   } catch {
     return readFallbackStatus();
   }
