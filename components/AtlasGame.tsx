@@ -120,6 +120,14 @@ const GAME_SESSION_STORAGE_KEY = "atlas-game-session";
 const DEFAULT_PLAYER_NAMES = ["Aarav", "Mia"];
 const TURN_TIME_LIMIT_SECONDS = 180;
 
+function formatTurnTimeStep(totalSeconds: number): string {
+  const clamped = Math.max(0, totalSeconds);
+  const steppedSeconds = Math.floor(clamped / 30) * 30;
+  const minutes = Math.floor(steppedSeconds / 60);
+  const seconds = steppedSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
 function makeId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -1376,19 +1384,19 @@ export function AtlasGame() {
                         />
                       </svg>
                     </button>
-                    <p className={`text-xs font-semibold ${turnSecondsRemaining <= 30 ? "text-rose-500" : "text-slate-500"}`}>
-                      {turnSecondsRemaining <= 30 ? "Hurry up — time is running out" : "3 minute turn timer"}
-                    </p>
-                    <p className={`text-xs font-semibold ${
-                        speechMessage
-                          ? speechMessageTone === "error"
-                            ? "text-rose-500"
-                            : speechMessageTone === "success"
-                              ? "text-emerald-600"
-                              : "text-sky-600"
-                          : "text-slate-500"
-                      }`}>
-                        {speechMessage || (isListening ? "Listening… tap to stop" : "Tap to speak")}
+                      <p className={`text-xs font-semibold whitespace-nowrap ${
+                          speechMessage
+                            ? speechMessageTone === "error"
+                              ? "text-rose-500"
+                              : speechMessageTone === "success"
+                                ? "text-emerald-600"
+                                : "text-sky-600"
+                            : "text-slate-500"
+                        }`}>
+                          {speechMessage ||
+                            (isListening
+                              ? `Listening… tap to stop | ${formatTurnTimeStep(turnSecondsRemaining)}`
+                              : `Tap to speak | ${formatTurnTimeStep(turnSecondsRemaining)}`)}
                       </p>
                   </div>
 
