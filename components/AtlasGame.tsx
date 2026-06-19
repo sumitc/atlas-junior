@@ -346,6 +346,9 @@ export function AtlasGame() {
   const placeInputRef = useRef<HTMLInputElement | null>(null);
   // Tracks the latest speech transcript so listeningState/onend handlers can auto-save
   const latestTranscriptRef = useRef("");
+  const nativeSpeechAutoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nativeSpeechAutoSaveHandledRef = useRef(false);
+  const NATIVE_SPEECH_AUTO_SAVE_DELAY_MS = 150;
   const isNativeApp = typeof window !== "undefined" && Capacitor.getPlatform() !== "web";
   const browserSpeechSupported =
     typeof window !== "undefined" &&
@@ -383,6 +386,7 @@ export function AtlasGame() {
 
   useEffect(() => {
     return () => {
+      clearNativeSpeechAutoSaveTimer();
       recognitionRef.current?.abort();
       if (isNativeApp) {
         void SpeechRecognition.stop();
@@ -447,6 +451,32 @@ export function AtlasGame() {
     }, 30);
   }
 
+  function clearNativeSpeechAutoSaveTimer() {
+    if (nativeSpeechAutoSaveTimerRef.current) {
+      clearTimeout(nativeSpeechAutoSaveTimerRef.current);
+      nativeSpeechAutoSaveTimerRef.current = null;
+    }
+  }
+
+  function scheduleNativeSpeechAutoSave(transcript: string) {
+    if (!transcript) {
+      return;
+    }
+
+    clearNativeSpeechAutoSaveTimer();
+    nativeSpeechAutoSaveTimerRef.current = setTimeout(() => {
+      nativeSpeechAutoSaveTimerRef.current = null;
+
+      if (nativeSpeechAutoSaveHandledRef.current) {
+        return;
+      }
+
+      nativeSpeechAutoSaveHandledRef.current = true;
+      dbg(`native auto-save: "${transcript}"`);
+      saveTurnInternal({ overridePlace: transcript });
+    }, NATIVE_SPEECH_AUTO_SAVE_DELAY_MS);
+  }
+
   function updatePlayerName(index: number, value: string) {
     setPlayerNames((current) =>
       current.map((name, currentIndex) => (currentIndex === index ? value : name)),
@@ -462,6 +492,7 @@ export function AtlasGame() {
   }
 
   async function stopListening() {
+    clearNativeSpeechAutoSaveTimer();
     recognitionRef.current?.stop();
     recognitionRef.current?.abort();
 
@@ -526,14 +557,17 @@ export function AtlasGame() {
           updateSpeechMessage(
             transcript ? `I heard: "${transcript}"` : "I am still listening...",
           );
+          scheduleNativeSpeechAutoSave(transcript);
         });
         await SpeechRecognition.addListener("listeningState", ({ status }) => {
           dbg(`listeningState: ${status}`);
           setIsListening(status === "started");
           if (status === "stopped") {
+            clearNativeSpeechAutoSaveTimer();
             const transcript = latestTranscriptRef.current;
-            if (transcript) {
+            if (transcript && !nativeSpeechAutoSaveHandledRef.current) {
               // Auto-save for audio — no Save button tap needed
+              nativeSpeechAutoSaveHandledRef.current = true;
               saveTurnInternal({ overridePlace: transcript });
             } else {
               updateSpeechMessage("Didn't catch that — tap Listen to try again.");
@@ -542,6 +576,8 @@ export function AtlasGame() {
         });
 
         latestTranscriptRef.current = "";
+        nativeSpeechAutoSaveHandledRef.current = false;
+        clearNativeSpeechAutoSaveTimer();
         setDraftPlace("");
         updateSpeechMessage("Listening...");
         await SpeechRecognition.start({
@@ -627,6 +663,8 @@ export function AtlasGame() {
 
     recognitionRef.current = recognition;
     latestTranscriptRef.current = "";
+    nativeSpeechAutoSaveHandledRef.current = false;
+    clearNativeSpeechAutoSaveTimer();
     setDraftPlace("");
     updateSpeechMessage("Listening...");
 
@@ -656,13 +694,15 @@ export function AtlasGame() {
     setPlayerNames(names);
     setDraftPlace("");
     updateSpeechMessage("");
+    clearNativeSpeechAutoSaveTimer();
+    nativeSpeechAutoSaveHandledRef.current = false;
     statsSubmittedRef.current = false;
     setGame(createNewGame(names));
   }
 
-  function saveTurnInternal({ skipDuplicateCheck = false, skipPlaceCheck = false, overridePlace }: { skipDuplicateCheck?: boolean; skipPlaceCheck?: boolean; overridePlace?: string } = {}) {
+  function saveTurnInternal({ skipDuplicateCheck = false, skipPlaceCheck = false, overridePlace }: { skipDuplicateCheck?: boolean; skipPlaceCheck?: boolean; overridePlace?: string } = {}): boolean {
     if (game.phase !== "playing" || !currentPlayer) {
-      return;
+      return false;
     }
 
     // overridePlace lets callers (e.g. "Yes ✓" button) pass the accepted value
@@ -676,7 +716,7 @@ export function AtlasGame() {
       setDuplicateChallenge(null);
       setPlaceCheck(null);
       updateSpeechMessage("No place name is ready yet. Listen again or type it.", "error");
-      return;
+      return false;
     }
 
     if (!placeKey.startsWith(game.requiredLetter)) {
@@ -686,7 +726,7 @@ export function AtlasGame() {
         `This turn must start with ${game.requiredLetter.toUpperCase()}.`,
         "error",
       );
-      return;
+      return false;
     }
 
     const likelyDuplicatePlace = findLikelyDuplicatePlace(placeValue, game.moves);
@@ -708,7 +748,7 @@ export function AtlasGame() {
           : `"${placeValue.trim()}" looks like "${challenge.matchedPlace}", which was already called out. You can still save anyway if this is truly different.`,
         "error",
       );
-      return;
+      return false;
     }
 
     // Place dictionary check — only if not overriding
@@ -716,7 +756,7 @@ export function AtlasGame() {
       const suggestion = findSuggestion(placeValue);
       setDuplicateChallenge(null);
       setPlaceCheck(suggestion ? { status: "suggest", suggestion } : { status: "unknown" });
-      return;
+      return false;
     }
 
     const nextLetter = getLastLetter(normalized);
@@ -727,7 +767,7 @@ export function AtlasGame() {
         "I could not find the next letter. Try saying the place again.",
         "error",
       );
-      return;
+      return false;
     }
 
     const nextPlayerIndex = getNextPlayerIndex(game.players, game.currentPlayerIndex);
@@ -757,6 +797,7 @@ export function AtlasGame() {
     setTimeout(() => setSavedFlash(false), 2000);
     setTimeout(() => setFlyingWord(null), 900);
     updateSpeechMessage("");
+    return true;
   }
 
   function saveTurn(event: FormEvent<HTMLFormElement>) {
@@ -828,6 +869,8 @@ export function AtlasGame() {
     setDraftPlace("");
     setDuplicateChallenge(null);
     updateSpeechMessage("");
+    clearNativeSpeechAutoSaveTimer();
+    nativeSpeechAutoSaveHandledRef.current = false;
     setGame(createSetupState());
   }
 

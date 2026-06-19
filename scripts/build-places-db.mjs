@@ -68,6 +68,22 @@ async function* readLines(filePath) {
   for await (const line of rl) yield line;
 }
 
+async function* readGeoapifyLocalityLines(zipPath) {
+  const dir = dirname(zipPath);
+  execSync(`unzip -o "${zipPath}" -d "${dir}"`, { stdio: "pipe" });
+
+  const files = [
+    join(dir, "in", "place_city.ndjson"),
+    join(dir, "in", "place-town.ndjson"),
+  ];
+
+  for (const filePath of files) {
+    if (!existsSync(filePath)) continue;
+    const rl = createInterface({ input: createReadStream(filePath), crlfDelay: Infinity });
+    for await (const line of rl) yield line;
+  }
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 mkdirSync(CACHE_DIR, { recursive: true });
 
@@ -128,8 +144,47 @@ for await (const line of readLines(admin1File)) {
 }
 console.log(`  ${adminIds.size} regions loaded`);
 
-// ── 4. Geographic features: rivers, lakes, mountains, islands, seas ─────────
-console.log("\n[4/5] Geographic features (rivers/lakes/mountains/islands/seas)");
+// ── 4. India locality bundle (cities/towns) ─────────────────────────────────
+console.log("\n[4/6] India localities (cities/towns)");
+const indiaLocalitiesZip = join(CACHE_DIR, "india-localities.zip");
+await download("https://www.geoapify.com/data-share/localities/in.zip", indiaLocalitiesZip);
+
+let indiaLocalityCount = 0;
+let indiaLocalityAliasCount = 0;
+for await (const line of readGeoapifyLocalityLines(indiaLocalitiesZip)) {
+  const trimmed = line.trim();
+  if (!trimmed) continue;
+
+  const place = JSON.parse(trimmed);
+  const canonicalName = typeof place.name === "string" ? place.name.trim() : "";
+  const canonicalKey = normalize(canonicalName);
+  if (!canonicalKey || canonicalKey.length < 2) continue;
+
+  if (!map[canonicalKey]) {
+    map[canonicalKey] = canonicalName;
+    indiaLocalityCount++;
+  }
+
+  const otherNames = place.other_names;
+  if (!otherNames || typeof otherNames !== "object") continue;
+
+  for (const [aliasKeyName, value] of Object.entries(otherNames)) {
+    if (aliasKeyName !== "old_name" && aliasKeyName !== "name:en") continue;
+    if (typeof value !== "string") continue;
+    for (const alias of value.split(/[;,|]/)) {
+      const aliasName = alias.trim();
+      const aliasKey = normalize(aliasName);
+      if (!aliasKey || aliasKey.length < 2 || map[aliasKey]) continue;
+      map[aliasKey] = canonicalName;
+      indiaLocalityAliasCount++;
+    }
+  }
+}
+console.log(`  ${indiaLocalityCount} India locality names loaded`);
+console.log(`  ${indiaLocalityAliasCount} India locality aliases added`);
+
+// ── 5. Geographic features: rivers, lakes, mountains, islands, seas ─────────
+console.log("\n[5/6] Geographic features (rivers/lakes/mountains/islands/seas)");
 const allCountriesZip = join(CACHE_DIR, "allCountries.zip");
 await download("https://download.geonames.org/export/dump/allCountries.zip", allCountriesZip);
 
@@ -175,8 +230,8 @@ for await (const line of readZippedLines(allCountriesZip)) {
 }
 console.log(`  ${featCount} geographic features loaded`);
 
-// ── 5. English alternate names (preferred/short only) ───────────────────────
-console.log("\n[5/5] English alternate names (preferred + short)");
+// ── 6. English alternate names (preferred/short only) ───────────────────────
+console.log("\n[6/6] English alternate names (preferred + short)");
 const altNamesZip = join(CACHE_DIR, "alternateNamesV2.zip");
 await download("https://download.geonames.org/export/dump/alternateNamesV2.zip", altNamesZip);
 

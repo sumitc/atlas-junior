@@ -148,6 +148,15 @@ test("Alias 'Nile' resolves (from 'River Nile')", () =>
 test("Known city 'Paris' is recognised", () =>
   assertTruthy(isKnownPlace("Paris")));
 
+test("Known Indian city 'Bengaluru' is recognised", () =>
+  assertTruthy(isKnownPlace("Bengaluru")));
+
+test("Common alias 'Bangalore' is recognised", () =>
+  assertTruthy(isKnownPlace("Bangalore")));
+
+test("Known Indian town 'Abohar' is recognised", () =>
+  assertTruthy(isKnownPlace("Abohar")));
+
 test("Known city with accents 'São Paulo' is recognised", () =>
   assertTruthy(isKnownPlace("São Paulo")));
 
