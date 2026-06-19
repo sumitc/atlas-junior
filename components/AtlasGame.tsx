@@ -1384,7 +1384,7 @@ export function AtlasGame() {
                         />
                       </svg>
                     </button>
-                      <p className={`text-xs font-semibold whitespace-nowrap ${
+                      <p className={`w-full max-w-full text-center text-xs font-semibold leading-snug break-words ${
                           speechMessage
                             ? speechMessageTone === "error"
                               ? "text-rose-500"
