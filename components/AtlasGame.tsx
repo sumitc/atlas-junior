@@ -477,12 +477,6 @@ export function AtlasGame() {
       } catch (e) {
         dbg(`stopListening: stop error ${String(e)}`);
       }
-      try {
-        await SpeechRecognition.removeAllListeners();
-        dbg("stopListening: done");
-      } catch (e) {
-        dbg(`stopListening: removeAllListeners error ${String(e)}`);
-      }
     }
   }
 
