@@ -20,7 +20,7 @@ atlas-junior/                  ← Next.js app (frontend + Capacitor source)
 ├── components/
 │   └── AtlasGame.tsx          ← all game logic, speech recognition, UI (~1400 lines)
 ├── lib/
-│   ├── api.ts                 ← typed API client (leaderboard, tickets, place pipeline)
+│   ├── api.ts                 ← typed API client (leaderboard, support form, place pipeline)
 │   ├── places.ts              ← offline place validation (loads places.json)
 │   └── version.ts             ← APP_VERSION — single source of truth
 ├── public/
@@ -33,7 +33,7 @@ atlas-junior/                  ← Next.js app (frontend + Capacitor source)
 ├── backend/                   ← Vercel project root
 │   ├── api/
 │   │   ├── leaderboard.js     ← Upstash Redis leaderboard (GET + POST)
-│   │   ├── tickets.js         ← GitHub Issues support tickets (GET + POST)
+│   │   ├── tickets.js         ← GitHub Issues support form submissions (GET + POST)
 │   │   ├── place-pipeline.js  ← place request intake + approval API (GET + POST)
 │   │   └── stats.js
 │   ├── public/
@@ -134,6 +134,7 @@ The `.places-cache/` directory is gitignored. `public/places.json` (the output) 
 ### Request pipeline
 
 Place requests go through `/api/place-pipeline`. The API auto-approves current-country matches from REST Countries, stores approved overlays in `data/approved-country-additions.json`, and exposes the live queue at `/game/pipeline`.
+The GitHub Actions workflow in `.github/workflows/place-dictionary-pipeline.yml` keeps the repo copy in sync on a schedule, so the pipeline runs even if the local machine is off.
 
 ---
 
@@ -144,7 +145,7 @@ Place requests go through `/api/place-pipeline`. The API auto-approves current-c
 - **Smart Save button** — only appears when the word starts with the right letter and passes validation
 - **Flying word animation** — fuchsia chip animates downward on save so players notice even when the list is off-screen
 - **Global leaderboard** — Upstash Redis; ties favour the older entry (fractional score tie-breaker)
-- **Support page** — open GitHub Issues as tickets; resolved issues shown in a separate section
+- **Support page** — feedback form plus live pipeline summary; no stale open-ticket list
 - **Version footer** — `v{APP_VERSION}` shown right-aligned on all pages (web + APK)
 
 ---

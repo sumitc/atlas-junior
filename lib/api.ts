@@ -19,16 +19,6 @@ export type SubmitResult = {
   onLeaderboard: boolean;
 };
 
-export type Ticket = {
-  number: number;
-  title: string;
-  url: string;
-  state: string;
-  labels: string[];
-  createdAt: string;
-  closedAt: string | null;
-};
-
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   const res = await fetch(api("/leaderboard"));
   if (!res.ok) throw new Error("Could not load leaderboard");
@@ -63,13 +53,6 @@ export async function getStats(): Promise<{ games: number; turns: number }> {
   const res = await fetch(api("/stats"));
   if (!res.ok) throw new Error("Could not load stats");
   return res.json();
-}
-
-export async function getTickets(): Promise<{ issues: Ticket[]; resolved: Ticket[] }> {
-  const res = await fetch(api("/tickets"));
-  if (!res.ok) throw new Error("Could not load tickets");
-  const data = await res.json();
-  return { issues: (data.issues ?? []) as Ticket[], resolved: (data.resolved ?? []) as Ticket[] };
 }
 
 export type PlacePipelineStatus = {

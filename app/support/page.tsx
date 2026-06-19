@@ -2,28 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getTickets, submitTicket, type Ticket } from "@/lib/api";
+import { getPlacePipeline, submitTicket, type PlacePipelineStatus } from "@/lib/api";
 import { APP_VERSION } from "@/lib/version";
 
 type SubmitState = "idle" | "submitting" | "done" | "error";
-
-const labelColour: Record<string, string> = {
-  bug: "bg-rose-100 text-rose-700",
-  enhancement: "bg-sky-100 text-sky-700",
-  "atlas-app": "bg-violet-100 text-violet-700",
-};
-
-function TicketLabel({ name }: { name: string }) {
-  return (
-    <span
-      className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
-        labelColour[name] ?? "bg-slate-100 text-slate-600"
-      }`}
-    >
-      {name}
-    </span>
-  );
-}
 
 export default function SupportPage() {
   const [title, setTitle] = useState("");
@@ -32,18 +14,14 @@ export default function SupportPage() {
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [submittedUrl, setSubmittedUrl] = useState<string | null>(null);
   const [submittedNumber, setSubmittedNumber] = useState<number | null>(null);
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [resolved, setResolved] = useState<Ticket[]>([]);
-  const [ticketsLoading, setTicketsLoading] = useState(true);
+  const [pipeline, setPipeline] = useState<PlacePipelineStatus | null>(null);
+  const [pipelineLoading, setPipelineLoading] = useState(true);
 
   useEffect(() => {
-    getTickets()
-      .then(({ issues, resolved: done }) => {
-        setTickets(issues);
-        setResolved(done);
-      })
+    getPlacePipeline()
+      .then((status) => setPipeline(status))
       .catch(() => {})
-      .finally(() => setTicketsLoading(false));
+      .finally(() => setPipelineLoading(false));
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -55,8 +33,6 @@ export default function SupportPage() {
       setSubmittedUrl(result.url);
       setSubmittedNumber(result.number);
       setSubmitState("done");
-      // Reload tickets list to include the new one
-      getTickets().then(({ issues, resolved: done }) => { setTickets(issues); setResolved(done); }).catch(() => {});
     } catch {
       setSubmitState("error");
     }
@@ -70,7 +46,6 @@ export default function SupportPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-violet-100 via-pink-50 to-cyan-100 px-4 py-8 sm:px-6">
       <div className="mx-auto max-w-lg space-y-6">
-        {/* Header */}
         <div className="flex items-center gap-3">
           <Link
             href="/"
@@ -84,14 +59,11 @@ export default function SupportPage() {
           </div>
         </div>
 
-        {/* Submission form */}
         <article className="rounded-[2rem] bg-white/85 p-5 shadow-xl shadow-violet-200/60 backdrop-blur sm:p-6">
           {submitState === "done" ? (
             <div className="flex flex-col items-center gap-4 py-4 text-center">
               <span className="text-4xl">✅</span>
-              <p className="font-bold text-slate-900">
-                Ticket #{submittedNumber} submitted!
-              </p>
+              <p className="font-bold text-slate-900">Ticket #{submittedNumber} submitted!</p>
               <p className="text-sm text-slate-500">
                 You can track it on GitHub — your ask is now on our radar.
               </p>
@@ -126,7 +98,6 @@ export default function SupportPage() {
                 </p>
               </div>
 
-              {/* Type toggle */}
               <div className="flex gap-2">
                 {(["bug", "feature"] as const).map((t) => (
                   <button
@@ -164,9 +135,7 @@ export default function SupportPage() {
               />
 
               {submitState === "error" && (
-                <p className="text-sm text-rose-600">
-                  Something went wrong. Please try again.
-                </p>
+                <p className="text-sm text-rose-600">Something went wrong. Please try again.</p>
               )}
 
               <button
@@ -180,88 +149,67 @@ export default function SupportPage() {
           )}
         </article>
 
-        {/* Open tickets list */}
         <article className="rounded-[2rem] bg-white/80 p-5 shadow-xl shadow-amber-200/50 backdrop-blur sm:p-6">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-lg font-black text-slate-900">Open tickets</h2>
-            {!ticketsLoading && (
+            <h2 className="text-lg font-black text-slate-900">Live pipeline</h2>
+            {!pipelineLoading && pipeline && (
               <span className="rounded-full bg-gradient-to-r from-cyan-200 to-violet-200 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-700">
-                {tickets.length}
+                {pipeline.totals.open}
               </span>
             )}
           </div>
 
           <div className="mt-4">
-            {ticketsLoading && (
-              <p className="text-sm text-slate-400">Loading tickets…</p>
+            {pipelineLoading && <p className="text-sm text-slate-400">Loading pipeline…</p>}
+            {!pipelineLoading && pipeline && pipeline.openRequests.length === 0 && (
+              <p className="text-sm text-slate-400">No open requests — all clear! 🎉</p>
             )}
-            {!ticketsLoading && tickets.length === 0 && (
-              <p className="text-sm text-slate-400">No open tickets — all clear! 🎉</p>
-            )}
-            {tickets.map((ticket) => (
-              <a
-                key={ticket.number}
-                className="flex items-start gap-3 rounded-[1.25rem] p-3 transition hover:bg-slate-50"
-                href={ticket.url}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                <span className="mt-0.5 text-slate-400">#{ticket.number}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-slate-800">{ticket.title}</p>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {ticket.labels
-                      .filter((l) => l !== "atlas-app")
-                      .map((l) => (
-                        <TicketLabel key={l} name={l} />
-                      ))}
+            {!pipelineLoading && pipeline && pipeline.openRequests.length > 0 && (
+              <div className="space-y-2">
+                {pipeline.openRequests.map((item) => (
+                  <div key={item.id} className="rounded-[1.25rem] bg-white/75 p-3">
+                    <p className="text-sm font-semibold text-slate-800">{item.requestedName}</p>
+                    <p className="text-xs text-slate-500">
+                      {item.status === "approved"
+                        ? `Approved as ${item.canonicalName ?? item.requestedName}`
+                        : item.reason ?? "Queued for review"}
+                    </p>
                   </div>
-                </div>
-                <span className="shrink-0 text-slate-300">→</span>
-              </a>
-            ))}
+                ))}
+              </div>
+            )}
+            {!pipelineLoading && pipeline && (
+              <p className="mt-3 text-xs text-slate-500">
+                The pipeline runs in GitHub Actions and Vercel, so it keeps going even when your device is off.
+              </p>
+            )}
           </div>
         </article>
 
-        {/* Resolved tickets list */}
-        {!ticketsLoading && resolved.length > 0 && (
+        {!pipelineLoading && pipeline && (
           <article className="rounded-[2rem] bg-white/70 p-5 shadow-xl shadow-emerald-200/40 backdrop-blur sm:p-6">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="text-lg font-black text-slate-900">✅ Resolved</h2>
+              <h2 className="text-lg font-black text-slate-900">✅ Approved countries</h2>
               <span className="rounded-full bg-gradient-to-r from-emerald-200 to-teal-200 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-700">
-                {resolved.length}
+                {pipeline.totals.approved}
               </span>
             </div>
-            <div className="mt-4 space-y-0.5">
-              {resolved.map((ticket) => (
-                <a
-                  key={ticket.number}
-                  className="flex items-start gap-3 rounded-[1.25rem] p-3 transition hover:bg-emerald-50/60"
-                  href={ticket.url}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  <span className="mt-0.5 text-slate-300">#{ticket.number}</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-500 line-through decoration-slate-300">
-                      {ticket.title}
+            <div className="mt-4 space-y-2">
+              {pipeline.approvedCountries.length === 0 ? (
+                <p className="text-sm text-slate-500">No approved country requests yet.</p>
+              ) : (
+                pipeline.approvedCountries.map((item) => (
+                  <div key={item.id} className="rounded-[1.25rem] bg-emerald-50 px-4 py-3">
+                    <p className="text-sm font-medium text-slate-700">
+                      {item.requestedName} → {item.canonicalName ?? item.requestedName}
                     </p>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {ticket.labels
-                        .filter((l) => l !== "atlas-app")
-                        .map((l) => (
-                          <TicketLabel key={l} name={l} />
-                        ))}
-                    </div>
                   </div>
-                  <span className="shrink-0 text-emerald-400">✓</span>
-                </a>
-              ))}
+                ))
+              )}
             </div>
           </article>
         )}
 
-        {/* Footer */}
         <div className="flex items-center text-sm text-slate-400">
           <div className="flex flex-1 justify-center gap-6">
             <Link href="/" className="hover:text-slate-600">
