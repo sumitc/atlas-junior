@@ -34,7 +34,19 @@ async function main() {
   }
 
   const status = await res.json();
+  const existingStatus = readJson(OUT_STATUS_FILE, {
+    updatedAt: null,
+    source: "redis+repo",
+    endpoint: "/api/place-pipeline",
+    openRequests: [],
+    approvedCountries: [],
+    needsReview: [],
+    totals: { open: 0, approved: 0, review: 0 },
+  });
   const approved = Array.isArray(status?.approvedCountries) ? status.approvedCountries : [];
+  const existingOpen = Array.isArray(existingStatus.openRequests) ? existingStatus.openRequests : [];
+  const existingApproved = Array.isArray(existingStatus.approvedCountries) ? existingStatus.approvedCountries : [];
+  const existingReview = Array.isArray(existingStatus.needsReview) ? existingStatus.needsReview : [];
   const existing = readJson(OUT_APPROVALS_FILE, { updatedAt: null, entries: [] });
   const merged = new Map(
     (Array.isArray(existing.entries) ? existing.entries : []).map((entry) => [String(entry?.requestedKey ?? entry?.requestedName ?? "").toLowerCase(), entry]),
@@ -56,13 +68,34 @@ async function main() {
     });
   }
 
-  writeJson(OUT_STATUS_FILE, status);
+  const mergedStatusRecords = new Map(
+    [...existingOpen, ...existingApproved, ...existingReview, ...(Array.isArray(status?.openRequests) ? status.openRequests : []), ...approved, ...(Array.isArray(status?.needsReview) ? status.needsReview : [])]
+      .map((entry) => [String(entry?.requestedKey ?? entry?.requestedName ?? entry?.id ?? "").toLowerCase(), entry])
+      .filter(([key]) => key),
+  );
+
+  const mergedStatus = {
+    ...existingStatus,
+    ...status,
+    openRequests: [...mergedStatusRecords.values()].filter((entry) => entry.status !== "approved"),
+    approvedCountries: [...mergedStatusRecords.values()].filter((entry) => entry.status === "approved"),
+    needsReview: [...mergedStatusRecords.values()].filter((entry) => entry.status === "review"),
+  };
+
+  mergedStatus.updatedAt = mergedStatus.updatedAt ?? existingStatus.updatedAt ?? new Date().toISOString();
+  mergedStatus.totals = {
+    open: mergedStatus.openRequests.length,
+    approved: mergedStatus.approvedCountries.length,
+    review: mergedStatus.needsReview.length,
+  };
+
+  writeJson(OUT_STATUS_FILE, mergedStatus);
   writeJson(OUT_APPROVALS_FILE, {
     updatedAt: new Date().toISOString(),
     entries: [...merged.values()].sort((a, b) => a.requestedName.localeCompare(b.requestedName)),
   });
 
-  console.log(`Synced place pipeline: ${approved.length} approved, ${status?.totals?.review ?? 0} review`);
+  console.log(`Synced place pipeline: ${mergedStatus.totals.approved} approved, ${mergedStatus.totals.review} review`);
 }
 
 await main();

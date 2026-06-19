@@ -22,6 +22,26 @@
         "totalTurns": 0,
         "suggestion": ""
       }
+    },
+    {
+      "id": "legacy-alibaba",
+      "requestedName": "Alibaba",
+      "requestedKey": "alibaba",
+      "canonicalName": null,
+      "status": "review",
+      "source": "legacy-github-issue",
+      "reason": "Backfilled from the older support ticket.",
+      "createdAt": "2026-06-19T18:34:34Z",
+      "updatedAt": "2026-06-20T00:39:29.589+05:30",
+      "details": {
+        "playerName": "",
+        "turnLetter": "a",
+        "platform": "web",
+        "appVersion": "1.0.14",
+        "savedTurns": 0,
+        "totalTurns": 0,
+        "suggestion": ""
+      }
     }
   ],
   "approvedCountries": [],
@@ -45,11 +65,31 @@
         "totalTurns": 0,
         "suggestion": ""
       }
+    },
+    {
+      "id": "legacy-alibaba",
+      "requestedName": "Alibaba",
+      "requestedKey": "alibaba",
+      "canonicalName": null,
+      "status": "review",
+      "source": "legacy-github-issue",
+      "reason": "Backfilled from the older support ticket.",
+      "createdAt": "2026-06-19T18:34:34Z",
+      "updatedAt": "2026-06-20T00:39:29.589+05:30",
+      "details": {
+        "playerName": "",
+        "turnLetter": "a",
+        "platform": "web",
+        "appVersion": "1.0.14",
+        "savedTurns": 0,
+        "totalTurns": 0,
+        "suggestion": ""
+      }
     }
   ],
   "totals": {
-    "open": 1,
+    "open": 2,
     "approved": 0,
-    "review": 1
+    "review": 2
   }
 }
