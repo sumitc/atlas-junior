@@ -1,12 +1,12 @@
 "use client";
 
 import { SpeechRecognition } from "@capacitor-community/speech-recognition";
-import { Capacitor } from "@capacitor/core";
+import { Capacitor, registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 import { Share } from "@capacitor/share";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { getLeaderboard, submitScore, submitStats, type LeaderboardEntry } from "@/lib/api";
-import { findSuggestion, isKnownPlace, loadPlaces } from "@/lib/places";
+import { findSuggestion, isBlockedCommonWord, isKnownPlace, loadPlaces } from "@/lib/places";
 import { APP_VERSION } from "@/lib/version";
 
 type Player = {
@@ -80,6 +80,25 @@ interface SpeechRecognitionConstructor {
   new (): BrowserSpeechRecognition;
 }
 
+type OfflineSpeechEvent = {
+  matches?: string[];
+  text?: string;
+  status?: "started" | "stopped";
+  message?: string;
+};
+
+interface OfflineSpeechPlugin {
+  start(): Promise<void>;
+  stop(): Promise<void>;
+  removeAllListeners(): Promise<void>;
+  addListener(
+    eventName: "partialResults" | "finalResult" | "listeningState" | "error",
+    listenerFunc: (event: OfflineSpeechEvent) => void,
+  ): Promise<PluginListenerHandle>;
+}
+
+const OfflineSpeech = registerPlugin<OfflineSpeechPlugin>("OfflineSpeech");
+
 declare global {
   interface Window {
     SpeechRecognition?: SpeechRecognitionConstructor;
@@ -98,6 +117,7 @@ const endGameButton =
 
 const PLAYER_NAMES_STORAGE_KEY = "atlas-player-names";
 const DEFAULT_PLAYER_NAMES = ["Aarav", "Mia"];
+const TURN_TIME_LIMIT_SECONDS = 180;
 
 function makeId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -363,7 +383,64 @@ export function AtlasGame() {
   const [endGameQualifies, setEndGameQualifies] = useState(false);
   const [endGameLeaderboard, setEndGameLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [endGameResult, setEndGameResult] = useState<{ rank: number | null; entryId: string; onLeaderboard: boolean } | null>(null);
+  const [turnSecondsRemaining, setTurnSecondsRemaining] = useState(TURN_TIME_LIMIT_SECONDS);
   const statsSubmittedRef = useRef(false);
+  const turnTimeoutHandledRef = useRef(false);
+  const turnTimerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function clearTurnTimerInterval() {
+    if (turnTimerIntervalRef.current) {
+      clearInterval(turnTimerIntervalRef.current);
+      turnTimerIntervalRef.current = null;
+    }
+  }
+
+  function resetTurnTimer() {
+    clearTurnTimerInterval();
+    turnTimeoutHandledRef.current = false;
+    setTurnSecondsRemaining(TURN_TIME_LIMIT_SECONDS);
+  }
+
+  function clearTurnDraftState() {
+    setDraftPlace("");
+    setDuplicateChallenge(null);
+    setPlaceCheck(null);
+    updateSpeechMessage("");
+    clearNativeSpeechAutoSaveTimer();
+    nativeSpeechAutoSaveHandledRef.current = false;
+    latestTranscriptRef.current = "";
+  }
+
+  function skipTurnInternal(reason = "Time's up. Turn skipped.") {
+    if (game.phase !== "playing" || !currentPlayer) {
+      return false;
+    }
+
+    const nextPlayerIndex = getNextPlayerIndex(game.players, game.currentPlayerIndex);
+    const nextPlayer = game.players[nextPlayerIndex];
+
+    setDuplicateChallenge(null);
+    setPlaceCheck(null);
+    setGame({
+      ...game,
+      currentPlayerIndex: nextPlayerIndex,
+      moves: [
+        ...game.moves,
+        {
+          id: makeId(),
+          playerName: currentPlayer.name,
+          place: "",
+          kind: "skipped",
+        },
+      ],
+      statusMessage: `${reason} ${nextPlayer.name} now plays ${game.requiredLetter.toUpperCase()}.`,
+    });
+    clearTurnDraftState();
+    resetTurnTimer();
+    setSavedFlash(false);
+    setFlyingWord(null);
+    return true;
+  }
 
   const speechSupported = isNativeApp ? nativeSpeechAvailable !== false : browserSpeechSupported;
 
@@ -371,6 +448,10 @@ export function AtlasGame() {
     game.phase === "playing" ? game.players[game.currentPlayerIndex] : null;
   const hasDraftPlace = draftPlace.trim().length > 0;
   const placeKeyOk = hasDraftPlace && createPlaceKey(draftPlace).startsWith(game.requiredLetter);
+  const turnProgress = Math.max(
+    0,
+    Math.min(1, 1 - turnSecondsRemaining / TURN_TIME_LIMIT_SECONDS),
+  );
   // Score counts only saved moves (skipped moves were removed)
   const savedTurns = game.moves.filter((m) => m.kind === "saved").length;
   const totalTurns = game.moves.length;
@@ -387,10 +468,13 @@ export function AtlasGame() {
   useEffect(() => {
     return () => {
       clearNativeSpeechAutoSaveTimer();
+      clearTurnTimerInterval();
       recognitionRef.current?.abort();
       if (isNativeApp) {
         void SpeechRecognition.stop();
         void SpeechRecognition.removeAllListeners();
+        void OfflineSpeech.stop();
+        void OfflineSpeech.removeAllListeners();
       }
     };
   }, [isNativeApp]);
@@ -424,12 +508,50 @@ export function AtlasGame() {
   // Load places dictionary in background when component mounts
   useEffect(() => { void loadPlaces(); }, []);
 
+  /* eslint-disable react-hooks/exhaustive-deps */
+  useEffect(() => {
+    clearTurnTimerInterval();
+
+    if (game.phase !== "playing" || showEndGame) {
+     return undefined;
+    }
+    turnTimeoutHandledRef.current = false;
+    turnTimerIntervalRef.current = setInterval(() => {
+     setTurnSecondsRemaining((current) => {
+        if (current <= 1) {
+          clearTurnTimerInterval();
+         void (async () => {
+           if (turnTimeoutHandledRef.current || game.phase !== "playing") {
+             return;
+           }
+
+           turnTimeoutHandledRef.current = true;
+           dbg("turn timer expired");
+           await stopListening();
+           skipTurnInternal("Time's up.");
+         })();
+         return 0;
+       }
+
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => {
+      clearTurnTimerInterval();
+    };
+  }, [game.phase, game.currentPlayerIndex, showEndGame]);
+  /* eslint-enable react-hooks/exhaustive-deps */
+
   // Clear all validation state when user edits the input (fixes stale duplicateChallenge bug)
   useEffect(() => {
-    setPlaceCheck(null);
-    setDuplicateChallenge(null);
-    updateSpeechMessage("");
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    const clearValidation = window.setTimeout(() => {
+      setPlaceCheck(null);
+      setDuplicateChallenge(null);
+      updateSpeechMessage("");
+    }, 0);
+
+    return () => window.clearTimeout(clearValidation);
   }, [draftPlace]);
 
   function updateSpeechMessage(
@@ -477,6 +599,24 @@ export function AtlasGame() {
     }, NATIVE_SPEECH_AUTO_SAVE_DELAY_MS);
   }
 
+  async function stopOfflineSpeech() {
+    if (!isNativeApp) {
+      return;
+    }
+
+    try {
+      await OfflineSpeech.stop();
+    } catch (e) {
+      dbg(`OfflineSpeech.stop failed: ${String(e)}`);
+    }
+
+    try {
+      await OfflineSpeech.removeAllListeners();
+    } catch (e) {
+      dbg(`OfflineSpeech.removeAllListeners failed: ${String(e)}`);
+    }
+  }
+
   function updatePlayerName(index: number, value: string) {
     setPlayerNames((current) =>
       current.map((name, currentIndex) => (currentIndex === index ? value : name)),
@@ -508,7 +648,70 @@ export function AtlasGame() {
       } catch (e) {
         dbg(`stopListening: stop error ${String(e)}`);
       }
+
+      await stopOfflineSpeech();
     }
+  }
+
+  async function startOfflineListening() {
+    dbg("startOfflineListening: preparing offline model");
+    latestTranscriptRef.current = "";
+    nativeSpeechAutoSaveHandledRef.current = false;
+    clearNativeSpeechAutoSaveTimer();
+    setDraftPlace("");
+    updateSpeechMessage("Listening...");
+
+    await OfflineSpeech.removeAllListeners();
+    await OfflineSpeech.addListener("partialResults", ({ matches }) => {
+      const transcript = matches?.[0]?.trim() ?? "";
+      dbg(`offline partialResults: "${transcript}"`);
+      latestTranscriptRef.current = transcript;
+      setDraftPlace(transcript);
+      updateSpeechMessage(transcript ? `I heard: "${transcript}"` : "I am still listening...");
+    });
+    await OfflineSpeech.addListener("finalResult", ({ text }) => {
+      const transcript = text?.trim() ?? latestTranscriptRef.current.trim();
+      dbg(`offline finalResult: "${transcript}"`);
+      latestTranscriptRef.current = transcript;
+      setDraftPlace(transcript);
+      nativeSpeechAutoSaveHandledRef.current = true;
+      clearNativeSpeechAutoSaveTimer();
+
+      if (transcript) {
+        saveTurnInternal({ overridePlace: transcript });
+      } else {
+        updateSpeechMessage("Didn't catch that — tap Listen to try again.");
+      }
+    });
+    await OfflineSpeech.addListener("listeningState", ({ status }) => {
+      dbg(`offline listeningState: ${status}`);
+      setIsListening(status === "started");
+
+      if (status === "stopped" && !nativeSpeechAutoSaveHandledRef.current) {
+        clearNativeSpeechAutoSaveTimer();
+        const transcript = latestTranscriptRef.current.trim();
+
+        if (transcript) {
+          nativeSpeechAutoSaveHandledRef.current = true;
+          saveTurnInternal({ overridePlace: transcript });
+        } else {
+          updateSpeechMessage("Didn't catch that — tap Listen to try again.");
+        }
+      }
+    });
+    await OfflineSpeech.addListener("error", ({ message }) => {
+      dbg(`offline error: ${message ?? "unknown"}`);
+      updateSpeechMessage(
+        message
+          ? `Offline voice error: ${message}`
+          : "Offline voice could not start. Try again or type the place name.",
+        "error",
+      );
+      setIsListening(false);
+    });
+
+    await OfflineSpeech.start();
+    setIsListening(true);
   }
 
   async function startListening() {
@@ -516,19 +719,11 @@ export function AtlasGame() {
 
     if (isNativeApp) {
       try {
+        const isDeviceOffline = typeof navigator !== "undefined" && navigator.onLine === false;
         dbg("startListening: checking available()");
         const { available } = await SpeechRecognition.available();
         setNativeSpeechAvailable(available);
         dbg(`startListening: available=${available}`);
-
-        if (!available) {
-          updateSpeechMessage(
-            "Speech input is not available on this device, so type the place name instead.",
-            "error",
-          );
-          placeInputRef.current?.focus();
-          return;
-        }
 
         dbg("startListening: checking permissions");
         const currentPermissions = await SpeechRecognition.checkPermissions();
@@ -547,6 +742,13 @@ export function AtlasGame() {
           return;
         }
 
+        if (isDeviceOffline) {
+        dbg("startListening: offline detected, using offline speech immediately");
+        await startOfflineListening();
+        return;
+        }
+
+        const onlineStart = async () => {
         dbg("startListening: removeAllListeners");
         await SpeechRecognition.removeAllListeners();
         await SpeechRecognition.addListener("partialResults", ({ matches }) => {
@@ -587,13 +789,28 @@ export function AtlasGame() {
           popup: false,
         });
         dbg("startListening: start() resolved");
+        setIsListening(true);
+        };
+
+        if (!available) {
+        dbg("startListening: online speech unavailable, switching to offline");
+        await startOfflineListening();
+        return;
+        }
+
+        try {
+        await onlineStart();
+        return;
+        } catch (onlineError) {
+        dbg(`startListening: online speech failed, falling back to offline: ${String(onlineError)}`);
+        await SpeechRecognition.stop().catch(() => undefined);
+        await SpeechRecognition.removeAllListeners().catch(() => undefined);
+        await startOfflineListening();
+        }
       } catch (e) {
         dbg(`startListening: CATCH ${String(e)}`);
         setIsListening(false);
-        updateSpeechMessage(
-          "I could not start the microphone in the app. Allow mic access or type the place name instead.",
-          "error",
-        );
+        updateSpeechMessage("I could not start speech in the app. Allow mic access or type the place name instead.", "error");
         placeInputRef.current?.focus();
       }
       return;
@@ -601,7 +818,7 @@ export function AtlasGame() {
 
     if (!speechSupported) {
       updateSpeechMessage(
-        "Speech input is not available in this browser, so type the place name instead.",
+        "Speech input is not available in this browser. Download the Android APK for offline voice, or type the place name instead.",
         "error",
       );
       placeInputRef.current?.focus();
@@ -612,7 +829,7 @@ export function AtlasGame() {
 
     if (!Recognition) {
       updateSpeechMessage(
-        "Speech input is not available in this browser, so type the place name instead.",
+        "Speech input is not available in this browser. Download the Android APK for offline voice, or type the place name instead.",
         "error",
       );
       placeInputRef.current?.focus();
@@ -651,7 +868,9 @@ export function AtlasGame() {
       updateSpeechMessage(
         event.error === "not-allowed"
           ? "Microphone access was blocked. Allow it or type the place name."
-          : "I could not hear that clearly. Try again or type the place name.",
+          : event.error === "network"
+            ? "Speech needs a network connection here. Download the Android APK for offline voice, or type the place name."
+            : "I could not hear that clearly. Try again or type the place name.",
         "error",
       );
       setIsListening(false);
@@ -692,16 +911,18 @@ export function AtlasGame() {
     }
 
     setPlayerNames(names);
-    setDraftPlace("");
-    updateSpeechMessage("");
-    clearNativeSpeechAutoSaveTimer();
-    nativeSpeechAutoSaveHandledRef.current = false;
+    clearTurnDraftState();
+    resetTurnTimer();
     statsSubmittedRef.current = false;
     setGame(createNewGame(names));
   }
 
   function saveTurnInternal({ skipDuplicateCheck = false, skipPlaceCheck = false, overridePlace }: { skipDuplicateCheck?: boolean; skipPlaceCheck?: boolean; overridePlace?: string } = {}): boolean {
     if (game.phase !== "playing" || !currentPlayer) {
+      return false;
+    }
+
+    if (turnTimeoutHandledRef.current) {
       return false;
     }
 
@@ -752,8 +973,10 @@ export function AtlasGame() {
     }
 
     // Place dictionary check — only if not overriding
-    if (!skipPlaceCheck && !isKnownPlace(placeValue)) {
-      const suggestion = findSuggestion(placeValue);
+    const isBlockedWord = isBlockedCommonWord(placeValue);
+
+    if (!skipPlaceCheck && (isBlockedWord || !isKnownPlace(placeValue))) {
+      const suggestion = isBlockedWord ? null : findSuggestion(placeValue);
       setDuplicateChallenge(null);
       setPlaceCheck(suggestion ? { status: "suggest", suggestion } : { status: "unknown" });
       return false;
@@ -791,12 +1014,12 @@ export function AtlasGame() {
       ],
       statusMessage: `${placeLabel} saved. ${game.players[nextPlayerIndex].name} now plays ${nextLetter.toUpperCase()}.`,
     });
-    setDraftPlace("");
+    clearTurnDraftState();
+    resetTurnTimer();
     setSavedFlash(true);
     setFlyingWord(placeLabel);
     setTimeout(() => setSavedFlash(false), 2000);
     setTimeout(() => setFlyingWord(null), 900);
-    updateSpeechMessage("");
     return true;
   }
 
@@ -807,6 +1030,7 @@ export function AtlasGame() {
 
   function openEndGame() {
     void stopListening();
+    clearTurnTimerInterval();
     setShowEndGame(true);
     setEndGameLoading(true);
     setEndGameResult(null);
@@ -861,16 +1085,14 @@ export function AtlasGame() {
 
   function returnToSetup() {
     void stopListening();
+    clearTurnTimerInterval();
     // Silently submit stats if not yet done (e.g. user resets without opening End Game)
     if (!statsSubmittedRef.current && game.phase === "playing") {
       statsSubmittedRef.current = true;
       void submitStats(totalTurns).catch(() => {});
     }
-    setDraftPlace("");
-    setDuplicateChallenge(null);
-    updateSpeechMessage("");
-    clearNativeSpeechAutoSaveTimer();
-    nativeSpeechAutoSaveHandledRef.current = false;
+    clearTurnDraftState();
+    resetTurnTimer();
     setGame(createSetupState());
   }
 
@@ -978,13 +1200,24 @@ export function AtlasGame() {
           ) : (
             <section className="grid gap-5">
               <div className="flex flex-wrap items-center gap-3 rounded-[2rem] bg-white/75 p-4 shadow-lg shadow-cyan-200/50 backdrop-blur">
-                <div className="rounded-full bg-gradient-to-r from-amber-300 via-orange-300 to-pink-300 px-5 py-3 text-center shadow">
-                  <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-700">
-                    Letter
-                  </p>
-                  <p className="text-3xl font-black uppercase text-slate-900">
-                    {game.requiredLetter}
-                  </p>
+                <div
+                  className="rounded-full p-1 shadow transition-[filter,box-shadow] duration-300"
+                  style={{
+                    background: `conic-gradient(from 270deg, rgba(236,72,153,0.95) 0deg ${turnProgress * 360}deg, rgba(255,255,255,0.25) ${turnProgress * 360}deg 360deg)`,
+                    boxShadow:
+                      turnProgress > 0.9
+                        ? "0 0 24px rgba(236,72,153,0.45)"
+                        : "0 8px 18px rgba(236,72,153,0.18)",
+                  }}
+                >
+                  <div className="rounded-full bg-gradient-to-r from-amber-300 via-orange-300 to-pink-300 px-5 py-3 text-center shadow-inner">
+                    <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-700">
+                      Letter
+                    </p>
+                    <p className="text-3xl font-black uppercase text-slate-900">
+                      {game.requiredLetter}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="min-w-0 flex-1">
@@ -1059,6 +1292,9 @@ export function AtlasGame() {
                         />
                       </svg>
                     </button>
+                    <p className={`text-xs font-semibold ${turnSecondsRemaining <= 30 ? "text-rose-500" : "text-slate-500"}`}>
+                      {turnSecondsRemaining <= 30 ? "Hurry up — time is running out" : "3 minute turn timer"}
+                    </p>
                     <p className={`text-xs font-semibold ${
                         speechMessage
                           ? speechMessageTone === "error"
