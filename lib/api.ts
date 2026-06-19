@@ -75,30 +75,10 @@ export async function getTickets(): Promise<{ issues: Ticket[]; resolved: Ticket
 export type PlacePipelineStatus = {
   updatedAt: string | null;
   source: string;
-  openRequests: Array<{
-    number: number;
-    title: string;
-    url: string;
-    requestedName: string;
-    createdAt: string;
-  }>;
-  approvedCountries: Array<{
-    number: number;
-    title: string;
-    url: string;
-    requestedName: string;
-    createdAt: string;
-    canonicalName: string;
-    source: string;
-  }>;
-  needsReview: Array<{
-    number: number;
-    title: string;
-    url: string;
-    requestedName: string;
-    createdAt: string;
-    reason: string;
-  }>;
+  endpoint: string;
+  openRequests: PlacePipelineRequest[];
+  approvedCountries: PlacePipelineRequest[];
+  needsReview: PlacePipelineRequest[];
   totals: {
     open: number;
     approved: number;
@@ -106,10 +86,58 @@ export type PlacePipelineStatus = {
   };
 };
 
+export type PlacePipelineRequest = {
+  id: string;
+  requestedName: string;
+  requestedKey: string;
+  canonicalName: string | null;
+  status: "approved" | "review";
+  source: string;
+  reason: string | null;
+  createdAt: string;
+  updatedAt: string;
+  details: {
+    playerName: string;
+    turnLetter: string;
+    platform: string;
+    appVersion: string;
+    savedTurns: number;
+    totalTurns: number;
+    suggestion: string;
+  };
+};
+
 export async function getPlacePipeline(): Promise<PlacePipelineStatus> {
   const res = await fetch(api("/place-pipeline"));
   if (!res.ok) throw new Error("Could not load place pipeline");
   return res.json();
+}
+
+export async function submitPlaceRequest(params: {
+  requestedName: string;
+  playerName: string;
+  turnLetter: string;
+  platform: string;
+  appVersion: string;
+  savedTurns: number;
+  totalTurns: number;
+  suggestion: string;
+}): Promise<{
+  requestId: string;
+  status: "approved" | "review";
+  canonicalName: string | null;
+  deduped: boolean;
+  message: string;
+}> {
+  const res = await fetch(api("/place-pipeline"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Could not submit place request");
+  return data;
 }
 
 export async function submitTicket(params: {

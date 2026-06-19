@@ -7,7 +7,8 @@ import { APP_VERSION } from "@/lib/version";
 
 const emptyStatus: PlacePipelineStatus = {
   updatedAt: null,
-  source: "github-issues",
+  source: "redis",
+  endpoint: "/api/place-pipeline",
   openRequests: [],
   approvedCountries: [],
   needsReview: [],
@@ -48,6 +49,8 @@ export default function PipelinePage() {
             <span className="rounded-full bg-amber-100 px-3 py-1">Review: {status.totals.review}</span>
           </div>
           <p className="mt-3 text-sm text-slate-500">
+            Endpoint: <code className="rounded bg-slate-100 px-1.5 py-0.5">/api/place-pipeline</code>
+            {" · "}
             Updated {status.updatedAt ? new Date(status.updatedAt).toLocaleString() : "never"}.
             {loading ? " Loading..." : ""}
           </p>
@@ -60,13 +63,11 @@ export default function PipelinePage() {
               <p className="text-sm text-slate-500">No approved country requests yet.</p>
             ) : (
               status.approvedCountries.map((item) => (
-                <div key={`${item.number}-${item.requestedName}`} className="rounded-2xl bg-emerald-50 px-4 py-3">
+                <div key={item.id} className="rounded-2xl bg-emerald-50 px-4 py-3">
                   <p className="font-semibold text-slate-800">
-                    {item.requestedName} → {item.canonicalName}
+                    {item.requestedName} → {item.canonicalName ?? item.requestedName}
                   </p>
-                  <a className="text-xs text-emerald-700 underline" href={item.url} rel="noreferrer" target="_blank">
-                    Issue #{item.number}
-                  </a>
+                  <p className="text-xs text-emerald-700">Source: {item.source}</p>
                 </div>
               ))
             )}
@@ -80,7 +81,7 @@ export default function PipelinePage() {
               <p className="text-sm text-slate-500">No review items right now.</p>
             ) : (
               status.needsReview.map((item) => (
-                <div key={`${item.number}-${item.requestedName}`} className="rounded-2xl bg-amber-50 px-4 py-3">
+                <div key={item.id} className="rounded-2xl bg-amber-50 px-4 py-3">
                   <p className="font-semibold text-slate-800">{item.requestedName}</p>
                   <p className="text-sm text-amber-800">{item.reason}</p>
                 </div>

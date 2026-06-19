@@ -4,16 +4,12 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "17 * * * *"
-  issues:
-    types: [opened, edited, labeled]
 
 permissions:
   contents: write
-  issues: read
 
 jobs:
   sync:
-    if: github.repository == 'sumitc/atlas-junior'
     runs-on: ubuntu-latest
 
     steps:
@@ -28,15 +24,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Process place requests
-        run: npm run process:place-requests
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          GITHUB_REPO: sumitc/atlas-junior
-
-      - name: Apply approved country aliases
-        run: npm run apply:place-approvals
 
       - name: Refresh web export
         run: npm run deploy:web

@@ -5,7 +5,13 @@ import { Capacitor, registerPlugin, type PluginListenerHandle } from "@capacitor
 import { Share } from "@capacitor/share";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { getLeaderboard, submitScore, submitStats, submitTicket, type LeaderboardEntry } from "@/lib/api";
+import {
+  getLeaderboard,
+  submitPlaceRequest,
+  submitScore,
+  submitStats,
+  type LeaderboardEntry,
+} from "@/lib/api";
 import { findSuggestion, isBlockedCommonWord, isKnownPlace, loadPlaces } from "@/lib/places";
 import { APP_VERSION } from "@/lib/version";
 
@@ -986,27 +992,23 @@ export function AtlasGame() {
     try {
       const suggestedPlace =
         placeCheck?.status === "suggest" ? placeCheck.suggestion : null;
-      const details = [
-        `Please add "${requestedPlace}" to the Atlas place dictionary.`,
-        suggestedPlace ? `The app suggested "${suggestedPlace}", but this is a different place.` : null,
-        `Player: ${currentPlayer.name}`,
-        `Turn letter: ${game.requiredLetter.toUpperCase()}`,
-        `Platform: ${Capacitor.getPlatform()}`,
-        `App version: ${APP_VERSION}`,
-        `Current turn count: ${savedTurns} saved / ${totalTurns} total`,
-      ].filter(Boolean);
 
-      await submitTicket({
-        title: `Add place request: ${requestedPlace}`,
-        body: details.join("\n\n"),
-        type: "feature",
+      const result = await submitPlaceRequest({
+        requestedName: requestedPlace,
+        playerName: currentPlayer.name,
+        turnLetter: game.requiredLetter,
+        platform: Capacitor.getPlatform(),
+        appVersion: APP_VERSION,
+        savedTurns,
+        totalTurns,
+        suggestion: suggestedPlace ?? "",
       });
       setPlaceRequestState("done");
-      updateSpeechMessage("Request sent — we’ll review it.", "success");
+      updateSpeechMessage(result.message, "success");
     } catch (error) {
       setPlaceRequestState("error");
       setPlaceRequestError(error instanceof Error ? error.message : "Could not submit request");
-      updateSpeechMessage("Could not send the request. Try again or use Support.", "error");
+      updateSpeechMessage("Could not send the request. Try again or check the pipeline.", "error");
     }
   }
 
@@ -1452,13 +1454,14 @@ export function AtlasGame() {
                         <button
                           className="flex-1 rounded-xl bg-amber-200 px-3 py-1.5 font-semibold hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
                           onClick={() => saveTurnInternal({ overridePlace: placeCheck.suggestion })}
+                          disabled={placeRequestState === "submitting"}
                           type="button"
                         >
                           Yes ✓
                         </button>
                         <button
                           className="flex-1 rounded-xl bg-white border border-amber-300 px-3 py-1.5 font-semibold hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-60"
-                          disabled={placeRequestState !== "idle"}
+                          disabled={placeRequestState === "submitting"}
                           onClick={() => void requestPlaceAdd()}
                           type="button"
                         >
@@ -1479,7 +1482,7 @@ export function AtlasGame() {
                       <p>&#34;{draftPlace.trim()}&#34; isn&#39;t in our map.</p>
                       <button
                         className="w-full rounded-xl bg-white border border-amber-300 px-3 py-1.5 font-semibold hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-60"
-                        disabled={placeRequestState !== "idle"}
+                        disabled={placeRequestState === "submitting"}
                         onClick={() => void requestPlaceAdd()}
                         type="button"
                       >

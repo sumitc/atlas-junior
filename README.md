@@ -20,7 +20,7 @@ atlas-junior/                  ← Next.js app (frontend + Capacitor source)
 ├── components/
 │   └── AtlasGame.tsx          ← all game logic, speech recognition, UI (~1400 lines)
 ├── lib/
-│   ├── api.ts                 ← typed API client (leaderboard, tickets)
+│   ├── api.ts                 ← typed API client (leaderboard, tickets, place pipeline)
 │   ├── places.ts              ← offline place validation (loads places.json)
 │   └── version.ts             ← APP_VERSION — single source of truth
 ├── public/
@@ -34,6 +34,7 @@ atlas-junior/                  ← Next.js app (frontend + Capacitor source)
 │   ├── api/
 │   │   ├── leaderboard.js     ← Upstash Redis leaderboard (GET + POST)
 │   │   ├── tickets.js         ← GitHub Issues support tickets (GET + POST)
+│   │   ├── place-pipeline.js  ← place request intake + approval API (GET + POST)
 │   │   └── stats.js
 │   ├── public/
 │   │   ├── index.html         ← landing page
@@ -132,13 +133,11 @@ The `.places-cache/` directory is gitignored. `public/places.json` (the output) 
 
 ### Request pipeline
 
-Place requests create GitHub issues. A workflow classifies them, auto-approves current-country aliases from REST Countries, and stores the approved overlay in `data/approved-country-additions.json`. That overlay is merged into `public/places.json` and picked up by both the web export and the Android build.
-
-Track it at `/game/pipeline`.
+Place requests go through `/api/place-pipeline`. The API auto-approves current-country matches from REST Countries, stores approved overlays in `data/approved-country-additions.json`, and exposes the live queue at `/game/pipeline`.
 
 ---
 
-## Key features (current — v1.0.8)
+## Key features (current — v1.0.13)
 
 - **Voice input** — tap microphone, speak a place name; auto-saves when mic stops
 - **Offline place validation** — 142k GeoNames places; fuzzy "Did you mean?" suggestions (Levenshtein ≤ 2)
