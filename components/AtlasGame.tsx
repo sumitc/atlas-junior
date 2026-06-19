@@ -469,9 +469,9 @@ export function AtlasGame() {
     game.phase === "playing" ? game.players[game.currentPlayerIndex] : null;
   const hasDraftPlace = draftPlace.trim().length > 0;
   const placeKeyOk = hasDraftPlace && createPlaceKey(draftPlace).startsWith(game.requiredLetter);
-  const turnProgress = Math.max(
+  const turnRemainingProgress = Math.max(
     0,
-    Math.min(1, 1 - turnSecondsRemaining / TURN_TIME_LIMIT_SECONDS),
+    Math.min(1, turnSecondsRemaining / TURN_TIME_LIMIT_SECONDS),
   );
   // Score counts only saved moves (skipped moves were removed)
   const savedTurns = game.moves.filter((m) => m.kind === "saved").length;
@@ -1287,9 +1287,9 @@ export function AtlasGame() {
                 <div
                   className="rounded-full p-1 shadow transition-[filter,box-shadow] duration-300"
                   style={{
-                    background: `conic-gradient(from 270deg, rgba(236,72,153,0.95) 0deg ${turnProgress * 360}deg, rgba(255,255,255,0.25) ${turnProgress * 360}deg 360deg)`,
+                    background: `conic-gradient(from 270deg, rgba(236,72,153,0.95) 0deg ${turnRemainingProgress * 360}deg, rgba(255,255,255,0.25) ${turnRemainingProgress * 360}deg 360deg)`,
                     boxShadow:
-                      turnProgress > 0.9
+                      turnRemainingProgress < 0.1
                         ? "0 0 24px rgba(236,72,153,0.45)"
                         : "0 8px 18px rgba(236,72,153,0.18)",
                   }}
