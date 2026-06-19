@@ -88,14 +88,14 @@ function getLastLetter(normalized) {
  * Simulates saveTurnInternal logic (pure, returns outcome instead of setting state).
  * outcome: "saved" | "letter_error" | "duplicate" | "suggest" | "unknown" | "no_next_letter"
  */
-function simulateSave(placeValue, { requiredLetter, usedPlaceKeys = [], skipPlaceCheck = false, skipDuplicateCheck = false } = {}) {
+function simulateSave(placeValue, { requiredLetter, usedPlaceKeys = [], skipDuplicateCheck = false } = {}) {
   const placeKey = createPlaceKey(placeValue);
   if (!placeKey) return { outcome: "empty" };
   if (!placeKey.startsWith(requiredLetter)) return { outcome: "letter_error" };
   if (!skipDuplicateCheck && usedPlaceKeys.includes(placeKey)) return { outcome: "duplicate" };
 
   const blocked = isBlockedCommonWord(placeValue);
-  if (!skipPlaceCheck && (blocked || !isKnownPlace(placeValue))) {
+  if (blocked || !isKnownPlace(placeValue)) {
     const suggestion = blocked ? null : findSuggestion(placeValue);
     return suggestion
       ? { outcome: "suggest", suggestion }
@@ -263,26 +263,14 @@ test("Accepting suggestion (overridePlace) saves correctly", () => {
   // First save attempt shows suggestion
   const first = simulateSave("Prayagrajj", { requiredLetter: "p" });
   assert(first.outcome, "suggest");
-  // User clicks Yes → saveTurnInternal({ overridePlace: suggestion, skipPlaceCheck: true })
-  const second = simulateSave(first.suggestion, { requiredLetter: "p", skipPlaceCheck: true });
+  const second = simulateSave(first.suggestion, { requiredLetter: "p" });
   assert(second.outcome, "saved", `Expected saved, got: ${second.outcome}`);
   console.log(`     Saved as: "${second.savedAs}", next letter: ${second.nextLetter}`);
-});
-
-test("'Save mine →' saves original unknown word", () => {
-  const r = simulateSave("Prayagrajj", { requiredLetter: "p", skipPlaceCheck: true });
-  assert(r.outcome, "saved");
-  assert(r.savedAs, "Prayagrajj");
 });
 
 test("Totally unknown word with no match shows unknown prompt", () => {
   const r = simulateSave("xyzzyabc", { requiredLetter: "x" });
   assert(r.outcome, "unknown");
-});
-
-test("'Save anyway →' saves unknown word", () => {
-  const r = simulateSave("xyzzyabc", { requiredLetter: "x", skipPlaceCheck: true });
-  assert(r.outcome, "saved");
 });
 
 test("Duplicate place shows duplicate warning", () => {

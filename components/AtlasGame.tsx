@@ -5,7 +5,7 @@ import { Capacitor, registerPlugin, type PluginListenerHandle } from "@capacitor
 import { Share } from "@capacitor/share";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { getLeaderboard, submitScore, submitStats, type LeaderboardEntry } from "@/lib/api";
+import { getLeaderboard, submitScore, submitStats, submitTicket, type LeaderboardEntry } from "@/lib/api";
 import { findSuggestion, isBlockedCommonWord, isKnownPlace, loadPlaces } from "@/lib/places";
 import { APP_VERSION } from "@/lib/version";
 
@@ -116,6 +116,7 @@ const endGameButton =
   "inline-flex items-center justify-center rounded-full border border-slate-400 bg-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:text-slate-300";
 
 const PLAYER_NAMES_STORAGE_KEY = "atlas-player-names";
+const GAME_SESSION_STORAGE_KEY = "atlas-game-session";
 const DEFAULT_PLAYER_NAMES = ["Aarav", "Mia"];
 const TURN_TIME_LIMIT_SECONDS = 180;
 
@@ -323,6 +324,51 @@ function getInitialPlayerNames(): string[] {
   return DEFAULT_PLAYER_NAMES;
 }
 
+type PersistedGameSession = {
+  game: GameState;
+  draftPlace: string;
+  turnSecondsRemaining: number;
+};
+
+function isPersistedGameSession(value: unknown): value is PersistedGameSession {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<PersistedGameSession> & { game?: Partial<GameState> };
+
+  return (
+    !!candidate.game &&
+    (candidate.game.phase === "playing" || candidate.game.phase === "setup") &&
+    Array.isArray(candidate.game.players) &&
+    Array.isArray(candidate.game.moves) &&
+    typeof candidate.draftPlace === "string" &&
+    typeof candidate.turnSecondsRemaining === "number"
+  );
+}
+
+function getInitialGameSession(): PersistedGameSession | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const raw = window.sessionStorage.getItem(GAME_SESSION_STORAGE_KEY);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (isPersistedGameSession(parsed) && parsed.game.phase === "playing") {
+      return parsed;
+    }
+  } catch {
+    window.sessionStorage.removeItem(GAME_SESSION_STORAGE_KEY);
+  }
+
+  return null;
+}
+
 const MEDALS = ["🥇", "🥈", "🥉"];
 
 function TopThree({ entries, highlightId }: { entries: import("@/lib/api").LeaderboardEntry[]; highlightId?: string }) {
@@ -346,8 +392,8 @@ function TopThree({ entries, highlightId }: { entries: import("@/lib/api").Leade
 
 export function AtlasGame() {
   const [playerNames, setPlayerNames] = useState(getInitialPlayerNames);
-  const [game, setGame] = useState<GameState>(createSetupState);
-  const [draftPlace, setDraftPlace] = useState("");
+  const [game, setGame] = useState<GameState>(() => getInitialGameSession()?.game ?? createSetupState());
+  const [draftPlace, setDraftPlace] = useState(() => getInitialGameSession()?.draftPlace ?? "");
   const [speechMessage, setSpeechMessage] = useState("");
   const [speechMessageTone, setSpeechMessageTone] = useState<"neutral" | "error" | "success">(
     "neutral",
@@ -383,7 +429,11 @@ export function AtlasGame() {
   const [endGameQualifies, setEndGameQualifies] = useState(false);
   const [endGameLeaderboard, setEndGameLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [endGameResult, setEndGameResult] = useState<{ rank: number | null; entryId: string; onLeaderboard: boolean } | null>(null);
-  const [turnSecondsRemaining, setTurnSecondsRemaining] = useState(TURN_TIME_LIMIT_SECONDS);
+  const [turnSecondsRemaining, setTurnSecondsRemaining] = useState(
+    () => getInitialGameSession()?.turnSecondsRemaining ?? TURN_TIME_LIMIT_SECONDS,
+  );
+  const [placeRequestState, setPlaceRequestState] = useState<"idle" | "submitting" | "done" | "error">("idle");
+  const [placeRequestError, setPlaceRequestError] = useState<string | null>(null);
   const statsSubmittedRef = useRef(false);
   const turnTimeoutHandledRef = useRef(false);
   const turnTimerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -406,6 +456,8 @@ export function AtlasGame() {
     setDuplicateChallenge(null);
     setPlaceCheck(null);
     updateSpeechMessage("");
+    setPlaceRequestState("idle");
+    setPlaceRequestError(null);
     clearNativeSpeechAutoSaveTimer();
     nativeSpeechAutoSaveHandledRef.current = false;
     latestTranscriptRef.current = "";
@@ -508,6 +560,25 @@ export function AtlasGame() {
   // Load places dictionary in background when component mounts
   useEffect(() => { void loadPlaces(); }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (game.phase !== "playing") {
+      window.sessionStorage.removeItem(GAME_SESSION_STORAGE_KEY);
+      return;
+    }
+
+    const payload: PersistedGameSession = {
+      game,
+      draftPlace,
+      turnSecondsRemaining,
+    };
+
+    window.sessionStorage.setItem(GAME_SESSION_STORAGE_KEY, JSON.stringify(payload));
+  }, [draftPlace, game, turnSecondsRemaining]);
+
   /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     clearTurnTimerInterval();
@@ -549,6 +620,8 @@ export function AtlasGame() {
       setPlaceCheck(null);
       setDuplicateChallenge(null);
       updateSpeechMessage("");
+      setPlaceRequestState("idle");
+      setPlaceRequestError(null);
     }, 0);
 
     return () => window.clearTimeout(clearValidation);
@@ -917,7 +990,47 @@ export function AtlasGame() {
     setGame(createNewGame(names));
   }
 
-  function saveTurnInternal({ skipDuplicateCheck = false, skipPlaceCheck = false, overridePlace }: { skipDuplicateCheck?: boolean; skipPlaceCheck?: boolean; overridePlace?: string } = {}): boolean {
+  async function requestPlaceAdd(): Promise<void> {
+    if (game.phase !== "playing" || !currentPlayer) {
+      return;
+    }
+
+    const requestedPlace = draftPlace.trim();
+    if (!requestedPlace) {
+      return;
+    }
+
+    setPlaceRequestState("submitting");
+    setPlaceRequestError(null);
+
+    try {
+      const suggestedPlace =
+        placeCheck?.status === "suggest" ? placeCheck.suggestion : null;
+      const details = [
+        `Please add "${requestedPlace}" to the Atlas place dictionary.`,
+        suggestedPlace ? `The app suggested "${suggestedPlace}", but this is a different place.` : null,
+        `Player: ${currentPlayer.name}`,
+        `Turn letter: ${game.requiredLetter.toUpperCase()}`,
+        `Platform: ${Capacitor.getPlatform()}`,
+        `App version: ${APP_VERSION}`,
+        `Current turn count: ${savedTurns} saved / ${totalTurns} total`,
+      ].filter(Boolean);
+
+      await submitTicket({
+        title: `Add place request: ${requestedPlace}`,
+        body: details.join("\n\n"),
+        type: "feature",
+      });
+      setPlaceRequestState("done");
+      updateSpeechMessage("Request sent — we’ll review it.", "success");
+    } catch (error) {
+      setPlaceRequestState("error");
+      setPlaceRequestError(error instanceof Error ? error.message : "Could not submit request");
+      updateSpeechMessage("Could not send the request. Try again or use Support.", "error");
+    }
+  }
+
+  function saveTurnInternal({ skipDuplicateCheck = false, overridePlace }: { skipDuplicateCheck?: boolean; overridePlace?: string } = {}): boolean {
     if (game.phase !== "playing" || !currentPlayer) {
       return false;
     }
@@ -975,7 +1088,7 @@ export function AtlasGame() {
     // Place dictionary check — only if not overriding
     const isBlockedWord = isBlockedCommonWord(placeValue);
 
-    if (!skipPlaceCheck && (isBlockedWord || !isKnownPlace(placeValue))) {
+    if (isBlockedWord || !isKnownPlace(placeValue)) {
       const suggestion = isBlockedWord ? null : findSuggestion(placeValue);
       setDuplicateChallenge(null);
       setPlaceCheck(suggestion ? { status: "suggest", suggestion } : { status: "unknown" });
@@ -1360,31 +1473,47 @@ export function AtlasGame() {
                       <div className="flex gap-2">
                         <button
                           className="flex-1 rounded-xl bg-amber-200 px-3 py-1.5 font-semibold hover:bg-amber-300"
-                          onClick={() => saveTurnInternal({ overridePlace: placeCheck.suggestion, skipPlaceCheck: true })}
+                          onClick={() => saveTurnInternal({ overridePlace: placeCheck.suggestion })}
                           type="button"
                         >
                           Yes ✓
                         </button>
                         <button
-                          className="flex-1 rounded-xl bg-white border border-amber-300 px-3 py-1.5 font-semibold hover:bg-amber-50"
-                          onClick={() => saveTurnInternal({ skipPlaceCheck: true })}
+                          className="flex-1 rounded-xl bg-white border border-amber-300 px-3 py-1.5 font-semibold hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={placeRequestState === "submitting"}
+                          onClick={() => void requestPlaceAdd()}
                           type="button"
                         >
-                          Save mine →
+                          {placeRequestState === "submitting"
+                            ? "Requesting…"
+                            : placeRequestState === "done"
+                              ? "Requested"
+                              : "Request add"}
                         </button>
                       </div>
+                      {placeRequestError && (
+                        <p className="text-xs text-rose-600">{placeRequestError}</p>
+                      )}
                     </div>
                   )}
                   {placeCheck?.status === "unknown" && (
                     <div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800 space-y-2">
                       <p>&#34;{draftPlace.trim()}&#34; isn&#39;t in our map.</p>
                       <button
-                        className="w-full rounded-xl bg-white border border-amber-300 px-3 py-1.5 font-semibold hover:bg-amber-50"
-                        onClick={() => saveTurnInternal({ skipPlaceCheck: true })}
+                        className="w-full rounded-xl bg-white border border-amber-300 px-3 py-1.5 font-semibold hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={placeRequestState === "submitting"}
+                        onClick={() => void requestPlaceAdd()}
                         type="button"
                       >
-                        Save anyway →
+                        {placeRequestState === "submitting"
+                          ? "Requesting…"
+                          : placeRequestState === "done"
+                            ? "Requested"
+                            : "Request add"}
                       </button>
+                      {placeRequestError && (
+                        <p className="text-xs text-rose-600">{placeRequestError}</p>
+                      )}
                     </div>
                   )}
                 </form>
