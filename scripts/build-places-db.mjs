@@ -68,20 +68,18 @@ async function* readLines(filePath) {
   for await (const line of rl) yield line;
 }
 
-async function* readGeoapifyLocalityLines(zipPath) {
+function prepareHdxPlaceTsv(zipPath) {
   const dir = dirname(zipPath);
-  execSync(`unzip -o "${zipPath}" -d "${dir}"`, { stdio: "pipe" });
+  const outPath = join(dir, "hotosm_ind_populated_places.tsv");
+  const jqFilter =
+    '.features[] | select(.properties.place != null and .properties.name != null and (.properties.place == "city" or .properties.place == "town" or .properties.place == "village" or .properties.place == "hamlet" or .properties.place == "suburb" or .properties.place == "neighbourhood" or .properties.place == "locality" or .properties.place == "isolated_dwelling" or .properties.place == "quarter")) | [.properties.name, (.properties.name_en // ""), (.properties.name_latin // ""), .properties.place, (.properties.adm1_name // ""), (.properties.adm2_name // ""), (.properties.adm3_name // ""), (.properties.adm4_name // "")] | @tsv';
 
-  const files = [
-    join(dir, "in", "place_city.ndjson"),
-    join(dir, "in", "place-town.ndjson"),
-  ];
+  execSync(
+    `unzip -p "${zipPath}" populated_places.geojson | jq -r '${jqFilter}' > "${outPath}"`,
+    { stdio: "pipe" },
+  );
 
-  for (const filePath of files) {
-    if (!existsSync(filePath)) continue;
-    const rl = createInterface({ input: createReadStream(filePath), crlfDelay: Infinity });
-    for await (const line of rl) yield line;
-  }
+  return outPath;
 }
 
 // ── Main ────────────────────────────────────────────────────────────────────
@@ -144,44 +142,80 @@ for await (const line of readLines(admin1File)) {
 }
 console.log(`  ${adminIds.size} regions loaded`);
 
-// ── 4. India locality bundle (cities/towns) ─────────────────────────────────
-console.log("\n[4/6] India localities (cities/towns)");
-const indiaLocalitiesZip = join(CACHE_DIR, "india-localities.zip");
-await download("https://www.geoapify.com/data-share/localities/in.zip", indiaLocalitiesZip);
+// ── 4. India populated places (cities/towns/villages/hamlets) ──────────────
+console.log("\n[4/6] India populated places");
+const hdxZip = join(CACHE_DIR, "hotosm_ind_populated_places_osm_geojson.zip");
+await download(
+  "https://production-raw-data-api.s3.amazonaws.com/ISO3/IND/populated_places/hotosm_ind_populated_places_osm_geojson.zip",
+  hdxZip,
+);
+const hdxTsv = prepareHdxPlaceTsv(hdxZip);
 
-let indiaLocalityCount = 0;
-let indiaLocalityAliasCount = 0;
-for await (const line of readGeoapifyLocalityLines(indiaLocalitiesZip)) {
-  const trimmed = line.trim();
-  if (!trimmed) continue;
+const INDIA_RENAME_ALIASES = {
+  allahabad: "Prayagraj",
+  bangalore: "Bengaluru",
+  bombay: "Mumbai",
+  calcutta: "Kolkata",
+  cochin: "Kochi",
+  cawnpore: "Kanpur",
+  gurgaon: "Gurugram",
+  madras: "Chennai",
+  mysore: "Mysuru",
+  poona: "Pune",
+  trivandrum: "Thiruvananthapuram",
+  pondicherry: "Puducherry",
+  baroda: "Vadodara",
+};
 
-  const place = JSON.parse(trimmed);
-  const canonicalName = typeof place.name === "string" ? place.name.trim() : "";
-  const canonicalKey = normalize(canonicalName);
+let indiaPlaceCount = 0;
+let indiaAliasCount = 0;
+
+for await (const line of readLines(hdxTsv)) {
+  const cols = line.split("\t");
+  if (cols.length < 8) continue;
+
+  const [name, nameEn, nameLatin, placeType, adm1Name, adm2Name, adm3Name, adm4Name] = cols;
+  const displayName = [nameEn, nameLatin, name].find((value) => value && value.trim())?.trim() ?? "";
+  const canonicalKey = normalize(displayName);
   if (!canonicalKey || canonicalKey.length < 2) continue;
 
   if (!map[canonicalKey]) {
-    map[canonicalKey] = canonicalName;
-    indiaLocalityCount++;
+    map[canonicalKey] = displayName;
+    indiaPlaceCount++;
   }
 
-  const otherNames = place.other_names;
-  if (!otherNames || typeof otherNames !== "object") continue;
+  const aliasCandidates = [
+    name,
+    nameEn,
+    nameLatin,
+    adm1Name,
+    adm2Name,
+    adm3Name,
+    adm4Name,
+  ];
 
-  for (const [aliasKeyName, value] of Object.entries(otherNames)) {
-    if (aliasKeyName !== "old_name" && aliasKeyName !== "name:en") continue;
-    if (typeof value !== "string") continue;
-    for (const alias of value.split(/[;,|]/)) {
-      const aliasName = alias.trim();
-      const aliasKey = normalize(aliasName);
-      if (!aliasKey || aliasKey.length < 2 || map[aliasKey]) continue;
-      map[aliasKey] = canonicalName;
-      indiaLocalityAliasCount++;
-    }
+  for (const candidate of aliasCandidates) {
+    if (typeof candidate !== "string") continue;
+    const alias = candidate.trim();
+    const aliasKey = normalize(alias);
+    if (!aliasKey || aliasKey.length < 2 || aliasKey === canonicalKey || map[aliasKey]) continue;
+    map[aliasKey] = displayName;
+    indiaAliasCount++;
   }
 }
-console.log(`  ${indiaLocalityCount} India locality names loaded`);
-console.log(`  ${indiaLocalityAliasCount} India locality aliases added`);
+
+for (const [aliasKeyName, displayName] of Object.entries(INDIA_RENAME_ALIASES)) {
+  const aliasKey = normalize(aliasKeyName);
+  const displayKey = normalize(displayName);
+  if (!aliasKey || !displayKey || !map[displayKey]) continue;
+  if (!map[aliasKey]) {
+    map[aliasKey] = map[displayKey];
+    indiaAliasCount++;
+  }
+}
+
+console.log(`  ${indiaPlaceCount} India place names loaded`);
+console.log(`  ${indiaAliasCount} India aliases added`);
 
 // ── 5. Geographic features: rivers, lakes, mountains, islands, seas ─────────
 console.log("\n[5/6] Geographic features (rivers/lakes/mountains/islands/seas)");

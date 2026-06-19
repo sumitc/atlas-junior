@@ -148,11 +148,23 @@ test("Alias 'Nile' resolves (from 'River Nile')", () =>
 test("Known city 'Paris' is recognised", () =>
   assertTruthy(isKnownPlace("Paris")));
 
+test("Known Indian city 'Prayagraj' is recognised", () =>
+  assertTruthy(isKnownPlace("Prayagraj")));
+
+test("Known old name 'Allahabad' is recognised", () =>
+  assertTruthy(isKnownPlace("Allahabad")));
+
 test("Known Indian city 'Bengaluru' is recognised", () =>
   assertTruthy(isKnownPlace("Bengaluru")));
 
 test("Common alias 'Bangalore' is recognised", () =>
   assertTruthy(isKnownPlace("Bangalore")));
+
+test("Known Indian city 'Rourkela' is recognised", () =>
+  assertTruthy(isKnownPlace("Rourkela")));
+
+test("Known Indian place 'Kashmir' is recognised", () =>
+  assertTruthy(isKnownPlace("Kashmir")));
 
 test("Known Indian town 'Abohar' is recognised", () =>
   assertTruthy(isKnownPlace("Abohar")));
@@ -172,9 +184,9 @@ test("Empty string is not recognised", () =>
 // ────────────────────────────────────────────────────────────────────────────
 console.log("\n── 2. Fuzzy suggestion ────────────────────────────────────────────");
 
-test("'Allapur' gets a suggestion (1-2 char difference from a real place)", () => {
-  const s = findSuggestion("Allapur");
-  assertTruthy(s, `Expected a suggestion for 'Allapur', got: ${s}`);
+test("'Prayagrajj' gets a suggestion (1-2 char difference from a real place)", () => {
+  const s = findSuggestion("Prayagrajj");
+  assertTruthy(s, `Expected a suggestion for 'Prayagrajj', got: ${s}`);
   console.log(`     (suggested: ${s})`);
 });
 
@@ -218,7 +230,7 @@ test("Known place with wrong starting letter gives letter_error", () => {
 });
 
 test("Unknown non-place word shows suggestion when fuzzy match found", () => {
-  const r = simulateSave("Allapur", { requiredLetter: "a" });
+  const r = simulateSave("Prayagrajj", { requiredLetter: "p" });
   assert(r.outcome, "suggest");
   assertTruthy(r.suggestion, "Should have a suggestion");
   console.log(`     (suggested: ${r.suggestion})`);
@@ -226,18 +238,18 @@ test("Unknown non-place word shows suggestion when fuzzy match found", () => {
 
 test("Accepting suggestion (overridePlace) saves correctly", () => {
   // First save attempt shows suggestion
-  const first = simulateSave("Allapur", { requiredLetter: "a" });
+  const first = simulateSave("Prayagrajj", { requiredLetter: "p" });
   assert(first.outcome, "suggest");
   // User clicks Yes → saveTurnInternal({ overridePlace: suggestion, skipPlaceCheck: true })
-  const second = simulateSave(first.suggestion, { requiredLetter: "a", skipPlaceCheck: true });
+  const second = simulateSave(first.suggestion, { requiredLetter: "p", skipPlaceCheck: true });
   assert(second.outcome, "saved", `Expected saved, got: ${second.outcome}`);
   console.log(`     Saved as: "${second.savedAs}", next letter: ${second.nextLetter}`);
 });
 
 test("'Save mine →' saves original unknown word", () => {
-  const r = simulateSave("Allapur", { requiredLetter: "a", skipPlaceCheck: true });
+  const r = simulateSave("Prayagrajj", { requiredLetter: "p", skipPlaceCheck: true });
   assert(r.outcome, "saved");
-  assert(r.savedAs, "Allapur");
+  assert(r.savedAs, "Prayagrajj");
 });
 
 test("Totally unknown word with no match shows unknown prompt", () => {
