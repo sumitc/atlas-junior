@@ -137,7 +137,7 @@ Place requests go through `/api/place-pipeline`. The API auto-approves current-c
 
 ---
 
-## Key features (current — v1.0.13)
+## Key features (current — v1.0.14)
 
 - **Voice input** — tap microphone, speak a place name; auto-saves when mic stops
 - **Offline place validation** — 142k GeoNames places; fuzzy "Did you mean?" suggestions (Levenshtein ≤ 2)

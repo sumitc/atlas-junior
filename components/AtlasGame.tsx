@@ -12,7 +12,7 @@ import {
   submitStats,
   type LeaderboardEntry,
 } from "@/lib/api";
-import { findSuggestion, isBlockedCommonWord, isKnownPlace, loadPlaces } from "@/lib/places";
+import { findSuggestion, isKnownPlace, isRejectedBareWord, loadPlaces } from "@/lib/places";
 import { APP_VERSION } from "@/lib/version";
 
 type Player = {
@@ -1096,7 +1096,7 @@ export function AtlasGame() {
     }
 
     // Place dictionary check — only if not overriding
-    const isBlockedWord = isBlockedCommonWord(placeValue);
+    const isBlockedWord = isRejectedBareWord(placeValue);
 
     if (isBlockedWord || !isKnownPlace(placeValue)) {
       const suggestion = isBlockedWord ? null : findSuggestion(placeValue);

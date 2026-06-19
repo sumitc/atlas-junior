@@ -11,7 +11,7 @@ interface PlacesData {
   byFirstLetter: Record<string, string[]>;
 }
 
-const BLOCKED_COMMON_WORDS = new Set(["ball", "dab", "egg"]);
+const MIN_BARE_WORD_LENGTH = 4;
 
 let placesData: PlacesData | null = null;
 let loadPromise: Promise<void> | null = null;
@@ -49,9 +49,9 @@ export function isKnownPlace(name: string): boolean {
 }
 
 /** Returns true for exact bare words that we want to reject even if they exist as place names. */
-export function isBlockedCommonWord(name: string): boolean {
+export function isRejectedBareWord(name: string): boolean {
   const key = normalizePlaceKey(name);
-  return BLOCKED_COMMON_WORDS.has(key);
+  return key.length > 0 && key.length < MIN_BARE_WORD_LENGTH;
 }
 
 /**

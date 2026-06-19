@@ -13,7 +13,7 @@ const ROOT = join(__dirname, "..");
 
 // ── Replicate lib/places.ts logic in Node (no fetch needed here) ─────────────
 const placesData = JSON.parse(readFileSync(join(ROOT, "public", "places.json"), "utf8"));
-const BLOCKED_COMMON_WORDS = new Set(["ball", "dab", "egg"]);
+const MIN_BARE_WORD_LENGTH = 4;
 
 function normalizePlaceKey(name) {
   return name
@@ -28,9 +28,9 @@ function isKnownPlace(name) {
   return key.length > 0 && Object.hasOwn(placesData.map, key);
 }
 
-function isBlockedCommonWord(name) {
+function isRejectedBareWord(name) {
   const key = normalizePlaceKey(name);
-  return BLOCKED_COMMON_WORDS.has(key);
+  return key.length > 0 && key.length < MIN_BARE_WORD_LENGTH;
 }
 
 function levenshtein(a, b, maxDist) {
@@ -94,7 +94,7 @@ function simulateSave(placeValue, { requiredLetter, usedPlaceKeys = [] } = {}) {
   if (!placeKey.startsWith(requiredLetter)) return { outcome: "letter_error" };
   if (usedPlaceKeys.includes(placeKey)) return { outcome: "duplicate" };
 
-  const blocked = isBlockedCommonWord(placeValue);
+  const blocked = isRejectedBareWord(placeValue);
   if (blocked || !isKnownPlace(placeValue)) {
     const suggestion = blocked ? null : findSuggestion(placeValue);
     return suggestion
@@ -176,11 +176,11 @@ test("Known Indian place 'Kashmir' is recognised", () =>
 test("Known Indian town 'Abohar' is recognised", () =>
   assertTruthy(isKnownPlace("Abohar")));
 
-test("Bare common word 'ball' is blocked even if the dictionary contains a place entry", () =>
-  assertTruthy(isBlockedCommonWord("ball")));
+test("Bare four-letter word 'ball' is not rejected by the length rule", () =>
+  assertFalsy(isRejectedBareWord("ball")));
 
-test("Bare common word 'dab' is blocked even if the dictionary contains a place entry", () =>
-  assertTruthy(isBlockedCommonWord("dab")));
+test("Bare short word 'dab' is rejected by the length rule", () =>
+  assertTruthy(isRejectedBareWord("dab")));
 
 test("Known city with accents 'São Paulo' is recognised", () =>
   assertTruthy(isKnownPlace("São Paulo")));
@@ -228,8 +228,8 @@ test("Known place 'Paris' returns no suggestion (no need to suggest)", () => {
   console.log(`     (Paris suggestion: ${s})`);
 });
 
-test("Typed common word 'egg' is not recognised", () =>
-  assertTruthy(isBlockedCommonWord("egg")));
+test("Typed common word 'egg' is rejected", () =>
+  assertTruthy(isRejectedBareWord("egg")));
 
 // ────────────────────────────────────────────────────────────────────────────
 console.log("\n── 3. Game save flow simulation ───────────────────────────────────");
@@ -240,9 +240,9 @@ test("Known place saves immediately, advances turn", () => {
   assert(r.nextLetter, "a"); // Angola → last letter 'a'
 });
 
-test("Bare common word 'ball' is rejected", () => {
+test("Bare four-letter word 'ball' saves as a valid place", () => {
   const r = simulateSave("ball", { requiredLetter: "b" });
-  assert(r.outcome, "unknown");
+  assert(r.outcome, "saved");
 });
 
 test("Real place 'Ball Bay' remains valid", () => {
