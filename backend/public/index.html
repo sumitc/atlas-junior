@@ -79,10 +79,12 @@
       background: linear-gradient(135deg, #ede9fe, #f3e8ff); color: #6d28d9; border-radius: 999px;
       padding: 0.7rem 1.5rem; font-weight: 800; font-size: 1rem;
       text-decoration: none; box-shadow: 0 4px 14px #7c3aed20; border: 1.5px solid #c4b5fd;
+      white-space: nowrap;
     }
     .play-btn:hover { background: linear-gradient(135deg, #ddd6fe, #ede9fe); }
 
     .alpha-links { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-top: 0.5rem; }
+    .gh-btn {
       display: inline-flex; align-items: center; gap: 0.5rem;
       background: #7c3aed; color: white; border-radius: 999px;
       padding: 0.65rem 1.4rem; font-weight: 700; font-size: 0.95rem;
@@ -148,6 +150,12 @@
     .alpha-links a:hover { text-decoration: underline; }
     .alpha-store-link { font-size: 0.8rem; font-weight: 700; color: #c026d3; text-decoration: none; margin-top: 0.15rem; }
     .alpha-store-link:hover { text-decoration: underline; }
+    @media(max-width:480px){
+      .alpha-banner { flex-direction: column; align-items: center; text-align: center; }
+      .alpha-text { align-items: center; }
+      .alpha-links { justify-content: center; }
+      .play-btn { font-size: 0.88rem; padding: 0.6rem 1rem; max-width: 100%; }
+    }
 
     .footer {
       text-align: center; font-size: 0.8rem; color: #94a3b8;
