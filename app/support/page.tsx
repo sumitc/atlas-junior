@@ -270,6 +270,9 @@ export default function SupportPage() {
             <Link href="/leaderboard" className="hover:text-slate-600">
               Leaderboard
             </Link>
+            <Link href="/pipeline" className="hover:text-slate-600">
+              Pipeline
+            </Link>
           </div>
           <span className="text-slate-300">v{APP_VERSION}</span>
         </div>

@@ -16,7 +16,7 @@
  *   NFD decompose → strip combining marks → lowercase → strip non-alpha
  */
 
-import { createReadStream, createWriteStream, existsSync, mkdirSync, writeFileSync } from "fs";
+import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { pipeline } from "stream/promises";
 import { createInterface } from "readline";
 import { join, dirname } from "path";
@@ -27,6 +27,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 const CACHE_DIR = join(ROOT, ".places-cache");
 const OUT_FILE = join(ROOT, "public", "places.json");
+const APPROVALS_FILE = join(ROOT, "data", "approved-country-additions.json");
 
 // ── Normalization (must match createPlaceKey in AtlasGame.tsx) ──────────────
 function normalize(name) {
@@ -174,7 +175,7 @@ for await (const line of readLines(hdxTsv)) {
   const cols = line.split("\t");
   if (cols.length < 8) continue;
 
-  const [name, nameEn, nameLatin, placeType, adm1Name, adm2Name, adm3Name, adm4Name] = cols;
+  const [name, nameEn, nameLatin, , adm1Name, adm2Name, adm3Name, adm4Name] = cols;
   const displayName = [nameEn, nameLatin, name].find((value) => value && value.trim())?.trim() ?? "";
   const canonicalKey = normalize(displayName);
   if (!canonicalKey || canonicalKey.length < 2) continue;
@@ -216,6 +217,34 @@ for (const [aliasKeyName, displayName] of Object.entries(INDIA_RENAME_ALIASES)) 
 
 console.log(`  ${indiaPlaceCount} India place names loaded`);
 console.log(`  ${indiaAliasCount} India aliases added`);
+
+// ── 4b. Approved country aliases from the place-request pipeline ────────────
+let approvalCount = 0;
+if (existsSync(APPROVALS_FILE)) {
+  try {
+    const approvals = JSON.parse(readFileSync(APPROVALS_FILE, "utf8"));
+    const entries = Array.isArray(approvals?.entries) ? approvals.entries : [];
+
+    for (const entry of entries) {
+      const requestedName = typeof entry?.requestedName === "string" ? entry.requestedName.trim() : "";
+      const canonicalName = typeof entry?.canonicalName === "string" ? entry.canonicalName.trim() : "";
+      const requestedKey = normalize(requestedName);
+      const canonicalKey = normalize(canonicalName);
+
+      if (!requestedKey || !canonicalKey) continue;
+      if (!map[canonicalKey]) {
+        map[canonicalKey] = canonicalName;
+      }
+      if (!map[requestedKey]) {
+        map[requestedKey] = canonicalName;
+        approvalCount++;
+      }
+    }
+  } catch (error) {
+    console.warn(`  ! could not read approved-country-additions.json: ${error instanceof Error ? error.message : error}`);
+  }
+}
+console.log(`  ${approvalCount} approved country aliases loaded`);
 
 // ── 5. Geographic features: rivers, lakes, mountains, islands, seas ─────────
 console.log("\n[5/6] Geographic features (rivers/lakes/mountains/islands/seas)");

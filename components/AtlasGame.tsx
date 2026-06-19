@@ -976,6 +976,9 @@ export function AtlasGame() {
     if (!requestedPlace) {
       return;
     }
+    if (placeRequestState === "submitting" || placeRequestState === "done") {
+      return;
+    }
 
     setPlaceRequestState("submitting");
     setPlaceRequestError(null);
@@ -1447,7 +1450,7 @@ export function AtlasGame() {
                       <p>Did you mean <strong>{placeCheck.suggestion}</strong>?</p>
                       <div className="flex gap-2">
                         <button
-                          className="flex-1 rounded-xl bg-amber-200 px-3 py-1.5 font-semibold hover:bg-amber-300"
+                          className="flex-1 rounded-xl bg-amber-200 px-3 py-1.5 font-semibold hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
                           onClick={() => saveTurnInternal({ overridePlace: placeCheck.suggestion })}
                           type="button"
                         >
@@ -1455,7 +1458,7 @@ export function AtlasGame() {
                         </button>
                         <button
                           className="flex-1 rounded-xl bg-white border border-amber-300 px-3 py-1.5 font-semibold hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-60"
-                          disabled={placeRequestState === "submitting"}
+                          disabled={placeRequestState !== "idle"}
                           onClick={() => void requestPlaceAdd()}
                           type="button"
                         >
@@ -1476,7 +1479,7 @@ export function AtlasGame() {
                       <p>&#34;{draftPlace.trim()}&#34; isn&#39;t in our map.</p>
                       <button
                         className="w-full rounded-xl bg-white border border-amber-300 px-3 py-1.5 font-semibold hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-60"
-                        disabled={placeRequestState === "submitting"}
+                        disabled={placeRequestState !== "idle"}
                         onClick={() => void requestPlaceAdd()}
                         type="button"
                       >

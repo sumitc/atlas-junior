@@ -72,6 +72,46 @@ export async function getTickets(): Promise<{ issues: Ticket[]; resolved: Ticket
   return { issues: (data.issues ?? []) as Ticket[], resolved: (data.resolved ?? []) as Ticket[] };
 }
 
+export type PlacePipelineStatus = {
+  updatedAt: string | null;
+  source: string;
+  openRequests: Array<{
+    number: number;
+    title: string;
+    url: string;
+    requestedName: string;
+    createdAt: string;
+  }>;
+  approvedCountries: Array<{
+    number: number;
+    title: string;
+    url: string;
+    requestedName: string;
+    createdAt: string;
+    canonicalName: string;
+    source: string;
+  }>;
+  needsReview: Array<{
+    number: number;
+    title: string;
+    url: string;
+    requestedName: string;
+    createdAt: string;
+    reason: string;
+  }>;
+  totals: {
+    open: number;
+    approved: number;
+    review: number;
+  };
+};
+
+export async function getPlacePipeline(): Promise<PlacePipelineStatus> {
+  const res = await fetch(api("/place-pipeline"));
+  if (!res.ok) throw new Error("Could not load place pipeline");
+  return res.json();
+}
+
 export async function submitTicket(params: {
   title: string;
   body: string;

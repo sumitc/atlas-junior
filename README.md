@@ -130,6 +130,12 @@ node scripts/test-places.mjs
 
 The `.places-cache/` directory is gitignored. `public/places.json` (the output) **is** committed.
 
+### Request pipeline
+
+Place requests create GitHub issues. A workflow classifies them, auto-approves current-country aliases from REST Countries, and stores the approved overlay in `data/approved-country-additions.json`. That overlay is merged into `public/places.json` and picked up by both the web export and the Android build.
+
+Track it at `/game/pipeline`.
+
 ---
 
 ## Key features (current — v1.0.8)
