@@ -59,6 +59,12 @@ export async function submitStats(turns: number): Promise<void> {
   if (!res.ok) throw new Error("Could not save stats");
 }
 
+export async function getStats(): Promise<{ games: number; turns: number }> {
+  const res = await fetch(api("/stats"));
+  if (!res.ok) throw new Error("Could not load stats");
+  return res.json();
+}
+
 export async function getTickets(): Promise<{ issues: Ticket[]; resolved: Ticket[] }> {
   const res = await fetch(api("/tickets"));
   if (!res.ok) throw new Error("Could not load tickets");
