@@ -463,37 +463,6 @@ export function AtlasGame() {
     latestTranscriptRef.current = "";
   }
 
-  function skipTurnInternal(reason = "Time's up. Turn skipped.") {
-    if (game.phase !== "playing" || !currentPlayer) {
-      return false;
-    }
-
-    const nextPlayerIndex = getNextPlayerIndex(game.players, game.currentPlayerIndex);
-    const nextPlayer = game.players[nextPlayerIndex];
-
-    setDuplicateChallenge(null);
-    setPlaceCheck(null);
-    setGame({
-      ...game,
-      currentPlayerIndex: nextPlayerIndex,
-      moves: [
-        ...game.moves,
-        {
-          id: makeId(),
-          playerName: currentPlayer.name,
-          place: "",
-          kind: "skipped",
-        },
-      ],
-      statusMessage: `${reason} ${nextPlayer.name} now plays ${game.requiredLetter.toUpperCase()}.`,
-    });
-    clearTurnDraftState();
-    resetTurnTimer();
-    setSavedFlash(false);
-    setFlyingWord(null);
-    return true;
-  }
-
   const speechSupported = isNativeApp ? nativeSpeechAvailable !== false : browserSpeechSupported;
 
   const currentPlayer =
@@ -565,7 +534,7 @@ export function AtlasGame() {
       return;
     }
 
-    if (game.phase !== "playing") {
+    if (game.phase !== "playing" || showEndGame) {
       window.sessionStorage.removeItem(GAME_SESSION_STORAGE_KEY);
       return;
     }
@@ -577,7 +546,7 @@ export function AtlasGame() {
     };
 
     window.sessionStorage.setItem(GAME_SESSION_STORAGE_KEY, JSON.stringify(payload));
-  }, [draftPlace, game, turnSecondsRemaining]);
+  }, [draftPlace, game, turnSecondsRemaining, showEndGame]);
 
   /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
@@ -599,7 +568,7 @@ export function AtlasGame() {
            turnTimeoutHandledRef.current = true;
            dbg("turn timer expired");
            await stopListening();
-           skipTurnInternal("Time's up.");
+           openEndGame();
          })();
          return 0;
        }
@@ -1144,6 +1113,8 @@ export function AtlasGame() {
   function openEndGame() {
     void stopListening();
     clearTurnTimerInterval();
+    clearTurnDraftState();
+    setTurnSecondsRemaining(0);
     setShowEndGame(true);
     setEndGameLoading(true);
     setEndGameResult(null);
