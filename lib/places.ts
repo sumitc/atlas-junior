@@ -11,7 +11,7 @@ interface PlacesData {
   byFirstLetter: Record<string, string[]>;
 }
 
-const BLOCKED_COMMON_WORDS = new Set(["ball", "dab"]);
+const BLOCKED_COMMON_WORDS = new Set(["ball", "dab", "egg"]);
 
 let placesData: PlacesData | null = null;
 let loadPromise: Promise<void> | null = null;
@@ -42,7 +42,7 @@ export async function loadPlaces(): Promise<void> {
 
 /** Returns true if the place name exists in the dictionary. */
 export function isKnownPlace(name: string): boolean {
-  if (!placesData) return true; // optimistic: don't block if not loaded yet
+  if (!placesData) return false;
   const key = normalizePlaceKey(name);
   if (!key) return false;
   return Object.hasOwn(placesData.map, key);

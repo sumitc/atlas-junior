@@ -13,7 +13,7 @@ const ROOT = join(__dirname, "..");
 
 // ── Replicate lib/places.ts logic in Node (no fetch needed here) ─────────────
 const placesData = JSON.parse(readFileSync(join(ROOT, "public", "places.json"), "utf8"));
-const BLOCKED_COMMON_WORDS = new Set(["ball", "dab"]);
+const BLOCKED_COMMON_WORDS = new Set(["ball", "dab", "egg"]);
 
 function normalizePlaceKey(name) {
   return name
@@ -228,6 +228,9 @@ test("Known place 'Paris' returns no suggestion (no need to suggest)", () => {
   console.log(`     (Paris suggestion: ${s})`);
 });
 
+test("Typed common word 'egg' is not recognised", () =>
+  assertTruthy(isBlockedCommonWord("egg")));
+
 // ────────────────────────────────────────────────────────────────────────────
 console.log("\n── 3. Game save flow simulation ───────────────────────────────────");
 
@@ -270,6 +273,11 @@ test("Accepting suggestion (overridePlace) saves correctly", () => {
 
 test("Totally unknown word with no match shows unknown prompt", () => {
   const r = simulateSave("xyzzyabc", { requiredLetter: "x" });
+  assert(r.outcome, "unknown");
+});
+
+test("Typed common word 'egg' is rejected", () => {
+  const r = simulateSave("egg", { requiredLetter: "e" });
   assert(r.outcome, "unknown");
 });
 

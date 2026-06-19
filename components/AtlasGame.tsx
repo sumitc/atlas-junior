@@ -448,6 +448,7 @@ export function AtlasGame() {
   );
   const [placeRequestState, setPlaceRequestState] = useState<"idle" | "submitting" | "done" | "error">("idle");
   const [placeRequestError, setPlaceRequestError] = useState<string | null>(null);
+  const [placesReady, setPlacesReady] = useState(false);
   const statsSubmittedRef = useRef(false);
   const turnTimeoutHandledRef = useRef(false);
   const turnTimerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -541,7 +542,29 @@ export function AtlasGame() {
   }, [playerNames]);
 
   // Load places dictionary in background when component mounts
-  useEffect(() => { void loadPlaces(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+
+    void loadPlaces()
+      .then(() => {
+        if (!cancelled) {
+          setPlacesReady(true);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setPlacesReady(false);
+          updateSpeechMessage(
+            error instanceof Error ? error.message : "Could not load the place dictionary.",
+            "error",
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -1021,6 +1044,11 @@ export function AtlasGame() {
       return false;
     }
 
+    if (!placesReady) {
+      updateSpeechMessage("Place dictionary is still loading. Try again in a moment.", "error");
+      return false;
+    }
+
     // overridePlace lets callers (e.g. "Yes ✓" button) pass the accepted value
     // directly, bypassing stale React state for draftPlace
     const placeValue = overridePlace ?? draftPlace;
@@ -1419,10 +1447,16 @@ export function AtlasGame() {
                   />
 
                   {/* ── Save (only when letter is correct and no pending check) ── */}
-                  {hasDraftPlace && placeKeyOk && !placeCheck && !duplicateChallenge && (
+                  {hasDraftPlace && placesReady && placeKeyOk && !placeCheck && !duplicateChallenge && (
                     <button className={`${primaryButton} w-full`} type="submit">
                       Save
                     </button>
+                  )}
+
+                  {!placesReady && hasDraftPlace && (
+                    <p className="text-center text-sm font-semibold text-amber-600">
+                      Loading place dictionary…
+                    </p>
                   )}
 
                   {/* ── Letter hint (reactive, no click needed) ── */}
