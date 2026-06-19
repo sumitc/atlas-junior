@@ -1007,7 +1007,7 @@ export function AtlasGame() {
     }
   }
 
-  function saveTurnInternal({ skipDuplicateCheck = false, overridePlace }: { skipDuplicateCheck?: boolean; overridePlace?: string } = {}): boolean {
+  function saveTurnInternal({ overridePlace }: { overridePlace?: string } = {}): boolean {
     if (game.phase !== "playing" || !currentPlayer) {
       return false;
     }
@@ -1042,7 +1042,7 @@ export function AtlasGame() {
 
     const likelyDuplicatePlace = findLikelyDuplicatePlace(placeValue, game.moves);
 
-    if (!skipDuplicateCheck && (game.usedPlaceKeys.includes(placeKey) || likelyDuplicatePlace)) {
+    if (game.usedPlaceKeys.includes(placeKey) || likelyDuplicatePlace) {
       const challenge =
         likelyDuplicatePlace ??
         ({
@@ -1055,8 +1055,8 @@ export function AtlasGame() {
       setPlaceCheck(null);
       updateSpeechMessage(
         challenge.exact
-          ? `"${placeValue.trim()}" was already called out. You can still save anyway if this is truly a different place.`
-          : `"${placeValue.trim()}" looks like "${challenge.matchedPlace}", which was already called out. You can still save anyway if this is truly different.`,
+          ? `"${placeValue.trim()}" was already called out. Pick a different place.`
+          : `"${placeValue.trim()}" looks like "${challenge.matchedPlace}", which was already called out. Pick a different place.`,
         "error",
       );
       return false;
@@ -1436,13 +1436,9 @@ export function AtlasGame() {
 
                   {/* ── Duplicate override ── */}
                   {duplicateChallenge && (
-                    <button
-                      className={`${primaryButton} w-full`}
-                      onClick={() => saveTurnInternal({ skipDuplicateCheck: true })}
-                      type="button"
-                    >
-                      Save anyway
-                    </button>
+                    <p className="text-center text-sm font-semibold text-rose-500">
+                      Pick a different place.
+                    </p>
                   )}
 
                   {/* ── Place-check feedback ── */}

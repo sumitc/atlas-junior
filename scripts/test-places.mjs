@@ -88,11 +88,11 @@ function getLastLetter(normalized) {
  * Simulates saveTurnInternal logic (pure, returns outcome instead of setting state).
  * outcome: "saved" | "letter_error" | "duplicate" | "suggest" | "unknown" | "no_next_letter"
  */
-function simulateSave(placeValue, { requiredLetter, usedPlaceKeys = [], skipDuplicateCheck = false } = {}) {
+function simulateSave(placeValue, { requiredLetter, usedPlaceKeys = [] } = {}) {
   const placeKey = createPlaceKey(placeValue);
   if (!placeKey) return { outcome: "empty" };
   if (!placeKey.startsWith(requiredLetter)) return { outcome: "letter_error" };
-  if (!skipDuplicateCheck && usedPlaceKeys.includes(placeKey)) return { outcome: "duplicate" };
+  if (usedPlaceKeys.includes(placeKey)) return { outcome: "duplicate" };
 
   const blocked = isBlockedCommonWord(placeValue);
   if (blocked || !isKnownPlace(placeValue)) {
@@ -276,11 +276,6 @@ test("Totally unknown word with no match shows unknown prompt", () => {
 test("Duplicate place shows duplicate warning", () => {
   const r = simulateSave("Angola", { requiredLetter: "a", usedPlaceKeys: ["angola"] });
   assert(r.outcome, "duplicate");
-});
-
-test("skipDuplicateCheck overrides duplicate warning and saves", () => {
-  const r = simulateSave("Angola", { requiredLetter: "a", usedPlaceKeys: ["angola"], skipDuplicateCheck: true });
-  assert(r.outcome, "saved");
 });
 
 test("'India' saves and next letter is 'a'", () => {
