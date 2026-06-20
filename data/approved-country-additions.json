@@ -1,6 +1,25 @@
 {
-  "updatedAt": "2026-06-20T10:10:47.601Z",
+  "updatedAt": "2026-06-20T10:15:16.023Z",
   "entries": [
+    {
+      "requestedName": "egg",
+      "requestedKey": "egg",
+      "canonicalName": "Egg",
+      "status": "approved",
+      "source": "wikidata",
+      "reason": "Auto-approved by web lookup (municipality in switzerland).",
+      "createdAt": "2026-06-20T10:15:11.707Z",
+      "updatedAt": "2026-06-20T10:15:11.707Z",
+      "details": {
+        "playerName": "tester",
+        "turnLetter": "e",
+        "platform": "web",
+        "appVersion": "1.0.14",
+        "savedTurns": 3,
+        "totalTurns": 4,
+        "suggestion": "egg"
+      }
+    },
     {
       "requestedName": "Hooghly",
       "requestedKey": "hooghly",

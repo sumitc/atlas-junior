@@ -2,7 +2,6 @@ import { randomUUID } from "crypto";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { PLACE_DICTIONARY_VERSION } from "./place-dictionary-version.js";
-import { PLACE_PIPELINE_STATUS } from "./place-pipeline-status.js";
 
 const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -15,7 +14,6 @@ const RATE_WINDOW_SEC = 300;
 function resolveDataFile(...segments) {
   const candidates = [
     join(process.cwd(), ...segments),
-    join(process.cwd(), "backend", ...segments),
     join(process.cwd(), "..", ...segments),
     join(process.cwd(), "..", "..", ...segments),
   ];
@@ -49,7 +47,7 @@ function readJsonFile(path, fallback) {
 }
 
 function readFallbackStatus() {
-  return PLACE_PIPELINE_STATUS ?? readJsonFile(FALLBACK_STATUS_FILE, {
+  return readJsonFile(FALLBACK_STATUS_FILE, {
     updatedAt: null,
     source: "redis",
     endpoint: "/api/place-pipeline",

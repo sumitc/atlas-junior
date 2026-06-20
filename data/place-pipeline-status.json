@@ -1,29 +1,8 @@
 {
-  "updatedAt": "2026-06-20T09:59:38.318Z",
+  "updatedAt": "2026-06-20T10:15:11.707Z",
   "source": "redis",
   "endpoint": "/api/place-pipeline",
-  "openRequests": [
-    {
-      "id": "b8c2b3b9-7d5e-4b48-a8d8-8b0c2c2d1a11",
-      "requestedName": "egg",
-      "requestedKey": "egg",
-      "canonicalName": null,
-      "status": "review",
-      "source": "seed",
-      "reason": "Seeded for pipeline testing.",
-      "createdAt": "2026-06-20T10:09:21.178Z",
-      "updatedAt": "2026-06-20T10:09:21.178Z",
-      "details": {
-        "playerName": "tester",
-        "turnLetter": "e",
-        "platform": "web",
-        "appVersion": "1.0.14",
-        "savedTurns": 3,
-        "totalTurns": 4,
-        "suggestion": "egg"
-      }
-    }
-  ],
+  "openRequests": [],
   "approvedCountries": [
     {
       "id": "1a660d3b-db4d-4e2e-b926-1d7f5b985cb0",
@@ -44,19 +23,17 @@
         "totalTurns": 0,
         "suggestion": ""
       }
-    }
-  ],
-  "needsReview": [
+    },
     {
-      "id": "b8c2b3b9-7d5e-4b48-a8d8-8b0c2c2d1a11",
+      "id": "f6d2b913-4550-4640-b03c-f350434a6be6",
       "requestedName": "egg",
       "requestedKey": "egg",
-      "canonicalName": null,
-      "status": "review",
-      "source": "seed",
-      "reason": "Seeded for pipeline testing.",
-      "createdAt": "2026-06-20T10:09:21.178Z",
-      "updatedAt": "2026-06-20T10:09:21.178Z",
+      "canonicalName": "Egg",
+      "status": "approved",
+      "source": "wikidata",
+      "reason": "Auto-approved by web lookup (municipality in switzerland).",
+      "createdAt": "2026-06-20T10:15:11.707Z",
+      "updatedAt": "2026-06-20T10:15:11.707Z",
       "details": {
         "playerName": "tester",
         "turnLetter": "e",
@@ -68,13 +45,14 @@
       }
     }
   ],
+  "needsReview": [],
   "totals": {
-    "open": 1,
-    "approved": 1,
+    "open": 0,
+    "approved": 2,
     "rejected": 1,
-    "review": 1
+    "review": 0
   },
-  "dictionaryVersion": "2026-06-20T09:59:42.828Z",
+  "dictionaryVersion": "2026-06-20T10:15:16.022Z",
   "rejectedRequests": [
     {
       "id": "9791fabd-d5c9-4db1-acd8-e92f8b34cf68",

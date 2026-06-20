@@ -5,9 +5,7 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 const OUT_STATUS_FILE = join(ROOT, "data", "place-pipeline-status.json");
-const OUT_BACKEND_STATUS_FILE = join(ROOT, "backend", "data", "place-pipeline-status.json");
 const OUT_APPROVALS_FILE = join(ROOT, "data", "approved-country-additions.json");
-const OUT_BACKEND_APPROVALS_FILE = join(ROOT, "backend", "data", "approved-country-additions.json");
 const OUT_DICT_VERSION_JSON = join(ROOT, "data", "place-dictionary-version.json");
 const OUT_DICT_VERSION_JS = join(ROOT, "backend", "api", "place-dictionary-version.js");
 const OUT_DICT_VERSION_TS = join(ROOT, "lib", "place-dictionary-version.ts");
@@ -145,14 +143,9 @@ async function main() {
   }
 
   writeJson(OUT_STATUS_FILE, mergedStatus);
-  writeJson(OUT_BACKEND_STATUS_FILE, mergedStatus);
   writeJson(OUT_APPROVALS_FILE, {
-    updatedAt: new Date().toISOString(),
-    entries: [...merged.values()].sort((a, b) => a.requestedName.localeCompare(b.requestedName)),
-  });
-  writeJson(OUT_BACKEND_APPROVALS_FILE, {
-    updatedAt: new Date().toISOString(),
-    entries: [...merged.values()].sort((a, b) => a.requestedName.localeCompare(b.requestedName)),
+   updatedAt: new Date().toISOString(),
+   entries: [...merged.values()].sort((a, b) => a.requestedName.localeCompare(b.requestedName)),
   });
 
   console.log(
