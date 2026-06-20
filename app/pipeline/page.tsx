@@ -79,19 +79,26 @@ export default function PipelinePage() {
           </div>
         </section>
 
-        {!loading && status.rejectedRequests.length > 0 && (
-          <section className="rounded-[2rem] bg-white/80 p-5 shadow-xl shadow-rose-200/50 backdrop-blur sm:p-6">
+        <section className="rounded-[2rem] bg-white/80 p-5 shadow-xl shadow-rose-200/50 backdrop-blur sm:p-6">
+          <div className="flex items-center justify-between gap-2">
             <h2 className="text-lg font-black text-slate-900">Rejected requests</h2>
-            <div className="mt-4 space-y-2">
-              {status.rejectedRequests.map((item) => (
+            <span className="rounded-full bg-gradient-to-r from-rose-200 to-orange-200 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-700">
+              {status.totals.rejected}
+            </span>
+          </div>
+          <div className="mt-4 space-y-2">
+            {!loading && status.rejectedRequests.length === 0 ? (
+              <p className="text-sm text-slate-500">No rejected requests right now.</p>
+            ) : (
+              status.rejectedRequests.map((item) => (
                 <div key={item.id} className="rounded-[1.25rem] bg-rose-50 px-4 py-3">
                   <p className="text-sm font-medium text-slate-700">{item.requestedName}</p>
                   <p className="text-xs text-rose-700">{item.reason}</p>
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
+              ))
+            )}
+          </div>
+        </section>
 
         <section className="rounded-[2rem] bg-white/85 p-5 shadow-xl shadow-violet-200/60 backdrop-blur sm:p-6">
           <h2 className="text-lg font-black text-slate-900">Needs review</h2>
