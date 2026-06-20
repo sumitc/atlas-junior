@@ -55,6 +55,22 @@ export async function getStats(): Promise<{ games: number; turns: number }> {
   return res.json();
 }
 
+export type SupportIssue = {
+  number: number;
+  title: string;
+  url: string;
+  state: "open" | "closed";
+  labels: string[];
+  createdAt: string;
+  closedAt: string | null;
+};
+
+export async function getTickets(): Promise<{ issues: SupportIssue[]; resolved: SupportIssue[] }> {
+  const res = await fetch(api("/tickets"));
+  if (!res.ok) throw new Error("Could not load tickets");
+  return res.json();
+}
+
 export type PlacePipelineStatus = {
   updatedAt: string | null;
   source: string;

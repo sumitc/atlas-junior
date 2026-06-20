@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getPlacePipeline, submitTicket, type PlacePipelineStatus } from "@/lib/api";
+import { getTickets, submitTicket, type SupportIssue } from "@/lib/api";
 import { APP_VERSION } from "@/lib/version";
 
 type SubmitState = "idle" | "submitting" | "done" | "error";
@@ -14,14 +14,18 @@ export default function SupportPage() {
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [submittedUrl, setSubmittedUrl] = useState<string | null>(null);
   const [submittedNumber, setSubmittedNumber] = useState<number | null>(null);
-  const [pipeline, setPipeline] = useState<PlacePipelineStatus | null>(null);
-  const [pipelineLoading, setPipelineLoading] = useState(true);
+  const [issues, setIssues] = useState<SupportIssue[]>([]);
+  const [resolved, setResolved] = useState<SupportIssue[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(true);
 
   useEffect(() => {
-    getPlacePipeline()
-      .then((status) => setPipeline(status))
+    getTickets()
+      .then((data) => {
+        setIssues(data.issues);
+        setResolved(data.resolved);
+      })
       .catch(() => {})
-      .finally(() => setPipelineLoading(false));
+      .finally(() => setTicketsLoading(false));
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -151,64 +155,71 @@ export default function SupportPage() {
 
         <article className="rounded-[2rem] bg-white/80 p-5 shadow-xl shadow-amber-200/50 backdrop-blur sm:p-6">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-lg font-black text-slate-900">Live pipeline</h2>
-            {!pipelineLoading && pipeline && (
+            <h2 className="text-lg font-black text-slate-900">Open tickets</h2>
+            {!ticketsLoading && (
               <span className="rounded-full bg-gradient-to-r from-cyan-200 to-violet-200 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-700">
-                {pipeline.totals.open}
+                {issues.length}
               </span>
             )}
           </div>
 
           <div className="mt-4">
-            {pipelineLoading && <p className="text-sm text-slate-400">Loading pipeline…</p>}
-            {!pipelineLoading && pipeline && pipeline.openRequests.length === 0 && (
-              <p className="text-sm text-slate-400">No open requests — all clear! 🎉</p>
-            )}
-            {!pipelineLoading && pipeline && pipeline.openRequests.length > 0 && (
+            {ticketsLoading && <p className="text-sm text-slate-400">Loading ticket history…</p>}
+            {!ticketsLoading && issues.length === 0 ? (
+              <p className="text-sm text-slate-400">No open tickets right now.</p>
+            ) : (
               <div className="space-y-2">
-                {pipeline.openRequests.map((item) => (
-                  <div key={item.id} className="rounded-[1.25rem] bg-white/75 p-3">
-                    <p className="text-sm font-semibold text-slate-800">{item.requestedName}</p>
-                    <p className="text-xs text-slate-500">
-                      {item.status === "approved"
-                        ? `Approved as ${item.canonicalName ?? item.requestedName}`
-                        : item.reason ?? "Queued for review"}
+                {issues.map((item) => (
+                  <a
+                    key={item.number}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block rounded-[1.25rem] bg-white/75 p-3"
+                  >
+                    <p className="text-sm font-semibold text-slate-800">
+                      #{item.number} · {item.title}
                     </p>
-                  </div>
+                    <p className="text-xs text-slate-500">Open on GitHub</p>
+                  </a>
                 ))}
               </div>
-            )}
-            {!pipelineLoading && pipeline && (
-              <p className="mt-3 text-xs text-slate-500">
-                The pipeline runs in GitHub Actions and Vercel, so it keeps going even when your device is off.
-              </p>
             )}
           </div>
         </article>
 
-        {!pipelineLoading && pipeline && (
-          <article className="rounded-[2rem] bg-white/70 p-5 shadow-xl shadow-emerald-200/40 backdrop-blur sm:p-6">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-lg font-black text-slate-900">✅ Approved countries</h2>
+        <article className="rounded-[2rem] bg-white/70 p-5 shadow-xl shadow-emerald-200/40 backdrop-blur sm:p-6">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-lg font-black text-slate-900">Resolved enhancements</h2>
+            {!ticketsLoading && (
               <span className="rounded-full bg-gradient-to-r from-emerald-200 to-teal-200 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-700">
-                {pipeline.totals.approved}
+                {resolved.length}
               </span>
-            </div>
-            <div className="mt-4 space-y-2">
-              {pipeline.approvedCountries.length === 0 ? (
-                <p className="text-sm text-slate-500">No approved country requests yet.</p>
-              ) : (
-                pipeline.approvedCountries.map((item) => (
-                  <div key={item.id} className="rounded-[1.25rem] bg-emerald-50 px-4 py-3">
+            )}
+          </div>
+          <div className="mt-4">
+            {ticketsLoading && <p className="text-sm text-slate-400">Loading resolved history…</p>}
+            {!ticketsLoading && resolved.length === 0 ? (
+              <p className="text-sm text-slate-500">No resolved enhancements yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {resolved.map((item) => (
+                  <a
+                    key={item.number}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block rounded-[1.25rem] bg-emerald-50 px-4 py-3"
+                  >
                     <p className="text-sm font-medium text-slate-700">
-                      {item.requestedName} → {item.canonicalName ?? item.requestedName}
+                      #{item.number} · {item.title}
                     </p>
-                  </div>
-                ))
-              )}
-            </div>
-          </article>
-        )}
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        </article>
 
         <div className="flex items-center text-sm text-slate-400">
           <div className="flex flex-1 justify-center gap-6">
