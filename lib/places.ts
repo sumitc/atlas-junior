@@ -6,6 +6,8 @@
  * Normalization matches createPlaceKey() in AtlasGame.tsx exactly.
  */
 
+import { PLACE_DICTIONARY_VERSION } from "@/lib/place-dictionary-version";
+
 interface PlacesData {
   map: Record<string, string>;
   byFirstLetter: Record<string, string[]>;
@@ -33,7 +35,7 @@ export async function loadPlaces(): Promise<void> {
   if (placesData) return;
   if (loadPromise) return loadPromise;
   loadPromise = (async () => {
-    const res = await fetch(`${BASE_PATH}/places.json`);
+    const res = await fetch(`${BASE_PATH}/places.json?v=${encodeURIComponent(PLACE_DICTIONARY_VERSION)}`);
     if (!res.ok) throw new Error(`Failed to load places.json: ${res.status}`);
     placesData = await res.json();
   })();

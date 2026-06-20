@@ -4,15 +4,23 @@ import { join } from "path";
 
 const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-
 const PIPELINE_PREFIX = "atlas:place-pipeline:";
 const REQUESTS_KEY = `${PIPELINE_PREFIX}requests`;
-const REQUEST_INDEX_KEY = `${PIPELINE_PREFIX}index`;
-const APPROVED_KEY = `${PIPELINE_PREFIX}approved`;
 const RATE_LIMIT_PREFIX = `${PIPELINE_PREFIX}ratelimit:`;
 const RATE_LIMIT = 1;
 const RATE_WINDOW_SEC = 300;
-const FALLBACK_STATUS_FILE = join(process.cwd(), "data", "place-pipeline-status.json");
+
+function resolveDataFile(...segments) {
+  const candidates = [
+    join(process.cwd(), ...segments),
+    join(process.cwd(), "..", ...segments),
+    join(process.cwd(), "..", "..", ...segments),
+  ];
+  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0];
+}
+
+const FALLBACK_STATUS_FILE = resolveDataFile("data", "place-pipeline-status.json");
+const DICTIONARY_VERSION_FILE = resolveDataFile("data", "place-dictionary-version.json");
 
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -28,39 +36,36 @@ function normalize(value) {
     .replace(/[^a-z]/g, "");
 }
 
-function readFallbackStatus() {
-  if (!existsSync(FALLBACK_STATUS_FILE)) {
-    return {
-      updatedAt: null,
-      source: "redis",
-      endpoint: "/api/place-pipeline",
-      openRequests: [],
-      approvedCountries: [],
-      needsReview: [],
-      totals: { open: 0, approved: 0, review: 0 },
-    };
-  }
-
+function readJsonFile(path, fallback) {
+  if (!existsSync(path)) return fallback;
   try {
-    return JSON.parse(readFileSync(FALLBACK_STATUS_FILE, "utf8"));
+    return JSON.parse(readFileSync(path, "utf8"));
   } catch {
-    return {
-      updatedAt: null,
-      source: "redis",
-      endpoint: "/api/place-pipeline",
-      openRequests: [],
-      approvedCountries: [],
-      needsReview: [],
-      totals: { open: 0, approved: 0, review: 0 },
-    };
+    return fallback;
   }
 }
 
-async function redisCmd(...args) {
-  if (!UPSTASH_URL || !UPSTASH_TOKEN) {
-    throw new Error("Redis env vars are missing");
-  }
+function readFallbackStatus() {
+  return readJsonFile(FALLBACK_STATUS_FILE, {
+    updatedAt: null,
+    source: "redis",
+    endpoint: "/api/place-pipeline",
+    dictionaryVersion: null,
+    openRequests: [],
+    approvedCountries: [],
+    rejectedRequests: [],
+    needsReview: [],
+    totals: { open: 0, approved: 0, rejected: 0, review: 0 },
+  });
+}
 
+function readDictionaryVersion() {
+  const meta = readJsonFile(DICTIONARY_VERSION_FILE, null);
+  return typeof meta?.version === "string" ? meta.version : null;
+}
+
+async function redisCmd(...args) {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) throw new Error("Redis env vars are missing");
   const res = await fetch(`${UPSTASH_URL}/${args.map(encodeURIComponent).join("/")}`, {
     headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` },
   });
@@ -70,10 +75,7 @@ async function redisCmd(...args) {
 }
 
 async function redisPipeline(commands) {
-  if (!UPSTASH_URL || !UPSTASH_TOKEN) {
-    throw new Error("Redis env vars are missing");
-  }
-
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) throw new Error("Redis env vars are missing");
   const res = await fetch(`${UPSTASH_URL}/pipeline`, {
     method: "POST",
     headers: {
@@ -128,16 +130,10 @@ function mergeRecords(primary, secondary) {
 }
 
 function buildStatus(records) {
-  const openRequests = records
-    .filter((record) => record.status !== "approved")
-    .map(publicRecord);
-  const approvedCountries = records
-    .filter((record) => record.status === "approved")
-    .map(publicRecord);
-  const needsReview = records
-    .filter((record) => record.status === "review")
-    .map(publicRecord);
-
+  const openRequests = records.filter((record) => record.status === "review").map(publicRecord);
+  const approvedCountries = records.filter((record) => record.status === "approved").map(publicRecord);
+  const rejectedRequests = records.filter((record) => record.status === "rejected").map(publicRecord);
+  const needsReview = openRequests;
   const updatedAt = records.reduce((latest, record) => {
     if (!record.updatedAt) return latest;
     if (!latest) return record.updatedAt;
@@ -148,12 +144,15 @@ function buildStatus(records) {
     updatedAt,
     source: "redis",
     endpoint: "/api/place-pipeline",
+    dictionaryVersion: readDictionaryVersion(),
     openRequests,
     approvedCountries,
+    rejectedRequests,
     needsReview,
     totals: {
       open: openRequests.length,
       approved: approvedCountries.length,
+      rejected: rejectedRequests.length,
       review: needsReview.length,
     },
   };
@@ -161,71 +160,131 @@ function buildStatus(records) {
 
 async function loadRecordsFromRedis() {
   const ids = await redisCmd("ZREVRANGE", REQUESTS_KEY, "0", "-1");
-  if (!Array.isArray(ids) || ids.length === 0) {
-    return [];
-  }
-
+  if (!Array.isArray(ids) || ids.length === 0) return [];
   const rawRecords = await redisPipeline(ids.map((id) => ["GET", `${PIPELINE_PREFIX}req:${id}`]));
-  return rawRecords
-    .map((record) => safeJsonParse(record))
-    .filter((record) => record && typeof record === "object");
+  return rawRecords.map((record) => safeJsonParse(record)).filter((record) => record && typeof record === "object");
 }
 
 async function resolveCountry(requestedName) {
   const response = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(requestedName)}`);
   if (!response.ok) return null;
-
   const data = await response.json();
   if (!Array.isArray(data)) return null;
-
   const requestedKey = normalize(requestedName);
-
   for (const item of data) {
     const common = String(item?.name?.common ?? "").trim();
     const official = String(item?.name?.official ?? "").trim();
     const altSpellings = Array.isArray(item?.altSpellings) ? item.altSpellings : [];
     const candidateNames = [common, official, ...altSpellings].filter(Boolean);
-
     if (candidateNames.some((name) => normalize(name) === requestedKey)) {
+      return { canonicalName: common || official || requestedName, source: "restcountries", reason: "Auto-approved as a country." };
+    }
+  }
+  return null;
+}
+
+const PLACE_DESC_KEYWORDS = [
+  "district", "city", "town", "village", "municipality", "county", "province", "state", "region",
+  "country", "island", "river", "lake", "mountain", "bay", "gulf", "strait", "channel", "peninsula",
+  "cape", "valley", "forest", "desert", "park", "reservoir", "reef", "plain", "plateau", "suburb",
+];
+const NON_PLACE_DESC_KEYWORDS = [
+  "company", "business", "organization", "organisation", "corporation", "brand", "film", "song",
+  "album", "book", "television series", "actor", "singer", "software", "tech company",
+];
+
+async function resolveWebPlace(requestedName) {
+  const url = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(requestedName)}&language=en&format=json&origin=*`;
+  const response = await fetch(url, { headers: { "User-Agent": "Atlas Junior place pipeline" } });
+  if (!response.ok) return null;
+  const data = await response.json();
+  const results = Array.isArray(data?.search) ? data.search : [];
+  for (const result of results) {
+    const label = String(result?.label ?? "").trim();
+    const description = String(result?.description ?? "").toLowerCase();
+    if (!label) continue;
+    if (NON_PLACE_DESC_KEYWORDS.some((keyword) => description.includes(keyword))) {
       return {
-        canonicalName: common || official || requestedName,
-        source: "restcountries",
+        status: "rejected",
+        source: "wikidata",
+        reason: `Web lookup found a non-place entry (${description || "no description"}).`,
+      };
+    }
+    if (PLACE_DESC_KEYWORDS.some((keyword) => description.includes(keyword))) {
+      return {
+        status: "approved",
+        canonicalName: label,
+        source: "wikidata",
+        reason: `Auto-approved by web lookup (${description || "place-like result"}).`,
       };
     }
   }
+  return { status: "rejected", source: "wikidata", reason: "Web lookup did not identify this as a place." };
+}
 
-  return null;
+async function classifyRequestedName(requestedName) {
+  const country = await resolveCountry(requestedName);
+  if (country) {
+    return { status: "approved", canonicalName: country.canonicalName, source: country.source, reason: country.reason };
+  }
+  const webPlace = await resolveWebPlace(requestedName);
+  if (webPlace) return webPlace;
+  return { status: "rejected", reason: "Web lookup did not identify this as a place." };
 }
 
 function extractRequestedName(body) {
   const explicit = String(body?.requestedName ?? body?.place ?? "").trim();
   if (explicit) return explicit;
-
   const title = String(body?.title ?? "").trim();
   const titleMatch = title.match(/^Add place request:\s*(.+)$/i);
   if (titleMatch?.[1]) return titleMatch[1].trim();
-
   const freeText = String(body?.body ?? "").trim();
   const bodyMatch = freeText.match(/Please add\s+"([^"]+)"/i);
   if (bodyMatch?.[1]) return bodyMatch[1].trim();
-
   return "";
 }
 
-async function loadStatus() {
-  try {
-    const liveRecords = await loadRecordsFromRedis();
-    const fallback = readFallbackStatus();
-    const fallbackRecords = [
-      ...(Array.isArray(fallback.openRequests) ? fallback.openRequests : []),
-      ...(Array.isArray(fallback.approvedCountries) ? fallback.approvedCountries : []),
-      ...(Array.isArray(fallback.needsReview) ? fallback.needsReview : []),
-    ];
+async function reviewRecord(record) {
+  if (!record || (record.status !== "review" && record.status !== "pending")) return record;
+  const classification = await classifyRequestedName(record.requestedName);
+  const now = new Date().toISOString();
+  return {
+    ...record,
+    canonicalName: classification.canonicalName ?? record.canonicalName ?? null,
+    status: classification.status,
+    source: classification.source ?? record.source ?? "manual",
+    reason: classification.reason ?? record.reason ?? null,
+    updatedAt: now,
+  };
+}
 
-    return buildStatus(mergeRecords(liveRecords, fallbackRecords));
-  } catch {
-    return readFallbackStatus();
+async function persistReviewedRecords(records) {
+  const commands = [];
+  for (const record of records) {
+    commands.push(["SET", `${PIPELINE_PREFIX}req:${record.id}`, JSON.stringify(record)]);
   }
+  if (commands.length > 0) {
+    await redisPipeline(commands);
+  }
+}
+
+async function loadAndReviewRecords() {
+  const liveRecords = await loadRecordsFromRedis();
+  const fallback = readFallbackStatus();
+  const fallbackRecords = [
+    ...(Array.isArray(fallback.openRequests) ? fallback.openRequests : []),
+    ...(Array.isArray(fallback.approvedCountries) ? fallback.approvedCountries : []),
+    ...(Array.isArray(fallback.rejectedRequests) ? fallback.rejectedRequests : []),
+    ...(Array.isArray(fallback.needsReview) ? fallback.needsReview : []),
+  ];
+
+  const merged = mergeRecords(liveRecords, fallbackRecords);
+  const reviewed = [];
+  for (const record of merged) {
+    reviewed.push(await reviewRecord(record));
+  }
+  await persistReviewedRecords(reviewed.filter((record) => record && record.status !== "pending"));
+  return reviewed;
 }
 
 export default async function handler(req, res) {
@@ -234,7 +293,7 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     try {
-      return res.json(await loadStatus());
+      return res.json(buildStatus(await loadAndReviewRecords()));
     } catch (err) {
       console.error("GET /place-pipeline", err);
       return res.status(500).json({ error: "Could not load place pipeline" });
@@ -254,7 +313,6 @@ export default async function handler(req, res) {
         redisCmd("INCR", rateKey),
         redisCmd("EXPIRE", rateKey, String(RATE_WINDOW_SEC)),
       ]);
-
       if (Number(count) > RATE_LIMIT) {
         return res.status(429).json({ error: "Please wait a few minutes before adding another place." });
       }
@@ -265,17 +323,11 @@ export default async function handler(req, res) {
 
     const body = req.body ?? {};
     const requestedName = extractRequestedName(body);
-
-    if (!requestedName) {
-      return res.status(400).json({ error: "requestedName is required" });
-    }
-
+    if (!requestedName) return res.status(400).json({ error: "requestedName is required" });
     const requestedKey = normalize(requestedName);
-    if (!requestedKey) {
-      return res.status(400).json({ error: "requestedName is required" });
-    }
+    if (!requestedKey) return res.status(400).json({ error: "requestedName is required" });
 
-    const existingId = await redisCmd("HGET", REQUEST_INDEX_KEY, requestedKey);
+    const existingId = await redisCmd("HGET", `${PIPELINE_PREFIX}index`, requestedKey);
     if (existingId) {
       const existingRaw = await redisCmd("GET", `${PIPELINE_PREFIX}req:${existingId}`);
       const existing = safeJsonParse(existingRaw);
@@ -294,7 +346,7 @@ export default async function handler(req, res) {
     }
 
     const createdAt = new Date().toISOString();
-    const match = await resolveCountry(requestedName);
+    const classification = await classifyRequestedName(requestedName);
     const id = randomUUID();
     const details = {
       playerName: String(body.playerName ?? "").trim(),
@@ -310,37 +362,21 @@ export default async function handler(req, res) {
       id,
       requestedName,
       requestedKey,
-      canonicalName: match?.canonicalName ?? null,
-      status: match ? "approved" : "review",
-      source: match?.source ?? "manual",
-      reason: match ? "Auto-approved as current country." : "Queued for review.",
+      canonicalName: classification.canonicalName ?? null,
+      status: classification.status,
+      source: classification.source ?? "manual",
+      reason: classification.reason ?? null,
       createdAt,
       updatedAt: createdAt,
       details,
     };
 
-    const commands = [
-      ["ZADD", REQUESTS_KEY, String(Date.now()), id],
-      ["SET", `${PIPELINE_PREFIX}req:${id}`, JSON.stringify(record)],
-      ["HSET", REQUEST_INDEX_KEY, requestedKey, id],
-    ];
-
-    if (match) {
-      commands.push([
-        "HSET",
-        APPROVED_KEY,
-        requestedKey,
-        JSON.stringify({
-          requestedName,
-          canonicalName: match.canonicalName,
-          source: match.source,
-          updatedAt: createdAt,
-        }),
-      ]);
-    }
-
     try {
-      await redisPipeline(commands);
+      await redisPipeline([
+        ["ZADD", REQUESTS_KEY, String(Date.now()), id],
+        ["SET", `${PIPELINE_PREFIX}req:${id}`, JSON.stringify(record)],
+        ["HSET", `${PIPELINE_PREFIX}index`, requestedKey, id],
+      ]);
       return res.status(201).json({
         requestId: id,
         status: record.status,
@@ -348,8 +384,8 @@ export default async function handler(req, res) {
         deduped: false,
         message:
           record.status === "approved"
-            ? `"${record.requestedName}" was added to the dictionary as ${record.canonicalName}.`
-            : `"${record.requestedName}" was queued for review.`,
+            ? `"${record.requestedName}" was approved and added to the dictionary.`
+            : `"${record.requestedName}" was rejected by web lookup.`,
       });
     } catch (err) {
       console.error("POST /place-pipeline", err);

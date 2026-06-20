@@ -1,18 +1,19 @@
 {
-  "updatedAt": "2026-06-19T19:09:57.052Z",
+  "updatedAt": "2026-06-20T09:59:38.318Z",
   "source": "redis",
   "endpoint": "/api/place-pipeline",
-  "openRequests": [
+  "openRequests": [],
+  "approvedCountries": [
     {
       "id": "1a660d3b-db4d-4e2e-b926-1d7f5b985cb0",
       "requestedName": "Hooghly",
       "requestedKey": "hooghly",
-      "canonicalName": null,
-      "status": "review",
-      "source": "manual",
-      "reason": "Queued for review.",
+      "canonicalName": "Hooghly district",
+      "status": "approved",
+      "source": "wikidata",
+      "reason": "Auto-approved by web lookup (district in west bengal, india).",
       "createdAt": "2026-06-19T19:09:57.052Z",
-      "updatedAt": "2026-06-19T19:09:57.052Z",
+      "updatedAt": "2026-06-20T09:59:38.318Z",
       "details": {
         "playerName": "legacy",
         "turnLetter": "h",
@@ -22,74 +23,36 @@
         "totalTurns": 0,
         "suggestion": ""
       }
-    },
-    {
-      "id": "legacy-alibaba",
-      "requestedName": "Alibaba",
-      "requestedKey": "alibaba",
-      "canonicalName": null,
-      "status": "review",
-      "source": "legacy-github-issue",
-      "reason": "Backfilled from the older support ticket.",
-      "createdAt": "2026-06-19T18:34:34Z",
-      "updatedAt": "2026-06-20T00:39:29.589+05:30",
-      "details": {
-        "playerName": "",
-        "turnLetter": "a",
-        "platform": "web",
-        "appVersion": "1.0.14",
-        "savedTurns": 0,
-        "totalTurns": 0,
-        "suggestion": ""
-      }
     }
   ],
-  "approvedCountries": [],
-  "needsReview": [
-    {
-      "id": "1a660d3b-db4d-4e2e-b926-1d7f5b985cb0",
-      "requestedName": "Hooghly",
-      "requestedKey": "hooghly",
-      "canonicalName": null,
-      "status": "review",
-      "source": "manual",
-      "reason": "Queued for review.",
-      "createdAt": "2026-06-19T19:09:57.052Z",
-      "updatedAt": "2026-06-19T19:09:57.052Z",
-      "details": {
-        "playerName": "legacy",
-        "turnLetter": "h",
-        "platform": "web",
-        "appVersion": "1.0.14",
-        "savedTurns": 0,
-        "totalTurns": 0,
-        "suggestion": ""
-      }
-    },
-    {
-      "id": "legacy-alibaba",
-      "requestedName": "Alibaba",
-      "requestedKey": "alibaba",
-      "canonicalName": null,
-      "status": "review",
-      "source": "legacy-github-issue",
-      "reason": "Backfilled from the older support ticket.",
-      "createdAt": "2026-06-19T18:34:34Z",
-      "updatedAt": "2026-06-20T00:39:29.589+05:30",
-      "details": {
-        "playerName": "",
-        "turnLetter": "a",
-        "platform": "web",
-        "appVersion": "1.0.14",
-        "savedTurns": 0,
-        "totalTurns": 0,
-        "suggestion": ""
-      }
-    }
-  ],
+  "needsReview": [],
   "totals": {
-    "open": 2,
-    "approved": 0,
-    "review": 2
-  }
+    "open": 0,
+    "approved": 1,
+    "rejected": 1,
+    "review": 0
+  },
+  "dictionaryVersion": "2026-06-20T09:59:42.828Z",
+  "rejectedRequests": [
+    {
+      "id": "9791fabd-d5c9-4db1-acd8-e92f8b34cf68",
+      "requestedName": "Alibaba",
+      "requestedKey": "alibaba",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "manual",
+      "reason": "Web lookup found a non-place entry (chinese multinational technology company).",
+      "createdAt": "2026-06-19T19:15:42.344Z",
+      "updatedAt": "2026-06-20T09:59:38.172Z",
+      "details": {
+        "playerName": "legacy",
+        "turnLetter": "a",
+        "platform": "web",
+        "appVersion": "1.0.14",
+        "savedTurns": 0,
+        "totalTurns": 0,
+        "suggestion": ""
+      }
+    }
+  ]
 }

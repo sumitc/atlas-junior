@@ -59,12 +59,15 @@ export type PlacePipelineStatus = {
   updatedAt: string | null;
   source: string;
   endpoint: string;
+  dictionaryVersion: string | null;
   openRequests: PlacePipelineRequest[];
   approvedCountries: PlacePipelineRequest[];
+  rejectedRequests: PlacePipelineRequest[];
   needsReview: PlacePipelineRequest[];
   totals: {
     open: number;
     approved: number;
+    rejected: number;
     review: number;
   };
 };
@@ -74,7 +77,7 @@ export type PlacePipelineRequest = {
   requestedName: string;
   requestedKey: string;
   canonicalName: string | null;
-  status: "approved" | "review";
+  status: "approved" | "review" | "rejected";
   source: string;
   reason: string | null;
   createdAt: string;
@@ -107,7 +110,7 @@ export async function submitPlaceRequest(params: {
   suggestion: string;
 }): Promise<{
   requestId: string;
-  status: "approved" | "review";
+  status: "approved" | "review" | "rejected";
   canonicalName: string | null;
   deduped: boolean;
   message: string;

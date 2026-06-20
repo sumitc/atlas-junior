@@ -9,10 +9,12 @@ const emptyStatus: PlacePipelineStatus = {
   updatedAt: null,
   source: "redis",
   endpoint: "/api/place-pipeline",
+  dictionaryVersion: null,
   openRequests: [],
   approvedCountries: [],
+  rejectedRequests: [],
   needsReview: [],
-  totals: { open: 0, approved: 0, review: 0 },
+  totals: { open: 0, approved: 0, rejected: 0, review: 0 },
 };
 
 export default function PipelinePage() {
@@ -46,10 +48,13 @@ export default function PipelinePage() {
           <div className="flex flex-wrap gap-3 text-sm font-semibold text-slate-700">
             <span className="rounded-full bg-emerald-100 px-3 py-1">Open: {status.totals.open}</span>
             <span className="rounded-full bg-sky-100 px-3 py-1">Approved: {status.totals.approved}</span>
+            <span className="rounded-full bg-rose-100 px-3 py-1">Rejected: {status.totals.rejected}</span>
             <span className="rounded-full bg-amber-100 px-3 py-1">Review: {status.totals.review}</span>
           </div>
           <p className="mt-3 text-sm text-slate-500">
             Endpoint: <code className="rounded bg-slate-100 px-1.5 py-0.5">/api/place-pipeline</code>
+            {" · "}
+            Dictionary version: {status.dictionaryVersion ?? "unknown"}
             {" · "}
             Updated {status.updatedAt ? new Date(status.updatedAt).toLocaleString() : "never"}.
             {loading ? " Loading..." : ""}
@@ -73,6 +78,20 @@ export default function PipelinePage() {
             )}
           </div>
         </section>
+
+        {!loading && status.rejectedRequests.length > 0 && (
+          <section className="rounded-[2rem] bg-white/80 p-5 shadow-xl shadow-rose-200/50 backdrop-blur sm:p-6">
+            <h2 className="text-lg font-black text-slate-900">Rejected requests</h2>
+            <div className="mt-4 space-y-2">
+              {status.rejectedRequests.map((item) => (
+                <div key={item.id} className="rounded-[1.25rem] bg-rose-50 px-4 py-3">
+                  <p className="text-sm font-medium text-slate-700">{item.requestedName}</p>
+                  <p className="text-xs text-rose-700">{item.reason}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="rounded-[2rem] bg-white/85 p-5 shadow-xl shadow-violet-200/60 backdrop-blur sm:p-6">
           <h2 className="text-lg font-black text-slate-900">Needs review</h2>
