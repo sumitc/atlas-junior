@@ -7,6 +7,7 @@ const ROOT = join(__dirname, "..");
 const OUT_STATUS_FILE = join(ROOT, "data", "place-pipeline-status.json");
 const OUT_APPROVALS_FILE = join(ROOT, "data", "approved-country-additions.json");
 const OUT_DICT_VERSION_JSON = join(ROOT, "data", "place-dictionary-version.json");
+const OUT_DICT_VERSION_JS = join(ROOT, "backend", "api", "place-dictionary-version.js");
 const OUT_DICT_VERSION_TS = join(ROOT, "lib", "place-dictionary-version.ts");
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://atlas-junior.vercel.app";
 
@@ -35,6 +36,8 @@ function writeDictionaryVersion(version, approvedCount) {
     approvedCount,
   };
   writeJson(OUT_DICT_VERSION_JSON, payload);
+  ensureDir(OUT_DICT_VERSION_JS);
+  writeFileSync(OUT_DICT_VERSION_JS, `export const PLACE_DICTIONARY_VERSION = "${version}";\n`, "utf8");
   ensureDir(OUT_DICT_VERSION_TS);
   writeFileSync(OUT_DICT_VERSION_TS, `export const PLACE_DICTIONARY_VERSION = "${version}";\n`, "utf8");
 }

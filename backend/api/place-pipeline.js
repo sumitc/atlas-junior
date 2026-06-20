@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
+import { PLACE_DICTIONARY_VERSION } from "./place-dictionary-version.js";
 
 const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -144,7 +145,7 @@ function buildStatus(records) {
     updatedAt,
     source: "redis",
     endpoint: "/api/place-pipeline",
-    dictionaryVersion: readDictionaryVersion(),
+    dictionaryVersion: PLACE_DICTIONARY_VERSION ?? readDictionaryVersion(),
     openRequests,
     approvedCountries,
     rejectedRequests,
