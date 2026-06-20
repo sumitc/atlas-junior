@@ -1,7 +1,8 @@
-🌍 Welcome to Atlas Junior — v1.0.0!
+🌍 Atlas Junior v1.0.16
 
-Name places that start with the given letter — countries, cities, rivers, anything goes! Take turns with friends and see who can name the most.
+This update makes games feel smoother, fairer, and easier to play:
 
-• Tap the mic and speak your answer, or type it in
-• Leaderboard to compare scores with others
-• Works great for family game nights and road trips
+• A reliable turn timer keeps each round moving and helps games finish on time
+• Voice input is easier to use, with clearer on-screen guidance while you speak or type
+• Better place checking catches invalid answers sooner and gives more helpful feedback
+• Missing places can now be requested from inside the game, so new names are easier to add

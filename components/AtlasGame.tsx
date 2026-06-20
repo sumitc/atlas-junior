@@ -1,7 +1,7 @@
 "use client";
 
 import { SpeechRecognition } from "@capacitor-community/speech-recognition";
-import { Capacitor, registerPlugin, type PluginListenerHandle } from "@capacitor/core";
+import { Capacitor } from "@capacitor/core";
 import { Share } from "@capacitor/share";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
@@ -85,25 +85,6 @@ interface BrowserSpeechRecognition extends EventTarget {
 interface SpeechRecognitionConstructor {
   new (): BrowserSpeechRecognition;
 }
-
-type OfflineSpeechEvent = {
-  matches?: string[];
-  text?: string;
-  status?: "started" | "stopped";
-  message?: string;
-};
-
-interface OfflineSpeechPlugin {
-  start(): Promise<void>;
-  stop(): Promise<void>;
-  removeAllListeners(): Promise<void>;
-  addListener(
-    eventName: "partialResults" | "finalResult" | "listeningState" | "error",
-    listenerFunc: (event: OfflineSpeechEvent) => void,
-  ): Promise<PluginListenerHandle>;
-}
-
-const OfflineSpeech = registerPlugin<OfflineSpeechPlugin>("OfflineSpeech");
 
 declare global {
   interface Window {
@@ -428,7 +409,7 @@ export function AtlasGame() {
   const latestTranscriptRef = useRef("");
   const nativeSpeechAutoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nativeSpeechAutoSaveHandledRef = useRef(false);
-  const NATIVE_SPEECH_AUTO_SAVE_DELAY_MS = 150;
+  const NATIVE_SPEECH_AUTO_SAVE_DELAY_MS = 700;
   const isNativeApp = typeof window !== "undefined" && Capacitor.getPlatform() !== "web";
   const browserSpeechSupported =
     typeof window !== "undefined" &&
@@ -509,8 +490,6 @@ export function AtlasGame() {
       if (isNativeApp) {
         void SpeechRecognition.stop();
         void SpeechRecognition.removeAllListeners();
-        void OfflineSpeech.stop();
-        void OfflineSpeech.removeAllListeners();
       }
     };
   }, [isNativeApp]);
@@ -678,24 +657,6 @@ export function AtlasGame() {
     }, NATIVE_SPEECH_AUTO_SAVE_DELAY_MS);
   }
 
-  async function stopOfflineSpeech() {
-    if (!isNativeApp) {
-      return;
-    }
-
-    try {
-      await OfflineSpeech.stop();
-    } catch (e) {
-      dbg(`OfflineSpeech.stop failed: ${String(e)}`);
-    }
-
-    try {
-      await OfflineSpeech.removeAllListeners();
-    } catch (e) {
-      dbg(`OfflineSpeech.removeAllListeners failed: ${String(e)}`);
-    }
-  }
-
   function updatePlayerName(index: number, value: string) {
     setPlayerNames((current) =>
       current.map((name, currentIndex) => (currentIndex === index ? value : name)),
@@ -728,69 +689,7 @@ export function AtlasGame() {
         dbg(`stopListening: stop error ${String(e)}`);
       }
 
-      await stopOfflineSpeech();
     }
-  }
-
-  async function startOfflineListening() {
-    dbg("startOfflineListening: preparing offline model");
-    latestTranscriptRef.current = "";
-    nativeSpeechAutoSaveHandledRef.current = false;
-    clearNativeSpeechAutoSaveTimer();
-    setDraftPlace("");
-    updateSpeechMessage("Listening...");
-
-    await OfflineSpeech.removeAllListeners();
-    await OfflineSpeech.addListener("partialResults", ({ matches }) => {
-      const transcript = matches?.[0]?.trim() ?? "";
-      dbg(`offline partialResults: "${transcript}"`);
-      latestTranscriptRef.current = transcript;
-      setDraftPlace(transcript);
-      updateSpeechMessage(transcript ? `I heard: "${transcript}"` : "I am still listening...");
-    });
-    await OfflineSpeech.addListener("finalResult", ({ text }) => {
-      const transcript = text?.trim() ?? latestTranscriptRef.current.trim();
-      dbg(`offline finalResult: "${transcript}"`);
-      latestTranscriptRef.current = transcript;
-      setDraftPlace(transcript);
-      nativeSpeechAutoSaveHandledRef.current = true;
-      clearNativeSpeechAutoSaveTimer();
-
-      if (transcript) {
-        saveTurnInternal({ overridePlace: transcript });
-      } else {
-        updateSpeechMessage("Didn't catch that — tap Listen to try again.");
-      }
-    });
-    await OfflineSpeech.addListener("listeningState", ({ status }) => {
-      dbg(`offline listeningState: ${status}`);
-      setIsListening(status === "started");
-
-      if (status === "stopped" && !nativeSpeechAutoSaveHandledRef.current) {
-        clearNativeSpeechAutoSaveTimer();
-        const transcript = latestTranscriptRef.current.trim();
-
-        if (transcript) {
-          nativeSpeechAutoSaveHandledRef.current = true;
-          saveTurnInternal({ overridePlace: transcript });
-        } else {
-          updateSpeechMessage("Didn't catch that — tap Listen to try again.");
-        }
-      }
-    });
-    await OfflineSpeech.addListener("error", ({ message }) => {
-      dbg(`offline error: ${message ?? "unknown"}`);
-      updateSpeechMessage(
-        message
-          ? `Offline voice error: ${message}`
-          : "Offline voice could not start. Try again or type the place name.",
-        "error",
-      );
-      setIsListening(false);
-    });
-
-    await OfflineSpeech.start();
-    setIsListening(true);
   }
 
   async function startListening() {
@@ -798,7 +697,6 @@ export function AtlasGame() {
 
     if (isNativeApp) {
       try {
-        const isDeviceOffline = typeof navigator !== "undefined" && navigator.onLine === false;
         dbg("startListening: checking available()");
         const { available } = await SpeechRecognition.available();
         setNativeSpeechAvailable(available);
@@ -819,12 +717,6 @@ export function AtlasGame() {
           );
           placeInputRef.current?.focus();
           return;
-        }
-
-        if (isDeviceOffline) {
-        dbg("startListening: offline detected, using offline speech immediately");
-        await startOfflineListening();
-        return;
         }
 
         const onlineStart = async () => {
@@ -872,20 +764,17 @@ export function AtlasGame() {
         };
 
         if (!available) {
-        dbg("startListening: online speech unavailable, switching to offline");
-        await startOfflineListening();
+        dbg("startListening: online speech unavailable");
+        updateSpeechMessage(
+          "Speech input is not available in this app. Allow mic access or type the place name instead.",
+          "error",
+        );
+        placeInputRef.current?.focus();
         return;
         }
 
-        try {
         await onlineStart();
         return;
-        } catch (onlineError) {
-        dbg(`startListening: online speech failed, falling back to offline: ${String(onlineError)}`);
-        await SpeechRecognition.stop().catch(() => undefined);
-        await SpeechRecognition.removeAllListeners().catch(() => undefined);
-        await startOfflineListening();
-        }
       } catch (e) {
         dbg(`startListening: CATCH ${String(e)}`);
         setIsListening(false);
@@ -897,7 +786,7 @@ export function AtlasGame() {
 
     if (!speechSupported) {
       updateSpeechMessage(
-        "Speech input is not available in this browser. Download the Android APK for offline voice, or type the place name instead.",
+        "Speech input is not available in this browser. Type the place name instead.",
         "error",
       );
       placeInputRef.current?.focus();
@@ -908,7 +797,7 @@ export function AtlasGame() {
 
     if (!Recognition) {
       updateSpeechMessage(
-        "Speech input is not available in this browser. Download the Android APK for offline voice, or type the place name instead.",
+        "Speech input is not available in this browser. Type the place name instead.",
         "error",
       );
       placeInputRef.current?.focus();
@@ -936,6 +825,7 @@ export function AtlasGame() {
       updateSpeechMessage(
         transcript ? `I heard: "${transcript}"` : "I am still listening...",
       );
+      scheduleNativeSpeechAutoSave(transcript);
 
       if (isFinal && transcript) {
         // Auto-save for audio — no Save button tap needed
@@ -948,7 +838,7 @@ export function AtlasGame() {
         event.error === "not-allowed"
           ? "Microphone access was blocked. Allow it or type the place name."
           : event.error === "network"
-            ? "Speech needs a network connection here. Download the Android APK for offline voice, or type the place name."
+            ? "Speech needs a network connection here. Try again or type the place name."
             : "I could not hear that clearly. Try again or type the place name.",
         "error",
       );
@@ -956,6 +846,9 @@ export function AtlasGame() {
     };
 
     recognition.onend = () => {
+      if (latestTranscriptRef.current.trim()) {
+        scheduleNativeSpeechAutoSave(latestTranscriptRef.current.trim());
+      }
       setIsListening(false);
     };
 

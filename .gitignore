@@ -46,7 +46,3 @@ next-env.d.ts
 
 # GeoNames download cache (rebuilt via: node scripts/build-places-db.mjs)
 .places-cache/
-
-# Vosk offline speech cache/model bundle
-.vosk-cache/
-android/app/src/main/assets/vosk-model-small-en-us-0.15.zip
