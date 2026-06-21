@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-20T10:15:11.707Z",
+  "updatedAt": "2026-06-21T12:04:18.201Z",
   "source": "redis",
   "endpoint": "/api/place-pipeline",
   "openRequests": [],
@@ -49,7 +49,7 @@
   "totals": {
     "open": 0,
     "approved": 2,
-    "rejected": 1,
+    "rejected": 2,
     "review": 0
   },
   "dictionaryVersion": "2026-06-20T10:15:16.022Z",
@@ -71,6 +71,26 @@
         "appVersion": "1.0.14",
         "savedTurns": 0,
         "totalTurns": 0,
+        "suggestion": ""
+      }
+    },
+    {
+      "id": "fc094d26-6e56-4254-9528-454d43b90521",
+      "requestedName": "Ajanta Caves",
+      "requestedKey": "ajantacaves",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup did not identify this as a place.",
+      "createdAt": "2026-06-21T12:04:18.201Z",
+      "updatedAt": "2026-06-21T12:04:18.201Z",
+      "details": {
+        "playerName": "Sumit",
+        "turnLetter": "a",
+        "platform": "android",
+        "appVersion": "1.0.15",
+        "savedTurns": 5,
+        "totalTurns": 5,
         "suggestion": ""
       }
     }

@@ -109,9 +109,8 @@ const TURN_TIME_LIMIT_SECONDS = 180;
 
 function formatTurnTimeStep(totalSeconds: number): string {
   const clamped = Math.max(0, totalSeconds);
-  const steppedSeconds = Math.floor(clamped / 10) * 10;
-  const minutes = Math.floor(steppedSeconds / 60);
-  const seconds = steppedSeconds % 60;
+  const minutes = Math.floor(clamped / 60);
+  const seconds = clamped % 60;
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
