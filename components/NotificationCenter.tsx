@@ -130,7 +130,7 @@ export function NotificationCenter() {
   }
 
   return (
-    <div className="fixed right-3 top-[calc(0.75rem+env(safe-area-inset-top))] z-40">
+    <div className="fixed right-[5.25rem] top-[calc(1rem+env(safe-area-inset-top))] z-40">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -159,17 +159,17 @@ export function NotificationCenter() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-3 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-[1.4rem] border border-white/70 bg-white/82 shadow-2xl shadow-slate-200/40 backdrop-blur-sm">
+      <div className="absolute right-0 mt-3 w-[min(18rem,calc(100vw-1rem))] overflow-hidden rounded-[1.4rem] border border-white/70 bg-white/78 shadow-2xl shadow-slate-200/35 backdrop-blur-sm">
           <div className="flex items-center justify-between border-b border-slate-100/80 px-4 py-3">
             <div>
-              <p className="text-[13px] font-semibold text-slate-900">Notifications</p>
-              <p className="text-[11px] text-slate-500">
+            <p className="text-[12px] font-medium tracking-wide text-slate-900">Notifications</p>
+            <p className="text-[10px] text-slate-500">
                 {loading ? "Refreshing…" : unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
               </p>
             </div>
             <button
               type="button"
-              className="text-[13px] font-medium text-slate-500 hover:text-slate-700"
+            className="text-[12px] font-medium text-slate-500 hover:text-slate-700"
               onClick={() => setOpen(false)}
             >
               Close
@@ -178,7 +178,7 @@ export function NotificationCenter() {
 
           <div className="max-h-[58vh] overflow-auto p-2">
             {notifications.length === 0 ? (
-              <p className="px-3 py-8 text-center text-[13px] text-slate-400">No notifications yet.</p>
+            <p className="px-3 py-8 text-center text-[12px] text-slate-400">No notifications yet.</p>
             ) : (
               <div className="space-y-2">
                 {notifications.map((item) => (
@@ -195,9 +195,9 @@ export function NotificationCenter() {
                         {notificationGlyph(item.kind)}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[13px] font-medium text-slate-800">{item.title}</p>
-                        <p className="mt-0.5 text-[12px] leading-5 text-slate-500">{item.body}</p>
-                        <p className="mt-1 text-[11px] text-slate-400">
+                        <p className="text-[12px] font-medium text-slate-800">{item.title}</p>
+                        <p className="mt-0.5 text-[11px] leading-4 text-slate-500">{item.body}</p>
+                        <p className="mt-1 text-[10px] text-slate-400">
                           {isRead(item) ? "Read" : "Open"}
                         </p>
                       </div>

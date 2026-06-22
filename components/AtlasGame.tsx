@@ -411,7 +411,7 @@ export function AtlasGame() {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [nativeSpeechAvailable, setNativeSpeechAvailable] = useState<boolean | null>(null);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
-  const [showDebug, setShowDebug] = useState(false);
+  const [showDebug, setShowDebug] = useState(process.env.NEXT_PUBLIC_DEBUG_PANEL === "true");
   const [debugNotificationKind, setDebugNotificationKind] = useState<DebugNotificationKind>(
     "leaderboard-top",
   );
