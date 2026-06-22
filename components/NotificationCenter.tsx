@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getNotifications, getPlacePipeline, getTickets, markNotificationsRead } from "@/lib/api";
 import { getClientId } from "@/lib/client-id";
 import { setupAndroidPushNotifications } from "@/lib/push";
@@ -16,21 +16,17 @@ function notificationTone(kind: string): string {
 }
 
 export function NotificationCenter() {
-  const [clientId, setClientId] = useState<string | null>(null);
+  const [clientId] = useState(() => getClientId());
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    setClientId(getClientId());
-  }, []);
-
   async function syncSources() {
     await Promise.all([getTickets().catch(() => null), getPlacePipeline().catch(() => null)]);
   }
 
-  async function loadNotifications() {
+  const loadNotifications = useCallback(async () => {
     if (!clientId) {
       setNotifications([]);
       setUnreadCount(0);
@@ -40,7 +36,7 @@ export function NotificationCenter() {
     const inbox = await getNotifications();
     setNotifications(inbox.notifications);
     setUnreadCount(inbox.unreadCount);
-  }
+  }, [clientId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,7 +63,7 @@ export function NotificationCenter() {
       cancelled = true;
       if (interval) window.clearInterval(interval);
     };
-  }, [clientId]);
+  }, [clientId, loadNotifications]);
 
   useEffect(() => {
     if (!clientId) {
@@ -91,12 +87,20 @@ export function NotificationCenter() {
       return;
     }
 
-    setUnreadCount(0);
     void markNotificationsRead().then((inbox) => {
       setNotifications(inbox.notifications);
       setUnreadCount(inbox.unreadCount);
     }).catch(() => {});
   }, [open, clientId]);
+
+  useEffect(() => {
+    function onRefresh() {
+      void loadNotifications().catch(() => {});
+    }
+
+    window.addEventListener("atlas:notifications-refresh", onRefresh);
+    return () => window.removeEventListener("atlas:notifications-refresh", onRefresh);
+  }, [loadNotifications]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {

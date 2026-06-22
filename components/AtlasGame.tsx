@@ -7,10 +7,12 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   getLeaderboard,
+  sendDebugNotification,
   submitPlaceRequest,
   submitScore,
   submitStats,
   type LeaderboardEntry,
+  type DebugNotificationKind,
 } from "@/lib/api";
 import { findSuggestion, isKnownPlace, isRejectedBareWord, loadPlaces } from "@/lib/places";
 import { APP_VERSION } from "@/lib/version";
@@ -365,6 +367,15 @@ function getInitialGameSession(): PersistedGameSession | null {
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
+const DEBUG_NOTIFICATION_OPTIONS: Array<{ kind: DebugNotificationKind; label: string }> = [
+  { kind: "leaderboard-top", label: "Leaderboard: you are #1" },
+  { kind: "leaderboard-toppled", label: "Leaderboard: top score topped" },
+  { kind: "pipeline-approved", label: "Pipeline: place approved" },
+  { kind: "pipeline-rejected", label: "Pipeline: place rejected" },
+  { kind: "support-updated", label: "Support: ticket updated" },
+  { kind: "support-closed", label: "Support: ticket resolved" },
+];
+
 function TopThree({ entries, highlightId }: { entries: import("@/lib/api").LeaderboardEntry[]; highlightId?: string }) {
   const top = entries.slice(0, 3);
   return (
@@ -401,6 +412,10 @@ export function AtlasGame() {
   const [nativeSpeechAvailable, setNativeSpeechAvailable] = useState<boolean | null>(null);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const [showDebug, setShowDebug] = useState(false);
+  const [debugNotificationKind, setDebugNotificationKind] = useState<DebugNotificationKind>(
+    "leaderboard-top",
+  );
+  const [debugNotificationSending, setDebugNotificationSending] = useState(false);
   const debugScrollRef = useRef<HTMLDivElement | null>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const placeInputRef = useRef<HTMLInputElement | null>(null);
@@ -628,6 +643,24 @@ export function AtlasGame() {
     setTimeout(() => {
       debugScrollRef.current?.scrollTo({ top: 999999, behavior: "smooth" });
     }, 30);
+  }
+
+  async function fireDebugNotification() {
+    if (debugNotificationSending) {
+      return;
+    }
+
+    setDebugNotificationSending(true);
+    try {
+      dbg(`notification test: ${debugNotificationKind}`);
+      await sendDebugNotification(debugNotificationKind);
+      window.dispatchEvent(new Event("atlas:notifications-refresh"));
+      dbg(`notification test sent: ${debugNotificationKind}`);
+    } catch (error) {
+      dbg(`notification test failed: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setDebugNotificationSending(false);
+    }
   }
 
   function clearNativeSpeechAutoSaveTimer() {
@@ -1524,6 +1557,36 @@ export function AtlasGame() {
               type="button"
             >
               Clear
+            </button>
+          </div>
+        )}
+        {showDebug && (
+          <div className="space-y-2 bg-slate-900 px-3 pb-4">
+            <select
+              className="w-full rounded bg-slate-800 px-3 py-2 text-xs font-mono text-white outline-none"
+              value={debugNotificationKind}
+              onChange={(event) => {
+                const nextKind = DEBUG_NOTIFICATION_OPTIONS.find(
+                  (option) => option.kind === event.target.value,
+                );
+                if (nextKind) {
+                  setDebugNotificationKind(nextKind.kind);
+                }
+              }}
+            >
+              {DEBUG_NOTIFICATION_OPTIONS.map((option) => (
+                <option key={option.kind} value={option.kind}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <button
+              className="w-full rounded bg-fuchsia-600 px-3 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:bg-fuchsia-400"
+              onClick={() => void fireDebugNotification()}
+              type="button"
+              disabled={debugNotificationSending}
+            >
+              {debugNotificationSending ? "Sending…" : "Send test notification"}
             </button>
           </div>
         )}

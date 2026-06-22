@@ -224,3 +224,27 @@ export async function markNotificationsRead(notificationIds: string[] = []): Pro
   if (!res.ok) throw new Error(data.error ?? "Could not update notifications");
   return data;
 }
+
+export type DebugNotificationKind =
+  | "leaderboard-top"
+  | "leaderboard-toppled"
+  | "pipeline-approved"
+  | "pipeline-rejected"
+  | "support-updated"
+  | "support-closed";
+
+export async function sendDebugNotification(kind: DebugNotificationKind): Promise<void> {
+  const clientId = getClientId();
+  if (!clientId) {
+    throw new Error("Could not find a client ID for test notifications");
+  }
+
+  const res = await fetch(api("/debug/notifications"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ clientId, kind }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Could not send test notification");
+}
