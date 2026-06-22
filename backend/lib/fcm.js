@@ -60,6 +60,9 @@ export async function sendMulticastPush({ tokens, title, body, data = {} }) {
   return messaging.sendEachForMulticast({
     tokens,
     notification: { title, body },
+    android: {
+      priority: "high",
+    },
     data: Object.fromEntries(
       Object.entries(data).map(([key, value]) => [String(key), String(value)]),
     ),

@@ -1,4 +1,5 @@
 import { enqueueNotification } from "../../lib/notifications.js";
+import { redisCmd } from "../../lib/redis.js";
 
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -67,6 +68,29 @@ function buildTestNotification(kind) {
   }
 }
 
+async function listRegisteredClientIds() {
+  const clientIds = new Set();
+  let cursor = "0";
+
+  do {
+    const result = await redisCmd("SCAN", cursor, "MATCH", "atlas:push:client:*", "COUNT", "100");
+    if (!Array.isArray(result) || result.length < 2) {
+      break;
+    }
+
+    cursor = String(result[0] ?? "0");
+    const keys = Array.isArray(result[1]) ? result[1] : [];
+    for (const key of keys) {
+      const match = String(key ?? "").match(/^atlas:push:client:(.+)$/);
+      if (match?.[1]) {
+        clientIds.add(match[1]);
+      }
+    }
+  } while (cursor !== "0");
+
+  return [...clientIds];
+}
+
 export default async function handler(req, res) {
   setCors(res);
   if (req.method === "OPTIONS") return res.status(200).end();
@@ -79,25 +103,31 @@ export default async function handler(req, res) {
     const clientId = String(req.body?.clientId ?? "").trim();
     const kind = String(req.body?.kind ?? "").trim();
 
-    if (!clientId) {
-      return res.status(400).json({ error: "clientId is required" });
-    }
-
     const spec = buildTestNotification(kind);
     if (!spec) {
       return res.status(400).json({ error: "Unknown debug notification kind" });
     }
 
-    const notification = await enqueueNotification({
-      clientId,
-      ...spec,
-    });
-
-    if (!notification) {
-      return res.status(503).json({ error: "Could not queue test notification" });
+    const targetClientIds = clientId ? [clientId] : await listRegisteredClientIds();
+    if (targetClientIds.length === 0) {
+      return res.status(503).json({ error: "No registered devices are available for test notifications" });
     }
 
-    return res.status(201).json({ notification });
+    const notifications = [];
+    for (const targetClientId of targetClientIds) {
+      const notification = await enqueueNotification({
+        clientId: targetClientId,
+        ...spec,
+      });
+      if (notification) {
+        notifications.push(notification);
+      }
+    }
+
+    return res.status(201).json({
+      notifications,
+      deliveredTo: targetClientIds.length,
+    });
   } catch (error) {
     console.error("POST /debug/notifications", error);
     return res.status(500).json({ error: "Could not send test notification" });

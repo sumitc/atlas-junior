@@ -7,6 +7,7 @@ const NOTIFICATION_ITEM_PREFIX = "atlas:notif:";
 const PUSH_CLIENT_PREFIX = "atlas:push:client:";
 const PUSH_TOKEN_PREFIX = "atlas:push:token:";
 const MAX_NOTIFICATIONS_PER_CLIENT = 50;
+const READ_RETENTION_MS = 24 * 60 * 60 * 1000;
 
 function clientIndexKey(clientId) {
   return `${NOTIFICATION_INDEX_PREFIX}${clientId}`;
@@ -46,6 +47,23 @@ function toNotification(fields) {
     createdAt,
     readAt: readAt || null,
   };
+}
+
+function isNotificationVisible(notification) {
+  if (!notification) {
+    return false;
+  }
+
+  if (!notification.readAt) {
+    return true;
+  }
+
+  const readAtTime = Date.parse(notification.readAt);
+  if (!Number.isFinite(readAtTime)) {
+    return true;
+  }
+
+  return Date.now() - readAtTime < READ_RETENTION_MS;
 }
 
 export async function registerPushDevice(clientId, token, platform) {
@@ -222,9 +240,10 @@ export async function listNotifications(clientId) {
   );
 
   const notifications = rows.map(toNotification).filter(Boolean);
-  const unreadCount = notifications.reduce((count, item) => count + (item.readAt ? 0 : 1), 0);
+  const visibleNotifications = notifications.filter(isNotificationVisible);
+  const unreadCount = visibleNotifications.reduce((count, item) => count + (item.readAt ? 0 : 1), 0);
 
-  return { notifications, unreadCount };
+  return { notifications: visibleNotifications, unreadCount };
 }
 
 export async function markNotificationsRead(clientId, notificationIds = []) {
