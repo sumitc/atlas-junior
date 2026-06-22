@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { PLACE_DICTIONARY_VERSION } from "./place-dictionary-version.js";
+import { enqueueNotification } from "../lib/notifications.js";
 
 const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -114,6 +115,40 @@ function publicRecord(record) {
     updatedAt: record.updatedAt,
     details: record.details ?? {},
   };
+}
+
+async function maybeNotifyPipelineStatus(record, previousStatus) {
+  const clientId = String(record?.details?.clientId ?? "").trim();
+  if (!clientId || !record?.status || record.status === "review") {
+    return record;
+  }
+
+  if (record.notifiedStatus === record.status) {
+    return record;
+  }
+
+  if (previousStatus === record.status && record.notifiedStatus) {
+    return record;
+  }
+
+  const approved = record.status === "approved";
+  const kind = approved ? "pipeline-approved" : "pipeline-rejected";
+  const title = approved ? "Your place was approved" : "Your place was rejected";
+  const body = approved
+    ? `${record.requestedName} was approved and added to the dictionary.`
+    : `${record.requestedName} was rejected by the pipeline.`;
+
+  await enqueueNotification({
+    clientId,
+    kind,
+    title,
+    body,
+    targetUrl: "/pipeline",
+    sourceType: "place-pipeline",
+    sourceId: record.id,
+  });
+
+  return { ...record, notifiedStatus: record.status };
 }
 
 function recordKey(record) {
@@ -246,17 +281,25 @@ function extractRequestedName(body) {
 }
 
 async function reviewRecord(record) {
-  if (!record || (record.status !== "review" && record.status !== "pending")) return record;
-  const classification = await classifyRequestedName(record.requestedName);
-  const now = new Date().toISOString();
-  return {
-    ...record,
-    canonicalName: classification.canonicalName ?? record.canonicalName ?? null,
-    status: classification.status,
-    source: classification.source ?? record.source ?? "manual",
-    reason: classification.reason ?? record.reason ?? null,
-    updatedAt: now,
-  };
+  if (!record) {
+    return record;
+  }
+
+  const previousStatus = record.status;
+  if (record.status === "review" || record.status === "pending") {
+    const classification = await classifyRequestedName(record.requestedName);
+    const now = new Date().toISOString();
+    record = {
+      ...record,
+      canonicalName: classification.canonicalName ?? record.canonicalName ?? null,
+      status: classification.status,
+      source: classification.source ?? record.source ?? "manual",
+      reason: classification.reason ?? record.reason ?? null,
+      updatedAt: now,
+    };
+  }
+
+  return maybeNotifyPipelineStatus(record, previousStatus);
 }
 
 async function persistReviewedRecords(records) {
@@ -354,6 +397,7 @@ export default async function handler(req, res) {
       turnLetter: String(body.turnLetter ?? "").trim(),
       platform: String(body.platform ?? "").trim(),
       appVersion: String(body.appVersion ?? "").trim(),
+      clientId: String(body.clientId ?? "").trim(),
       savedTurns: Number(body.savedTurns ?? 0),
       totalTurns: Number(body.totalTurns ?? 0),
       suggestion: String(body.suggestion ?? "").trim(),
@@ -378,6 +422,16 @@ export default async function handler(req, res) {
         ["SET", `${PIPELINE_PREFIX}req:${id}`, JSON.stringify(record)],
         ["HSET", `${PIPELINE_PREFIX}index`, requestedKey, id],
       ]);
+      if (record.status !== "review") {
+        await maybeNotifyPipelineStatus(record, null).catch((error) =>
+          console.error("notify place pipeline", error),
+        );
+        await redisCmd(
+          "SET",
+          `${PIPELINE_PREFIX}req:${id}`,
+          JSON.stringify({ ...record, notifiedStatus: record.status }),
+        );
+      }
       return res.status(201).json({
         requestId: id,
         status: record.status,

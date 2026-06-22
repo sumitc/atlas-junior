@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { enqueueNotification } from "../lib/notifications.js";
 
 const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -37,6 +38,24 @@ async function redisPipeline(commands) {
     if (item.error) throw new Error(item.error);
   }
   return json.map((r) => r.result);
+}
+
+async function getTopEntry() {
+  const raw = await redisCmd("ZREVRANGE", LB_KEY, "0", "0", "WITHSCORES");
+  if (!raw || raw.length < 2) {
+    return null;
+  }
+
+  const [id, score] = raw;
+  const meta = await redisPipeline([["HMGET", `atlas:lb:${id}`, "name", "date", "clientId"]]);
+  const [name, date, clientId] = Array.isArray(meta[0]) ? meta[0] : [];
+  return {
+    id,
+    score: Number(score),
+    name: name ?? "Anonymous",
+    date: date ?? "",
+    clientId: clientId ?? null,
+  };
 }
 
 function localDateString() {
@@ -78,6 +97,7 @@ export default async function handler(req, res) {
 
   if (req.method === "POST") {
     const { name, score, date } = req.body ?? {};
+    const clientId = String(req.body?.clientId ?? "").trim() || null;
 
     const safeName = String(name ?? "").trim().slice(0, 24) || "Anonymous";
     const rawScore = Number(score);
@@ -92,16 +112,42 @@ export default async function handler(req, res) {
     const redisScore = safeScore + tieBreaker;
 
     try {
+      const previousTop = await getTopEntry().catch(() => null);
       const [, , , rank, readback] = await redisPipeline([
         ["ZADD", LB_KEY, "NX", String(redisScore), id],
-        ["HSET", `atlas:lb:${id}`, "name", safeName, "score", String(safeScore), "date", safeDate],
+        ["HSET", `atlas:lb:${id}`, "name", safeName, "score", String(safeScore), "date", safeDate, "clientId", clientId ?? ""],
         ["ZREMRANGEBYRANK", LB_KEY, "0", String(-(MAX_STORED + 1))],
         ["ZREVRANK", LB_KEY, id],
-        ["HMGET", `atlas:lb:${id}`, "name", "date"],
+        ["HMGET", `atlas:lb:${id}`, "name", "date", "clientId"],
       ]);
 
       console.log(`POST /leaderboard id=${id} safeName=${safeName} readback=${JSON.stringify(readback)}`);
       const finalRank = rank !== null ? Number(rank) + 1 : null;
+
+      const currentTop = await getTopEntry().catch(() => null);
+      if (clientId && currentTop?.id === id) {
+        void enqueueNotification({
+          clientId,
+          kind: "leaderboard-top",
+          title: "You're #1 on Atlas",
+          body: `Your score of ${safeScore} turns is now the top score.`,
+          targetUrl: "/leaderboard",
+          sourceType: "leaderboard",
+          sourceId: id,
+        }).catch((error) => console.error("notify leaderboard top", error));
+      }
+      if (previousTop?.clientId && previousTop.clientId !== clientId && currentTop?.id === id) {
+        void enqueueNotification({
+          clientId: previousTop.clientId,
+          kind: "leaderboard-toppled",
+          title: "Your top score was topped",
+          body: `${safeName} just moved ahead with ${safeScore} turns.`,
+          targetUrl: "/leaderboard",
+          sourceType: "leaderboard",
+          sourceId: id,
+        }).catch((error) => console.error("notify leaderboard toppled", error));
+      }
+
       return res.json({ entryId: id, rank: finalRank, onLeaderboard: finalRank !== null && finalRank <= TOP_N });
     } catch (err) {
       console.error("POST /leaderboard", err);

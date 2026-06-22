@@ -138,7 +138,7 @@ The GitHub Actions workflow in `.github/workflows/place-dictionary-pipeline.yml`
 
 ---
 
-## Key features (current — v1.0.17)
+## Key features (current — v1.0.18)
 
 - **Voice input** — tap microphone, speak a place name; auto-saves when mic stops
 - **Offline place validation** — 142k GeoNames places; fuzzy "Did you mean?" suggestions (Levenshtein ≤ 2)

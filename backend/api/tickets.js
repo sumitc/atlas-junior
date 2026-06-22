@@ -1,3 +1,5 @@
+import { enqueueNotification } from "../lib/notifications.js";
+
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_REPO = process.env.GITHUB_REPO || "sumitc/atlas-junior";
 const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
@@ -20,6 +22,62 @@ async function redisCmd(...args) {
   const json = await res.json();
   if (json.error) throw new Error(json.error);
   return json.result;
+}
+
+function extractClientId(body) {
+  const marker = String(body ?? "").match(/<!--\s*atlas-client-id:([a-zA-Z0-9-]+)\s*-->/i);
+  return marker?.[1] ?? "";
+}
+
+function safeParseJson(value) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+async function syncTicketNotification(issue) {
+  const clientId = extractClientId(issue.body);
+  if (!clientId) {
+    return;
+  }
+
+  const stateKey = `atlas:ticket:state:${issue.number}`;
+  const nextState = {
+    state: issue.state,
+    updatedAt: issue.updatedAt,
+    closedAt: issue.closedAt,
+  };
+
+  const previousRaw = await redisCmd("GET", stateKey).catch(() => null);
+  const previous = previousRaw ? safeParseJson(previousRaw) : null;
+  const changed =
+    !previous ||
+    previous.state !== nextState.state ||
+    previous.updatedAt !== nextState.updatedAt ||
+    previous.closedAt !== nextState.closedAt;
+
+  if (previous && changed) {
+    const isClosed = issue.state === "closed";
+    const title = isClosed ? `Support ticket #${issue.number} resolved` : `Support ticket #${issue.number} updated`;
+    const bodyText = isClosed
+      ? `${issue.title} was marked as resolved on GitHub.`
+      : `${issue.title} received a new update on GitHub.`;
+    await enqueueNotification({
+      clientId,
+      kind: isClosed ? "support-closed" : "support-updated",
+      title,
+      body: bodyText,
+      targetUrl: "/support",
+      sourceType: "support-ticket",
+      sourceId: String(issue.number),
+    }).catch((error) => console.error("notify support ticket", error));
+  }
+
+  await redisCmd("SET", stateKey, JSON.stringify({ ...nextState, clientId, title: issue.title })).catch(
+    (error) => console.error("cache support ticket state", error),
+  );
 }
 
 export default async function handler(req, res) {
@@ -47,10 +105,13 @@ export default async function handler(req, res) {
         labels: i.labels.map((l) => l.name),
         createdAt: i.created_at,
         closedAt: i.closed_at ?? null,
+        updatedAt: i.updated_at,
+        body: i.body ?? "",
       });
 
       const open = (await openRes.json()).filter((i) => !i.pull_request).map(toIssue);
       const closed = (await closedRes.json()).filter((i) => !i.pull_request).map(toIssue);
+      await Promise.all([...open, ...closed].map((issue) => syncTicketNotification(issue)));
 
       return res.json({ issues: open, resolved: closed });
     } catch (err) {
@@ -81,6 +142,7 @@ export default async function handler(req, res) {
     const safeTitle = String(title ?? "").trim().slice(0, 256);
     const safeBody = String(body ?? "").trim().slice(0, 4096);
     const labelType = VALID_TYPES[type] ?? "enhancement";
+    const clientId = String(req.body?.clientId ?? "").trim();
 
     if (!safeTitle) return res.status(400).json({ error: "Title is required" });
 
@@ -93,7 +155,11 @@ export default async function handler(req, res) {
           "X-GitHub-Api-Version": "2022-11-28",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ title: safeTitle, body: safeBody || undefined, labels: ["atlas-app", labelType] }),
+        body: JSON.stringify({
+          title: safeTitle,
+          body: `${safeBody}${clientId ? `\n\n<!-- atlas-client-id:${clientId} -->` : ""}`.trim(),
+          labels: ["atlas-app", labelType],
+        }),
       });
       if (!ghRes.ok) {
         const err = await ghRes.json().catch(() => ({}));

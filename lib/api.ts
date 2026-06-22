@@ -1,9 +1,17 @@
+import { getClientId } from "@/lib/client-id";
+import type { NotificationInbox } from "@/lib/notifications";
+
 const BASE =
   process.env.NEXT_PUBLIC_API_URL ??
   (typeof window !== "undefined" ? "http://localhost:3001" : "http://localhost:3001");
 
 // All routes are under /api/ (Vercel serverless functions layout)
 const api = (path: string) => `${BASE}/api${path}`;
+
+function attachClientId<T extends Record<string, unknown>>(payload: T): T & { clientId?: string } {
+  const clientId = getClientId();
+  return clientId ? { ...payload, clientId } : payload;
+}
 
 export type LeaderboardEntry = {
   id: string;
@@ -34,7 +42,7 @@ export async function submitScore(params: {
   const res = await fetch(api("/leaderboard"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
+    body: JSON.stringify(attachClientId(params)),
   });
   if (!res.ok) throw new Error("Could not save score");
   return res.json();
@@ -63,6 +71,8 @@ export type SupportIssue = {
   labels: string[];
   createdAt: string;
   closedAt: string | null;
+  updatedAt: string;
+  body: string;
 };
 
 export async function getTickets(): Promise<{ issues: SupportIssue[]; resolved: SupportIssue[] }> {
@@ -103,6 +113,7 @@ export type PlacePipelineRequest = {
     turnLetter: string;
     platform: string;
     appVersion: string;
+    clientId?: string;
     savedTurns: number;
     totalTurns: number;
     suggestion: string;
@@ -134,7 +145,7 @@ export async function submitPlaceRequest(params: {
   const res = await fetch(api("/place-pipeline"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
+    body: JSON.stringify(attachClientId(params)),
   });
 
   const data = await res.json();
@@ -150,9 +161,66 @@ export async function submitTicket(params: {
   const res = await fetch(api("/tickets"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
+    body: JSON.stringify(attachClientId(params)),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? "Could not submit ticket");
+  return data;
+}
+
+export async function registerDeviceToken(params: {
+  clientId: string;
+  token: string;
+  platform: string;
+}): Promise<void> {
+  const res = await fetch(api("/devices"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Could not register device");
+}
+
+export async function unregisterDeviceToken(params: {
+  clientId: string;
+  token: string;
+}): Promise<void> {
+  const res = await fetch(api("/devices"), {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Could not unregister device");
+}
+
+export type AppNotification = NotificationInbox["notifications"][number];
+
+export async function getNotifications(): Promise<NotificationInbox> {
+  const clientId = getClientId();
+  if (!clientId) {
+    return { notifications: [], unreadCount: 0 };
+  }
+
+  const res = await fetch(`${api("/notifications")}?clientId=${encodeURIComponent(clientId)}`);
+  if (!res.ok) throw new Error("Could not load notifications");
+  return res.json();
+}
+
+export async function markNotificationsRead(notificationIds: string[] = []): Promise<NotificationInbox> {
+  const clientId = getClientId();
+  if (!clientId) {
+    return { notifications: [], unreadCount: 0 };
+  }
+
+  const res = await fetch(api("/notifications"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ clientId, notificationIds }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Could not update notifications");
   return data;
 }

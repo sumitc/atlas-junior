@@ -1,8 +1,7 @@
-🌍 Atlas Junior v1.0.17
+🌍 Atlas Junior v1.0.18
 
-This update makes games feel smoother, fairer, and easier to play:
+This update adds notifications to bring players back into the game:
 
-• A reliable turn timer keeps each round moving and helps games finish on time
-• Voice input is easier to use, with clearer on-screen guidance while you speak or type
-• Better place checking catches invalid answers sooner and gives more helpful feedback
-• Missing places can now be requested from inside the game, so new names are easier to add
+• Bell icon with unread count and in-app notification center
+• Leaderboard, pipeline, and support updates link straight to the right screen
+• Android push registration is wired in for remote nudges when the device is available
