@@ -25,8 +25,6 @@ export async function setupAndroidPushNotifications(onTap?: (url: string) => voi
       lightColor: "#c026d3",
     });
 
-    await PushNotifications.register();
-
     const listeners = [
       await PushNotifications.addListener("registration", (token) => {
         const clientId = getClientId();
@@ -53,6 +51,8 @@ export async function setupAndroidPushNotifications(onTap?: (url: string) => voi
         // The in-app bell will refresh from the backend poller.
       }),
     ];
+
+    await PushNotifications.register();
 
     return async () => {
       await Promise.all(listeners.map((listener) => listener.remove()));
