@@ -62,6 +62,9 @@ export async function sendMulticastPush({ tokens, title, body, data = {} }) {
     notification: { title, body },
     android: {
       priority: "high",
+      notification: {
+        channelId: "atlas-updates",
+      },
     },
     data: Object.fromEntries(
       Object.entries(data).map(([key, value]) => [String(key), String(value)]),

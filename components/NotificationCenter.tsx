@@ -130,7 +130,7 @@ export function NotificationCenter() {
   }
 
   return (
-    <div className="fixed right-[5.25rem] top-[calc(1rem+env(safe-area-inset-top))] z-40">
+    <div className="fixed right-4 top-[calc(1rem+env(safe-area-inset-top))] z-40">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}

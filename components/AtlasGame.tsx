@@ -1179,7 +1179,7 @@ export function AtlasGame() {
       )}
       <main className="app-safe-area-shell min-h-screen bg-[radial-gradient(circle_at_top,_#fde68a,_#f5d0fe_42%,_#bfdbfe_78%,_#ffffff)] sm:px-6">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 pb-36">
-          <header className="flex items-start justify-between gap-3 rounded-[2rem] bg-white/75 px-5 py-4 shadow-lg shadow-violet-200/50 backdrop-blur sm:px-6">
+          <header className="relative flex items-start justify-between gap-3 rounded-[2rem] bg-white/75 px-5 py-4 pr-16 shadow-lg shadow-violet-200/50 backdrop-blur sm:px-6">
             <div className="min-w-0 flex-1">
               <p className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
                 Atlas
@@ -1191,7 +1191,7 @@ export function AtlasGame() {
 
             <button
               aria-label="About Atlas"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-600 text-lg font-black text-white shadow-lg shadow-violet-300/60 transition hover:bg-violet-500"
+              className="absolute right-16 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-violet-600 text-lg font-black text-white shadow-lg shadow-violet-300/60 transition hover:bg-violet-500"
               onClick={() => setIsAboutOpen(true)}
               type="button"
             >

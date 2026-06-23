@@ -14,6 +14,17 @@ export async function setupAndroidPushNotifications(onTap?: (url: string) => voi
       return () => {};
     }
 
+    await PushNotifications.createChannel({
+      id: "atlas-updates",
+      name: "Atlas updates",
+      description: "Notifications for Atlas gameplay updates",
+      importance: 5,
+      visibility: 1,
+      vibration: true,
+      lights: true,
+      lightColor: "#c026d3",
+    });
+
     await PushNotifications.register();
 
     const listeners = [
