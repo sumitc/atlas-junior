@@ -2,6 +2,7 @@ import { Capacitor } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { getClientId } from "@/lib/client-id";
 import { registerDeviceToken } from "@/lib/api";
+import { resolveNotificationTargetUrl } from "@/lib/notifications";
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -63,7 +64,10 @@ export async function setupAndroidPushNotifications(onTap?: (url: string) => voi
         console.error("push registration error", error);
       }),
       await PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
-        const targetUrl = String(action.notification.data?.targetUrl ?? "").trim();
+        const targetUrl = resolveNotificationTargetUrl({
+          kind: String(action.notification.data?.kind ?? action.notification.data?.sourceType ?? ""),
+          targetUrl: String(action.notification.data?.targetUrl ?? ""),
+        });
         if (targetUrl && onTap) {
           onTap(targetUrl);
         }

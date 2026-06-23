@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getNotifications, getPlacePipeline, getTickets, markNotificationsRead } from "@/lib/api";
 import { getClientId } from "@/lib/client-id";
 import { setupAndroidPushNotifications } from "@/lib/push";
-import type { AppNotification } from "@/lib/notifications";
+import { resolveNotificationTargetUrl, type AppNotification } from "@/lib/notifications";
 
 function notificationTone(kind: string): string {
   if (kind.includes("toppled")) return "border-rose-100";
@@ -25,6 +25,10 @@ function notificationGlyph(kind: string): string {
 
 function isRead(item: AppNotification): boolean {
   return Boolean(item.readAt);
+}
+
+function notificationHref(item: AppNotification): string {
+  return resolveNotificationTargetUrl({ kind: item.kind, targetUrl: item.targetUrl });
 }
 
 export function NotificationCenter() {
@@ -130,7 +134,7 @@ export function NotificationCenter() {
   }
 
   return (
-    <div className="fixed right-4 top-[calc(1rem+env(safe-area-inset-top))] z-40">
+    <div className="fixed right-4 top-[calc(1.15rem+env(safe-area-inset-top))] z-40">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -184,7 +188,7 @@ export function NotificationCenter() {
                 {notifications.map((item) => (
                   <Link
                     key={item.id}
-                    href={item.targetUrl}
+                    href={notificationHref(item)}
                     onClick={() => setOpen(false)}
                     className={`block rounded-2xl border px-3 py-2.5 transition ${notificationTone(item.kind)} ${
                       isRead(item) ? "bg-slate-50/90 opacity-55" : "bg-white"
