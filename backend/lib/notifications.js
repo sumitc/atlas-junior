@@ -225,7 +225,14 @@ export async function enqueueNotification(input) {
   ]);
 
   void deliverPush(notification).catch((error) => {
-    console.error("deliver push notification", error);
+    console.error("deliverPush:error", {
+      clientId: notification.clientId,
+      notificationId: notification.id,
+      kind: notification.kind,
+      message: error instanceof Error ? error.message : String(error),
+      code: error && typeof error === "object" ? String(error.code ?? "") : "",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
   });
 
   return notification;
