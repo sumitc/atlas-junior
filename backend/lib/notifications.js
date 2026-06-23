@@ -73,6 +73,12 @@ export async function registerPushDevice(clientId, token, platform) {
     return false;
   }
 
+  console.info("registerPushDevice", {
+    clientId: safeClientId,
+    tokenPrefix: safeToken.slice(0, 12),
+    platform: String(platform ?? "android"),
+  });
+
   await redisPipeline([
     ["SADD", pushClientKey(safeClientId), safeToken],
     ["HSET", pushTokenKey(safeToken), "clientId", safeClientId, "platform", String(platform ?? "android"), "updatedAt", new Date().toISOString()],
@@ -117,6 +123,11 @@ async function removeInvalidTokens(clientId, tokens) {
 async function deliverPush(notification) {
   const tokens = await getClientTokens(notification.clientId);
   if (tokens.length === 0) {
+    console.info("deliverPush:no-tokens", {
+      clientId: notification.clientId,
+      notificationId: notification.id,
+      kind: notification.kind,
+    });
     return;
   }
 
@@ -131,6 +142,15 @@ async function deliverPush(notification) {
       sourceType: notification.sourceType,
       sourceId: notification.sourceId,
     },
+  });
+
+  console.info("deliverPush:result", {
+    clientId: notification.clientId,
+    notificationId: notification.id,
+    kind: notification.kind,
+    tokenCount: tokens.length,
+    successCount: result.successCount,
+    failureCount: result.failureCount,
   });
 
   const invalidTokens = [];
