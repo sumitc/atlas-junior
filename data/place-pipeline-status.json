@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-21T12:04:18.201Z",
+  "updatedAt": "2026-06-24T08:52:55.919Z",
   "source": "redis",
   "endpoint": "/api/place-pipeline",
   "openRequests": [],
@@ -43,16 +43,37 @@
         "totalTurns": 4,
         "suggestion": "egg"
       }
+    },
+    {
+      "id": "26942c5d-4446-4036-ab69-7446d5684373",
+      "requestedName": "Netherlands",
+      "requestedKey": "netherlands",
+      "canonicalName": "Kingdom of the Netherlands",
+      "status": "approved",
+      "source": "wikidata",
+      "reason": "Auto-approved by web lookup (transcontinental sovereign state and constitutional monarchy).",
+      "createdAt": "2026-06-24T08:52:55.919Z",
+      "updatedAt": "2026-06-24T08:52:55.919Z",
+      "details": {
+        "playerName": "Sumit",
+        "turnLetter": "n",
+        "platform": "android",
+        "appVersion": "1.0.19",
+        "clientId": "0a45f706-83ff-4ddf-90c5-09ad94716724",
+        "savedTurns": 19,
+        "totalTurns": 19,
+        "suggestion": ""
+      }
     }
   ],
   "needsReview": [],
   "totals": {
     "open": 0,
-    "approved": 2,
+    "approved": 3,
     "rejected": 2,
     "review": 0
   },
-  "dictionaryVersion": "2026-06-20T10:15:16.022Z",
+  "dictionaryVersion": "2026-06-25T04:45:10.687Z",
   "rejectedRequests": [
     {
       "id": "9791fabd-d5c9-4db1-acd8-e92f8b34cf68",

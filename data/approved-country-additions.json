@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-24T04:45:48.879Z",
+  "updatedAt": "2026-06-25T04:45:10.688Z",
   "entries": [
     {
       "requestedName": "egg",
@@ -36,6 +36,26 @@
         "appVersion": "1.0.14",
         "savedTurns": 0,
         "totalTurns": 0,
+        "suggestion": ""
+      }
+    },
+    {
+      "requestedName": "Netherlands",
+      "requestedKey": "netherlands",
+      "canonicalName": "Kingdom of the Netherlands",
+      "status": "approved",
+      "source": "wikidata",
+      "reason": "Auto-approved by web lookup (transcontinental sovereign state and constitutional monarchy).",
+      "createdAt": "2026-06-24T08:52:55.919Z",
+      "updatedAt": "2026-06-24T08:52:55.919Z",
+      "details": {
+        "playerName": "Sumit",
+        "turnLetter": "n",
+        "platform": "android",
+        "appVersion": "1.0.19",
+        "clientId": "0a45f706-83ff-4ddf-90c5-09ad94716724",
+        "savedTurns": 19,
+        "totalTurns": 19,
         "suggestion": ""
       }
     }
