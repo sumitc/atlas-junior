@@ -424,6 +424,7 @@ export function AtlasGame() {
     "leaderboard-top",
   );
   const [debugNotificationSending, setDebugNotificationSending] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const debugScrollRef = useRef<HTMLDivElement | null>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const placeInputRef = useRef<HTMLInputElement | null>(null);
@@ -651,6 +652,41 @@ export function AtlasGame() {
     setTimeout(() => {
       debugScrollRef.current?.scrollTo({ top: 999999, behavior: "smooth" });
     }, 30);
+  }
+
+  async function shareAtlas() {
+    const shareUrl = "https://play.google.com/store/apps/details?id=com.fibuladreams.atlas";
+    const shareText = "Try out Atlas Junior app with your kid!";
+
+    if (Capacitor.getPlatform() !== "web") {
+      await Share.share({
+        title: "Atlas Junior",
+        text: shareText,
+        url: shareUrl,
+        dialogTitle: "Share Atlas Junior",
+      });
+      return;
+    }
+
+    if (typeof window !== "undefined" && typeof navigator.share === "function") {
+      await navigator.share({
+        title: "Atlas Junior",
+        text: shareText,
+        url: shareUrl,
+      });
+      return;
+    }
+
+    if (typeof window !== "undefined" && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+      setShareCopied(true);
+      window.setTimeout(() => setShareCopied(false), 2000);
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      window.prompt("Copy this link", shareUrl);
+    }
   }
 
   async function fireDebugNotification() {
@@ -1547,17 +1583,10 @@ export function AtlasGame() {
           </Link>
           <button
             className="hover:text-fuchsia-600 transition"
-            onClick={() => {
-              void Share.share({
-                title: "Atlas Junior",
-                text: "Try out Atlas Junior app with your kid!",
-                url: "https://play.google.com/store/apps/details?id=com.fibuladreams.atlas",
-                dialogTitle: "Share Atlas Junior",
-              });
-            }}
+            onClick={() => void shareAtlas()}
             type="button"
           >
-            📤 Share
+            {shareCopied ? "✓ Copied" : "📤 Share"}
           </button>
         </div>
         <span className="pr-3 text-slate-300">v{APP_VERSION}</span>

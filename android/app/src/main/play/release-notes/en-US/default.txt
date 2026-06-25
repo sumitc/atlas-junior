@@ -1,4 +1,4 @@
-🌍 Atlas Junior v1.0.21
+🌍 Atlas Junior v1.0.22
 
 Our first public release is here:
 
@@ -10,3 +10,4 @@ Our first public release is here:
 • In-app notifications plus Android push alerts
 • Deep links from notifications to leaderboard, pipeline, and support screens
 • Approved place requests now save immediately and refresh the dictionary on demand
+• Web share now falls back cleanly in the browser, and leaderboard loads reliably on web

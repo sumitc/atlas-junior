@@ -1,5 +1,7 @@
 "use client";
 
+"use client";
+
 import { Capacitor } from "@capacitor/core";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
