@@ -456,6 +456,9 @@ export function AtlasGame() {
   const statsSubmittedRef = useRef(false);
   const turnTimeoutHandledRef = useRef(false);
   const turnTimerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const turnDeadlineRef = useRef(
+    Date.now() + ((getInitialGameSession()?.turnSecondsRemaining ?? TURN_TIME_LIMIT_SECONDS) * 1000),
+  );
 
   function clearTurnTimerInterval() {
     if (turnTimerIntervalRef.current) {
@@ -467,6 +470,7 @@ export function AtlasGame() {
   function resetTurnTimer() {
     clearTurnTimerInterval();
     turnTimeoutHandledRef.current = false;
+    turnDeadlineRef.current = Date.now() + TURN_TIME_LIMIT_SECONDS * 1000;
     setTurnSecondsRemaining(TURN_TIME_LIMIT_SECONDS);
   }
 
@@ -595,29 +599,33 @@ export function AtlasGame() {
      return undefined;
     }
     turnTimeoutHandledRef.current = false;
-    turnTimerIntervalRef.current = setInterval(() => {
-     setTurnSecondsRemaining((current) => {
-        if (current <= 1) {
-          clearTurnTimerInterval();
-         void (async () => {
-           if (turnTimeoutHandledRef.current || game.phase !== "playing") {
-             return;
-           }
+    const syncTimer = () => {
+     const remaining = Math.max(
+       0,
+       Math.ceil((turnDeadlineRef.current - Date.now()) / 1000),
+     );
+     setTurnSecondsRemaining((current) => (current === remaining ? current : remaining));
 
-           turnTimeoutHandledRef.current = true;
-           dbg("turn timer expired");
-           await stopListening();
-           openEndGame();
-         })();
-         return 0;
-       }
+     if (remaining <= 0) {
+       clearTurnTimerInterval();
+       void (async () => {
+         if (turnTimeoutHandledRef.current || game.phase !== "playing") {
+           return;
+         }
 
-        return current - 1;
-      });
-    }, 1000);
+         turnTimeoutHandledRef.current = true;
+         dbg("turn timer expired");
+         await stopListening();
+         openEndGame();
+       })();
+     }
+    };
+
+    syncTimer();
+    turnTimerIntervalRef.current = setInterval(syncTimer, 250);
 
     return () => {
-      clearTurnTimerInterval();
+     clearTurnTimerInterval();
     };
   }, [game.phase, game.currentPlayerIndex, showEndGame]);
   /* eslint-enable react-hooks/exhaustive-deps */

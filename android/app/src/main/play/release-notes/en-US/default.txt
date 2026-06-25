@@ -1,4 +1,4 @@
-🌍 Atlas Junior v1.0.23
+🌍 Atlas Junior v1.0.24
 
 Our first public release is here:
 
@@ -12,3 +12,4 @@ Our first public release is here:
 • Approved place requests now save immediately and refresh the dictionary on demand
 • Web share now falls back cleanly in the browser, and leaderboard loads reliably on web
 • Speech turns now commit only once so the per-turn timer keeps running reliably
+• Countdown now uses a deadline-based timer so web turns keep ticking reliably
