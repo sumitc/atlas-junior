@@ -1,4 +1,4 @@
-🌍 Atlas Junior v1.0.22
+🌍 Atlas Junior v1.0.23
 
 Our first public release is here:
 
@@ -11,3 +11,4 @@ Our first public release is here:
 • Deep links from notifications to leaderboard, pipeline, and support screens
 • Approved place requests now save immediately and refresh the dictionary on demand
 • Web share now falls back cleanly in the browser, and leaderboard loads reliably on web
+• Speech turns now commit only once so the per-turn timer keeps running reliably

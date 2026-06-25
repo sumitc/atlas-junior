@@ -1,1 +1,0 @@
-(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,45868,s=>{"use strict";s.s(["APP_VERSION",0,"1.0.22"])},34137,s=>{s.v(t=>Promise.all(["static/chunks/01mj-mwyhs2i3.js"].map(t=>s.l(t))).then(()=>t(29100)))},15999,s=>{s.v(t=>Promise.all(["static/chunks/125p4qfjelv.l.js"].map(t=>s.l(t))).then(()=>t(75398)))}]);

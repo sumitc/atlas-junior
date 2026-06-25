@@ -733,6 +733,18 @@ export function AtlasGame() {
     }, NATIVE_SPEECH_AUTO_SAVE_DELAY_MS);
   }
 
+  function commitSpeechTranscript(transcript: string, source: string) {
+    const trimmed = transcript.trim();
+    if (!trimmed || nativeSpeechAutoSaveHandledRef.current) {
+      return;
+    }
+
+    nativeSpeechAutoSaveHandledRef.current = true;
+    clearNativeSpeechAutoSaveTimer();
+    dbg(`${source}: "${trimmed}"`);
+    saveTurnInternal({ overridePlace: trimmed });
+  }
+
   function updatePlayerName(index: number, value: string) {
     setPlayerNames((current) =>
       current.map((name, currentIndex) => (currentIndex === index ? value : name)),
@@ -812,13 +824,11 @@ export function AtlasGame() {
           dbg(`listeningState: ${status}`);
           setIsListening(status === "started");
           if (status === "stopped") {
-            clearNativeSpeechAutoSaveTimer();
             const transcript = latestTranscriptRef.current;
-            if (transcript && !nativeSpeechAutoSaveHandledRef.current) {
-              // Auto-save for audio — no Save button tap needed
-              nativeSpeechAutoSaveHandledRef.current = true;
-              saveTurnInternal({ overridePlace: transcript });
-            } else {
+            if (transcript) {
+              commitSpeechTranscript(transcript, "native speech commit");
+            }
+            if (!transcript) {
               updateSpeechMessage("Didn't catch that — tap Listen to try again.");
             }
           }
@@ -904,8 +914,7 @@ export function AtlasGame() {
       scheduleNativeSpeechAutoSave(transcript);
 
       if (isFinal && transcript) {
-        // Auto-save for audio — no Save button tap needed
-        saveTurnInternal({ overridePlace: transcript });
+        commitSpeechTranscript(transcript, "browser speech commit");
       }
     };
 
@@ -922,8 +931,9 @@ export function AtlasGame() {
     };
 
     recognition.onend = () => {
-      if (latestTranscriptRef.current.trim()) {
-        scheduleNativeSpeechAutoSave(latestTranscriptRef.current.trim());
+      const transcript = latestTranscriptRef.current.trim();
+      if (transcript) {
+        commitSpeechTranscript(transcript, "browser speech end");
       }
       setIsListening(false);
     };
