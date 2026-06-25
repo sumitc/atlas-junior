@@ -3,7 +3,7 @@
 A turn-based kids geography word-chain game. Players take turns naming places that start with the last letter of the previous place. Supports voice input, offline place validation, a global leaderboard, and in-app support.
 
 Available as:
-- **Android app** — [Google Play Store](https://play.google.com/store/apps/details?id=com.fibuladreams.atlas)
+- **Android app** — [Google Play Store](https://play.google.com/store/apps/details?id=com.fibuladreams.atlas) (v1.0.21)
 - **Web app** — [atlas-junior.vercel.app/game](https://atlas-junior.vercel.app/game)
 
 ---
@@ -138,15 +138,14 @@ The GitHub Actions workflow in `.github/workflows/place-dictionary-pipeline.yml`
 
 ---
 
-## Key features (current — v1.0.18)
+## Key features (current — v1.0.21)
 
-- **Voice input** — tap microphone, speak a place name; auto-saves when mic stops
-- **Offline place validation** — 142k GeoNames places; fuzzy "Did you mean?" suggestions (Levenshtein ≤ 2)
-- **Smart Save button** — only appears when the word starts with the right letter and passes validation
-- **Flying word animation** — fuchsia chip animates downward on save so players notice even when the list is off-screen
-- **Global leaderboard** — Upstash Redis; ties favour the older entry (fractional score tie-breaker)
-- **Support page** — feedback form plus live pipeline summary; no stale open-ticket list
-- **Version footer** — `v{APP_VERSION}` shown right-aligned on all pages (web + APK)
+- **Voice-first gameplay** — tap microphone, speak a place name, and auto-save when speech stops or pauses
+- **Offline place validation** — bundled GeoNames dictionary with fuzzy "Did you mean?" suggestions
+- **Turn timer + stricter rules** — shared countdown timer, auto-skip on timeout, and tighter duplicate/save validation
+- **Leaderboard + support** — Upstash Redis leaderboard, GitHub Issues support tickets, and live place-request pipeline
+- **Notifications v2** — in-app bell, unread count, read-state fading, deep links, and Android push alerts
+- **Mobile-friendly UI** — polished cards, flying save animation, and version footer across web + APK
 
 ---
 

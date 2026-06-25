@@ -1,5 +1,6 @@
 "use client";
 
+import { Capacitor } from "@capacitor/core";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { getNotifications, getPlacePipeline, getTickets, markNotificationsRead } from "@/lib/api";
@@ -32,6 +33,7 @@ function notificationHref(item: AppNotification): string {
 }
 
 export function NotificationCenter() {
+  const [platform] = useState(() => (typeof window === "undefined" ? "web" : Capacitor.getPlatform()));
   const [clientId] = useState(() => getClientId());
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -133,8 +135,12 @@ export function NotificationCenter() {
     return null;
   }
 
+  if (platform === "web") {
+    return null;
+  }
+
   return (
-    <div className="fixed right-4 top-[calc(1.15rem+env(safe-area-inset-top))] z-40">
+    <div className="fixed right-4 top-[calc(1rem+env(safe-area-inset-top))] z-40">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}

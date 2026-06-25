@@ -98,6 +98,22 @@ export type PlacePipelineStatus = {
   };
 };
 
+export type PlaceDictionaryDeltaItem = {
+  requestedName: string;
+  canonicalName: string;
+  requestedKey: string;
+  canonicalKey: string | null;
+  updatedAt: string;
+  source: string;
+  reason: string | null;
+};
+
+export type PlaceDictionaryDelta = {
+  version: string;
+  since: string;
+  items: PlaceDictionaryDeltaItem[];
+};
+
 export type PlacePipelineRequest = {
   id: string;
   requestedName: string;
@@ -123,6 +139,13 @@ export type PlacePipelineRequest = {
 export async function getPlacePipeline(): Promise<PlacePipelineStatus> {
   const res = await fetch(api("/place-pipeline"));
   if (!res.ok) throw new Error("Could not load place pipeline");
+  return res.json();
+}
+
+export async function getPlaceDictionaryDelta(since?: string): Promise<PlaceDictionaryDelta> {
+  const query = since ? `?since=${encodeURIComponent(since)}` : "";
+  const res = await fetch(api(`/place-dictionary-delta${query}`));
+  if (!res.ok) throw new Error("Could not load dictionary delta");
   return res.json();
 }
 

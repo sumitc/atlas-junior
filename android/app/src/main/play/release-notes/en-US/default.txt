@@ -1,7 +1,12 @@
-🌍 Atlas Junior v1.0.18
+🌍 Atlas Junior v1.0.21
 
-This update adds notifications to bring players back into the game:
+Our first public release is here:
 
-• Bell icon with unread count and in-app notification center
-• Leaderboard, pipeline, and support updates link straight to the right screen
-• Android push registration is wired in for remote nudges when the device is available
+• Full turn-based kids geography gameplay with voice input
+• Smoother speech auto-save and better mobile mic behavior
+• Shared turn timer, auto-skip on timeout, and stricter duplicate/save validation
+• Offline place validation to keep play fast and reliable
+• Leaderboard, support tickets, and place-request pipeline
+• In-app notifications plus Android push alerts
+• Deep links from notifications to leaderboard, pipeline, and support screens
+• Approved place requests now save immediately and refresh the dictionary on demand

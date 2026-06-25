@@ -180,7 +180,12 @@ function buildStatus(records) {
     updatedAt,
     source: "redis",
     endpoint: "/api/place-pipeline",
-    dictionaryVersion: PLACE_DICTIONARY_VERSION ?? readDictionaryVersion(),
+    dictionaryVersion:
+      approvedCountries.reduce((latest, record) => {
+        if (!record.updatedAt) return latest;
+        if (!latest) return record.updatedAt;
+        return record.updatedAt > latest ? record.updatedAt : latest;
+      }, null) ?? PLACE_DICTIONARY_VERSION ?? readDictionaryVersion(),
     openRequests,
     approvedCountries,
     rejectedRequests,
@@ -426,6 +431,23 @@ export default async function handler(req, res) {
         await maybeNotifyPipelineStatus(record, null).catch((error) =>
           console.error("notify place pipeline", error),
         );
+        if (record.status === "approved") {
+          await redisPipeline([
+            ["ZADD", `${PIPELINE_PREFIX}approved`, String(Date.parse(record.updatedAt) || Date.now()), record.id],
+            ["SET", `${PIPELINE_PREFIX}approved:${record.id}`, JSON.stringify({
+              id: record.id,
+              requestedName: record.requestedName,
+              requestedKey: record.requestedKey,
+              canonicalName: record.canonicalName ?? null,
+              status: record.status,
+              source: record.source ?? "manual",
+              reason: record.reason ?? null,
+              createdAt: record.createdAt,
+              updatedAt: record.updatedAt,
+              details: record.details ?? {},
+            })],
+          ]);
+        }
         await redisCmd(
           "SET",
           `${PIPELINE_PREFIX}req:${id}`,

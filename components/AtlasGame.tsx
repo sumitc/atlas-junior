@@ -14,7 +14,15 @@ import {
   type LeaderboardEntry,
   type DebugNotificationKind,
 } from "@/lib/api";
-import { findSuggestion, isKnownPlace, isRejectedBareWord, loadPlaces } from "@/lib/places";
+import {
+  applyPlaceDictionaryDelta,
+  findSuggestion,
+  getPlacesVersion,
+  isKnownPlace,
+  isRejectedBareWord,
+  loadPlaces,
+  refreshPlacesDelta,
+} from "@/lib/places";
 import { APP_VERSION } from "@/lib/version";
 
 type Player = {
@@ -423,7 +431,7 @@ export function AtlasGame() {
   const latestTranscriptRef = useRef("");
   const nativeSpeechAutoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nativeSpeechAutoSaveHandledRef = useRef(false);
-  const NATIVE_SPEECH_AUTO_SAVE_DELAY_MS = 700;
+  const NATIVE_SPEECH_AUTO_SAVE_DELAY_MS = 150;
   const isNativeApp = typeof window !== "undefined" && Capacitor.getPlatform() !== "web";
   const browserSpeechSupported =
     typeof window !== "undefined" &&
@@ -951,8 +959,40 @@ export function AtlasGame() {
         totalTurns,
         suggestion: suggestedPlace ?? "",
       });
-      setPlaceRequestState("done");
-      updateSpeechMessage(result.message, "success");
+      if (result.status === "approved") {
+        const approvedPlace = result.canonicalName?.trim() || requestedPlace;
+        const previousVersion = getPlacesVersion();
+        applyPlaceDictionaryDelta(
+          [
+            {
+              requestedName: requestedPlace,
+              canonicalName: approvedPlace,
+              requestedKey: "",
+              canonicalKey: "",
+              updatedAt: new Date().toISOString(),
+              source: "place-pipeline",
+              reason: null,
+            },
+          ],
+          previousVersion,
+        );
+        const saved = saveTurnInternal({
+          overridePlace: approvedPlace,
+          bypassDictionaryCheck: true,
+        });
+        if (saved) {
+          setPlaceRequestState("done");
+          updateSpeechMessage(result.message, "success");
+          void refreshPlacesDelta(previousVersion).catch(() => {});
+        } else {
+          setPlaceRequestState("error");
+          setPlaceRequestError("Could not save the approved place.");
+          updateSpeechMessage("The place was approved, but it could not be saved yet.", "error");
+        }
+      } else {
+        setPlaceRequestState("done");
+        updateSpeechMessage(result.message, "success");
+      }
     } catch (error) {
       setPlaceRequestState("error");
       setPlaceRequestError(error instanceof Error ? error.message : "Could not submit request");
@@ -960,7 +1000,12 @@ export function AtlasGame() {
     }
   }
 
-  function saveTurnInternal({ overridePlace }: { overridePlace?: string } = {}): boolean {
+  function saveTurnInternal(
+    {
+      overridePlace,
+      bypassDictionaryCheck,
+    }: { overridePlace?: string; bypassDictionaryCheck?: boolean } = {},
+  ): boolean {
     if (game.phase !== "playing" || !currentPlayer) {
       return false;
     }
@@ -1023,7 +1068,7 @@ export function AtlasGame() {
     // Place dictionary check — only if not overriding
     const isBlockedWord = isRejectedBareWord(placeValue);
 
-    if (isBlockedWord || !isKnownPlace(placeValue)) {
+    if (!bypassDictionaryCheck && (isBlockedWord || !isKnownPlace(placeValue))) {
       const suggestion = isBlockedWord ? null : findSuggestion(placeValue);
       setDuplicateChallenge(null);
       setPlaceCheck(suggestion ? { status: "suggest", suggestion } : { status: "unknown" });

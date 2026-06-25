@@ -7,6 +7,7 @@
  */
 
 import { PLACE_DICTIONARY_VERSION } from "@/lib/place-dictionary-version";
+import { getPlaceDictionaryDelta, type PlaceDictionaryDeltaItem } from "@/lib/api";
 
 interface PlacesData {
   map: Record<string, string>;
@@ -17,6 +18,9 @@ const MIN_BARE_WORD_LENGTH = 4;
 
 let placesData: PlacesData | null = null;
 let loadPromise: Promise<void> | null = null;
+let placesVersion = PLACE_DICTIONARY_VERSION;
+let pendingDeltaItems: PlaceDictionaryDeltaItem[] = [];
+let pendingDeltaVersion: string | null = null;
 
 /** Normalize a place name to its lookup key (must mirror createPlaceKey in AtlasGame.tsx) */
 export function normalizePlaceKey(name: string): string {
@@ -38,8 +42,73 @@ export async function loadPlaces(): Promise<void> {
     const res = await fetch(`${BASE_PATH}/places.json?v=${encodeURIComponent(PLACE_DICTIONARY_VERSION)}`);
     if (!res.ok) throw new Error(`Failed to load places.json: ${res.status}`);
     placesData = await res.json();
+    placesVersion = PLACE_DICTIONARY_VERSION;
+    if (pendingDeltaItems.length > 0) {
+      const queued = pendingDeltaItems;
+      pendingDeltaItems = [];
+      applyPlaceDictionaryDelta(queued);
+      placesVersion = pendingDeltaVersion ?? placesVersion;
+      pendingDeltaVersion = null;
+    }
   })();
   return loadPromise;
+}
+
+function addDictionaryEntry(key: string, displayName: string): void {
+  const normalizedKey = normalizePlaceKey(key);
+  const normalizedDisplayName = String(displayName ?? "").trim();
+  if (!normalizedKey || !normalizedDisplayName) {
+    return;
+  }
+
+  if (!placesData) {
+    return;
+  }
+
+  const data = placesData;
+  data.map[normalizedKey] = normalizedDisplayName;
+
+  const firstLetter = normalizedKey[0];
+  const bucket = data.byFirstLetter[firstLetter] ?? (data.byFirstLetter[firstLetter] = []);
+  if (!bucket.includes(normalizedKey)) {
+    bucket.push(normalizedKey);
+  }
+}
+
+export function getPlacesVersion(): string {
+  return placesVersion;
+}
+
+export function applyPlaceDictionaryDelta(items: PlaceDictionaryDeltaItem[], version?: string): void {
+  if (!placesData) {
+    pendingDeltaItems = [...pendingDeltaItems, ...items];
+    if (version && version.trim()) {
+      placesVersion = version.trim();
+      pendingDeltaVersion = version.trim();
+    }
+    return;
+  }
+
+  for (const item of items) {
+    const requestedName = String(item?.requestedName ?? "").trim();
+    const canonicalName = String(item?.canonicalName ?? "").trim();
+    if (!requestedName || !canonicalName) {
+      continue;
+    }
+
+    addDictionaryEntry(requestedName, canonicalName);
+    addDictionaryEntry(canonicalName, canonicalName);
+  }
+
+  if (version && version.trim()) {
+    placesVersion = version.trim();
+  }
+}
+
+export async function refreshPlacesDelta(since = placesVersion): Promise<string> {
+  const delta = await getPlaceDictionaryDelta(since);
+  applyPlaceDictionaryDelta(delta.items, delta.version);
+  return delta.version;
 }
 
 /** Returns true if the place name exists in the dictionary. */
