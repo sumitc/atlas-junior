@@ -15,6 +15,10 @@ export async function setupAndroidPushNotifications(onTap?: (url: string) => voi
     return () => {};
   }
 
+  if (process.env.NEXT_PUBLIC_ENABLE_PUSH_NOTIFICATIONS !== "true") {
+    return () => {};
+  }
+
   try {
     const permission = await PushNotifications.requestPermissions();
     if (permission.receive !== "granted") {
