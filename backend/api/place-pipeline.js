@@ -9,7 +9,7 @@ const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 const PIPELINE_PREFIX = "atlas:place-pipeline:";
 const REQUESTS_KEY = `${PIPELINE_PREFIX}requests`;
 const RATE_LIMIT_PREFIX = `${PIPELINE_PREFIX}ratelimit:`;
-const RATE_LIMIT = 1;
+const RATE_LIMIT = 10;
 const RATE_WINDOW_SEC = 300;
 
 function resolveDataFile(...segments) {
