@@ -1,0 +1,19 @@
+appId: com.fibuladreams.atlas
+---
+- launchApp:
+    clearState: true
+- tapOn: "Start game"
+- assertVisible: "Aarav"
+- tapOn: "Place input"
+- eraseText
+- inputText: "Azzzzville"
+- tapOn: "Save"
+- assertVisible: "Request add"
+- tapOn: "Request add"
+- assertVisible: "Requested"
+- launchApp:
+    clearState: false
+- tapOn: "Notifications"
+- assertVisible: "1 unread"
+- assertVisible: "Your place was rejected"
+- assertVisible: "Azzzzville was rejected by the pipeline."

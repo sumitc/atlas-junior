@@ -54,12 +54,13 @@ export default function SupportPage() {
           <Link
             href="/"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-slate-600 shadow-sm transition hover:bg-white"
+            data-testid="support-home-link"
           >
             ←
           </Link>
           <div>
-            <h1 className="text-2xl font-black text-slate-900">Support</h1>
-            <p className="text-xs text-slate-500">Report a bug or suggest a feature</p>
+            <h1 className="text-2xl font-black text-slate-900" data-testid="support-page-title">Support</h1>
+            <p className="text-xs text-slate-500" data-testid="support-page-subtitle">Report a bug or suggest a feature</p>
           </div>
         </div>
 
@@ -229,7 +230,7 @@ export default function SupportPage() {
             <Link href="/leaderboard" className="hover:text-slate-600">
               Leaderboard
             </Link>
-            <Link href="/pipeline" className="hover:text-slate-600">
+            <Link href="/pipeline" className="hover:text-slate-600" data-testid="support-pipeline-link">
               Pipeline
             </Link>
           </div>

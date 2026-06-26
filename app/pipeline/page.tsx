@@ -35,12 +35,13 @@ export default function PipelinePage() {
           <Link
             href="/support"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-slate-600 shadow-sm transition hover:bg-white"
+            data-testid="pipeline-back-link"
           >
             ←
           </Link>
           <div>
-            <h1 className="text-2xl font-black text-slate-900">Dictionary pipeline</h1>
-            <p className="text-xs text-slate-500">Request intake, country auto-approval, and review queue</p>
+            <h1 className="text-2xl font-black text-slate-900" data-testid="pipeline-page-title">Dictionary pipeline</h1>
+            <p className="text-xs text-slate-500" data-testid="pipeline-page-subtitle">Request intake, country auto-approval, and review queue</p>
           </div>
         </div>
 
@@ -81,7 +82,7 @@ export default function PipelinePage() {
 
         <section className="rounded-[2rem] bg-white/80 p-5 shadow-xl shadow-rose-200/50 backdrop-blur sm:p-6">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-lg font-black text-slate-900">Rejected requests</h2>
+            <h2 className="text-lg font-black text-slate-900" data-testid="pipeline-rejected-heading">Rejected requests</h2>
             <span className="rounded-full bg-gradient-to-r from-rose-200 to-orange-200 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-700">
               {status.totals.rejected}
             </span>

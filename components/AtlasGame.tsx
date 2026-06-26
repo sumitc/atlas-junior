@@ -1612,10 +1612,10 @@ export function AtlasGame() {
       {/* ── Navigation links ── */}
       <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center bg-white/70 py-2 backdrop-blur text-xs text-slate-400">
         <div className="flex flex-1 justify-center gap-6">
-          <Link href="/leaderboard" className="hover:text-fuchsia-600 transition">
+          <Link href="/leaderboard" className="hover:text-fuchsia-600 transition" data-testid="leaderboard-link">
             🏆 Leaderboard
           </Link>
-          <Link href="/support" className="hover:text-slate-600 transition">
+          <Link href="/support" className="hover:text-slate-600 transition" data-testid="support-link">
             Support
           </Link>
           <button

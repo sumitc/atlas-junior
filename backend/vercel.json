@@ -4,6 +4,7 @@
   "rewrites": [
     { "source": "/game", "destination": "/game/index.html" },
     { "source": "/game/leaderboard", "destination": "/game/leaderboard.html" },
+    { "source": "/game/test-harness", "destination": "/game/test-harness.html" },
     { "source": "/game/privacy", "destination": "/game/privacy.html" },
     { "source": "/game/support", "destination": "/game/support.html" },
     { "source": "/game/pipeline", "destination": "/game/pipeline.html" }

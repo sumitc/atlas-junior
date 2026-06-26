@@ -182,14 +182,15 @@ export default function LeaderboardPage() {
           <Link
             href="/"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-slate-600 shadow-sm transition hover:bg-white"
+            data-testid="leaderboard-home-link"
           >
             ←
           </Link>
           <div>
-            <h1 className="font-mono text-2xl font-black tracking-tight text-slate-900">
+            <h1 className="font-mono text-2xl font-black tracking-tight text-slate-900" data-testid="leaderboard-page-title">
               🏆 HIGH SCORES
             </h1>
-            <p className="text-xs text-slate-500">Total turns across all players per game</p>
+            <p className="text-xs text-slate-500" data-testid="leaderboard-page-subtitle">Total turns across all players per game</p>
           </div>
         </div>
 

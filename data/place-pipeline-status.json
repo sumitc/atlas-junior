@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-26T09:10:07.638Z",
+  "updatedAt": "2026-06-26T10:43:42.253Z",
   "source": "redis",
   "endpoint": "/api/place-pipeline",
   "openRequests": [],
@@ -70,7 +70,7 @@
   "totals": {
     "open": 0,
     "approved": 3,
-    "rejected": 4,
+    "rejected": 5,
     "review": 0
   },
   "dictionaryVersion": "2026-06-24T19:29:00.911Z",
@@ -155,6 +155,27 @@
         "savedTurns": 1,
         "totalTurns": 1,
         "suggestion": "Nahiya"
+      }
+    },
+    {
+      "id": "a78588a1-83d4-4011-a435-1fb163dc7837",
+      "requestedName": "Azzzzville",
+      "requestedKey": "azzzzville",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup did not identify this as a place.",
+      "createdAt": "2026-06-26T10:43:42.253Z",
+      "updatedAt": "2026-06-26T10:43:42.253Z",
+      "details": {
+        "playerName": "Aarav",
+        "turnLetter": "a",
+        "platform": "android",
+        "appVersion": "1.0.26",
+        "clientId": "22bb1308-b1f3-4b0a-a6ec-39727afa3f7d",
+        "savedTurns": 0,
+        "totalTurns": 0,
+        "suggestion": ""
       }
     }
   ]

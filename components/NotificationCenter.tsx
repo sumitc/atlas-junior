@@ -146,6 +146,7 @@ export function NotificationCenter() {
         onClick={() => setOpen((value) => !value)}
         className="relative flex h-10 w-10 items-center justify-center rounded-[1.1rem] border border-white/70 bg-white/80 text-violet-700 shadow-md shadow-slate-200/40 backdrop-blur transition hover:bg-white"
         aria-label="Notifications"
+        data-testid="notifications-button"
       >
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-5 w-5">
           <path
@@ -169,7 +170,7 @@ export function NotificationCenter() {
       </button>
 
       {open && (
-      <div className="absolute right-0 mt-3 w-[min(18rem,calc(100vw-1rem))] overflow-hidden rounded-[1.4rem] border border-white/70 bg-white/78 shadow-2xl shadow-slate-200/35 backdrop-blur-sm">
+      <div className="absolute right-0 mt-3 w-[min(18rem,calc(100vw-1rem))] overflow-hidden rounded-[1.4rem] border border-white/70 bg-white/78 shadow-2xl shadow-slate-200/35 backdrop-blur-sm" data-testid="notifications-panel">
           <div className="flex items-center justify-between border-b border-slate-100/80 px-4 py-3">
             <div>
             <p className="text-[12px] font-medium tracking-wide text-slate-900">Notifications</p>

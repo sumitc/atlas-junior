@@ -79,6 +79,7 @@ jobs:
             run_case startup maestro/atlas/startup.yaml
             run_case gameplay maestro/atlas/gameplay.yaml
             run_case navigation maestro/atlas/navigation.yaml
+            run_case pipeline_rejection maestro/atlas/pipeline-rejection.yaml
 
             node scripts/publish-maestro-results.mjs \
               --reportDir=maestro-results \

@@ -3,4 +3,4 @@ appId: com.fibuladreams.atlas
 - launchApp:
     clearState: true
 - tapOn: "🏆 Leaderboard"
-- assertVisible: "HIGH SCORES"
+- assertVisible: "Total games played"
