@@ -1,0 +1,13 @@
+🌍 Atlas Junior v1.0.25
+
+Our first public release is here:
+
+• Fixed the Android launch crash by gating push startup until Firebase is configured
+• Full turn-based kids geography gameplay with voice input
+• Smoother speech auto-save and better mobile mic behavior
+• Offline place validation to keep play fast and reliable with strict duplicate/save validation
+• Leaderboard, support tickets added. And new place request pipeline
+• In-app notifications plus Android push alerts for leaderboard and support updates
+• Deep links from notifications to leaderboard, pipeline, and support screens
+• Bug fixes - timer, share and leaderboard 
+• Approved place requests now save immediately and refresh the dictionary on demand

@@ -1,7 +1,8 @@
-🌍 Atlas Junior v1.0.24
+🌍 Atlas Junior v1.0.25
 
 Our first public release is here:
 
+• Fixed the Android launch crash by gating push startup until Firebase is configured
 • Full turn-based kids geography gameplay with voice input
 • Smoother speech auto-save and better mobile mic behavior
 • Shared turn timer, auto-skip on timeout, and stricter duplicate/save validation

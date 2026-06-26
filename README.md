@@ -3,7 +3,7 @@
 A turn-based kids geography word-chain game. Players take turns naming places that start with the last letter of the previous place. Supports voice input, offline place validation, a global leaderboard, and in-app support.
 
 Available as:
-- **Android app** — [Google Play Store](https://play.google.com/store/apps/details?id=com.fibuladreams.atlas) (v1.0.24)
+- **Android app** — [Google Play Store](https://play.google.com/store/apps/details?id=com.fibuladreams.atlas) (v1.0.25)
 - **Web app** — [atlas-junior.vercel.app/game](https://atlas-junior.vercel.app/game)
 
 ---
