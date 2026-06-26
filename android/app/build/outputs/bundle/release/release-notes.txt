@@ -1,7 +1,10 @@
-🌍 Atlas Junior v1.0.25
+🌍 Atlas Junior v1.0.26
 
 Our first public release is here:
 
+• Web export now rebuilds from the latest `main` during Vercel deploys, so `/game` stays in sync without committing generated files
+• Maestro smoke harness now captures and stores test results for startup, gameplay, and navigation
+• Android back navigation now returns from support/leaderboard/pipeline screens to the game instead of exiting
 • Fixed the Android launch crash by gating push startup until Firebase is configured
 • Full turn-based kids geography gameplay with voice input
 • Smoother speech auto-save and better mobile mic behavior

@@ -1,5 +1,14 @@
 # Atlas Junior — Changelog
 
+## v1.0.26 (versionCode 27) — 2026-06-26
+
+- Web export now rebuilds from the latest `main` during Vercel deploys, so `/game` stays in sync without committing generated files
+- Maestro smoke harness now captures and stores test results for startup, gameplay, and navigation
+- Android back navigation now returns from support/leaderboard/pipeline screens to the game instead of exiting
+- Local release flow now tracks the new version bump across web and Android
+
+---
+
 Release notes are stored per-version under:
 `android/app/src/main/play/release-notes/en-US/<versionCode>.txt`
 
