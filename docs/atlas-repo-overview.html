@@ -99,49 +99,48 @@
         <div class="svg-wrap">
           <svg viewBox="0 0 1280 360" role="img" aria-label="Core app runtime diagram">
             <defs>
-              <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                <path d="M0,0 L8,4 L0,8 Z" fill="#c4b5fd" />
+              <marker id="arrow" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+                <path d="M0,0 L5,2.5 L0,5 Z" fill="#c4b5fd" />
               </marker>
             </defs>
 
-            <rect x="35" y="70" width="180" height="100" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
-            <text x="125" y="108" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Android APK</text>
-            <text x="125" y="135" fill="#b7c1e1" text-anchor="middle" font-size="13">Capacitor WebView</text>
-            <text x="125" y="155" fill="#b7c1e1" text-anchor="middle" font-size="13">window.location.origin = localhost</text>
+            <rect x="28" y="74" width="210" height="94" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
+            <text x="133" y="108" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Open Atlas on Android</text>
+            <text x="133" y="134" fill="#b7c1e1" text-anchor="middle" font-size="12">powered by Capacitor WebView</text>
 
-            <rect x="250" y="54" width="220" height="132" rx="20" fill="#111827" stroke="#22c55e" stroke-width="2" />
-            <text x="360" y="94" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">app/page.tsx</text>
-            <text x="360" y="120" fill="#b7c1e1" text-anchor="middle" font-size="13">Home route renders AtlasGame</text>
-            <text x="360" y="144" fill="#b7c1e1" text-anchor="middle" font-size="13">Static export also serves /game</text>
+            <rect x="274" y="60" width="232" height="122" rx="20" fill="#111827" stroke="#22c55e" stroke-width="2" />
+            <text x="390" y="96" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Start a game</text>
+            <text x="390" y="122" fill="#b7c1e1" text-anchor="middle" font-size="12">powered by app/page.tsx</text>
+            <text x="390" y="146" fill="#b7c1e1" text-anchor="middle" font-size="12">Home route opens the game screen</text>
 
-            <rect x="520" y="42" width="250" height="156" rx="20" fill="#111827" stroke="#06b6d4" stroke-width="2" />
-            <text x="645" y="84" fill="#eef2ff" text-anchor="middle" font-size="20" font-weight="700">components/AtlasGame.tsx</text>
-            <text x="645" y="112" fill="#b7c1e1" text-anchor="middle" font-size="13">All game state runs locally</text>
-            <text x="645" y="136" fill="#b7c1e1" text-anchor="middle" font-size="13">Turns, timer, speech, duplicate checks</text>
-            <text x="645" y="160" fill="#b7c1e1" text-anchor="middle" font-size="13">Save score + request add + end game</text>
+            <rect x="544" y="48" width="242" height="146" rx="20" fill="#111827" stroke="#06b6d4" stroke-width="2" />
+            <text x="665" y="88" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Play a turn</text>
+            <text x="665" y="114" fill="#b7c1e1" text-anchor="middle" font-size="12">powered by AtlasGame</text>
+            <text x="665" y="138" fill="#b7c1e1" text-anchor="middle" font-size="12">timer, speech, duplicate checks</text>
+            <text x="665" y="162" fill="#b7c1e1" text-anchor="middle" font-size="12">save a place or request one</text>
 
-            <rect x="845" y="54" width="190" height="132" rx="20" fill="#111827" stroke="#f59e0b" stroke-width="2" />
-            <text x="940" y="94" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">NotificationCenter</text>
-            <text x="940" y="120" fill="#b7c1e1" text-anchor="middle" font-size="13">Native bell only</text>
-            <text x="940" y="144" fill="#b7c1e1" text-anchor="middle" font-size="13">Refreshes inbox on push</text>
+            <rect x="836" y="60" width="204" height="122" rx="20" fill="#111827" stroke="#f59e0b" stroke-width="2" />
+            <text x="938" y="96" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Check notifications</text>
+            <text x="938" y="122" fill="#b7c1e1" text-anchor="middle" font-size="12">powered by NotificationCenter</text>
+            <text x="938" y="146" fill="#b7c1e1" text-anchor="middle" font-size="12">native bell only</text>
 
-            <rect x="1090" y="42" width="155" height="156" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
-            <text x="1167" y="84" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Backend APIs</text>
-            <text x="1167" y="111" fill="#b7c1e1" text-anchor="middle" font-size="12">leaderboard</text>
+            <rect x="1082" y="48" width="170" height="146" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
+            <text x="1167" y="86" fill="#eef2ff" text-anchor="middle" font-size="17" font-weight="700">Use backend data</text>
+            <text x="1167" y="112" fill="#b7c1e1" text-anchor="middle" font-size="12">leaderboard</text>
             <text x="1167" y="132" fill="#b7c1e1" text-anchor="middle" font-size="12">stats</text>
-            <text x="1167" y="153" fill="#b7c1e1" text-anchor="middle" font-size="12">tickets</text>
-            <text x="1167" y="174" fill="#b7c1e1" text-anchor="middle" font-size="12">notifications</text>
+            <text x="1167" y="152" fill="#b7c1e1" text-anchor="middle" font-size="12">tickets</text>
+            <text x="1167" y="172" fill="#b7c1e1" text-anchor="middle" font-size="12">notifications</text>
 
-            <line x1="215" y1="120" x2="250" y2="120" stroke="#c4b5fd" stroke-width="4" marker-end="url(#arrow)" />
-            <line x1="470" y1="120" x2="520" y2="120" stroke="#c4b5fd" stroke-width="4" marker-end="url(#arrow)" />
-            <line x1="770" y1="120" x2="845" y2="120" stroke="#c4b5fd" stroke-width="4" marker-end="url(#arrow)" />
-            <line x1="1035" y1="120" x2="1090" y2="120" stroke="#c4b5fd" stroke-width="4" marker-end="url(#arrow)" />
+            <line x1="238" y1="120" x2="274" y2="120" stroke="#c4b5fd" stroke-width="3" marker-end="url(#arrow)" />
+            <line x1="506" y1="120" x2="544" y2="120" stroke="#c4b5fd" stroke-width="3" marker-end="url(#arrow)" />
+            <line x1="786" y1="120" x2="836" y2="120" stroke="#c4b5fd" stroke-width="3" marker-end="url(#arrow)" />
+            <line x1="1040" y1="120" x2="1082" y2="120" stroke="#c4b5fd" stroke-width="3" marker-end="url(#arrow)" />
 
-            <rect x="520" y="235" width="250" height="92" rx="18" fill="#0f172a" stroke="#22c55e" stroke-width="2" />
-            <text x="645" y="272" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">NativeBackHandler</text>
-            <text x="645" y="296" fill="#b7c1e1" text-anchor="middle" font-size="12">Back from Support/Leaderboard/Pipeline returns to /</text>
+            <rect x="510" y="238" width="286" height="88" rx="18" fill="#0f172a" stroke="#22c55e" stroke-width="2" />
+            <text x="653" y="272" fill="#eef2ff" text-anchor="middle" font-size="17" font-weight="700">Go back to the game</text>
+            <text x="653" y="296" fill="#b7c1e1" text-anchor="middle" font-size="12">powered by NativeBackHandler</text>
 
-            <line x1="645" y1="198" x2="645" y2="235" stroke="#86efac" stroke-width="4" marker-end="url(#arrow)" />
+            <line x1="652" y1="194" x2="652" y2="238" stroke="#86efac" stroke-width="3" marker-end="url(#arrow)" />
           </svg>
         </div>
 
@@ -177,53 +176,45 @@
         <div class="svg-wrap">
           <svg viewBox="0 0 1280 390" role="img" aria-label="Place pipeline diagram">
             <defs>
-              <marker id="arrow2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                <path d="M0,0 L8,4 L0,8 Z" fill="#67e8f9" />
+              <marker id="arrow2" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+                <path d="M0,0 L5,2.5 L0,5 Z" fill="#67e8f9" />
               </marker>
             </defs>
 
-            <rect x="28" y="136" width="178" height="110" rx="20" fill="#111827" stroke="#06b6d4" stroke-width="2" />
-            <text x="117" y="175" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Player taps</text>
-            <text x="117" y="201" fill="#b7c1e1" text-anchor="middle" font-size="13">Request add</text>
-            <text x="117" y="223" fill="#b7c1e1" text-anchor="middle" font-size="13">from game UI</text>
+            <rect x="28" y="138" width="204" height="106" rx="20" fill="#111827" stroke="#06b6d4" stroke-width="2" />
+            <text x="130" y="174" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Request a new place</text>
+            <text x="130" y="200" fill="#b7c1e1" text-anchor="middle" font-size="12">powered by the game UI</text>
 
-            <rect x="255" y="116" width="216" height="150" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
-            <text x="363" y="156" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">POST /api/place-pipeline</text>
-            <text x="363" y="184" fill="#b7c1e1" text-anchor="middle" font-size="13">Rate limit: Redis INCR + EXPIRE</text>
-            <text x="363" y="208" fill="#b7c1e1" text-anchor="middle" font-size="13">10 requests / 5 min / IP</text>
-            <text x="363" y="232" fill="#b7c1e1" text-anchor="middle" font-size="13">Dedupes and persists records</text>
+            <rect x="270" y="120" width="224" height="144" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
+            <text x="382" y="158" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Check if it is a country</text>
+            <text x="382" y="186" fill="#b7c1e1" text-anchor="middle" font-size="12">powered by restcountries.com</text>
+            <text x="382" y="210" fill="#b7c1e1" text-anchor="middle" font-size="12">countries auto-approve</text>
 
-            <rect x="520" y="80" width="220" height="220" rx="20" fill="#111827" stroke="#f59e0b" stroke-width="2" />
-            <text x="630" y="122" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Classifiers</text>
-            <text x="630" y="152" fill="#b7c1e1" text-anchor="middle" font-size="13">Country lookup</text>
-            <text x="630" y="176" fill="#b7c1e1" text-anchor="middle" font-size="13">restcountries.com</text>
-            <text x="630" y="204" fill="#b7c1e1" text-anchor="middle" font-size="13">Web place lookup</text>
-            <text x="630" y="228" fill="#b7c1e1" text-anchor="middle" font-size="13">Wikidata</text>
-            <text x="630" y="256" fill="#b7c1e1" text-anchor="middle" font-size="13">Approve / review / reject</text>
+            <rect x="540" y="96" width="220" height="192" rx="20" fill="#111827" stroke="#f59e0b" stroke-width="2" />
+            <text x="650" y="136" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Check the web for a place</text>
+            <text x="650" y="164" fill="#b7c1e1" text-anchor="middle" font-size="12">powered by Wikidata</text>
+            <text x="650" y="188" fill="#b7c1e1" text-anchor="middle" font-size="12">approve / review / reject</text>
+            <text x="650" y="212" fill="#b7c1e1" text-anchor="middle" font-size="12">rate limit stays on the API</text>
 
-            <rect x="790" y="80" width="200" height="220" rx="20" fill="#111827" stroke="#22c55e" stroke-width="2" />
-            <text x="890" y="122" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Redis</text>
-            <text x="890" y="152" fill="#b7c1e1" text-anchor="middle" font-size="13">atlas:place-pipeline:* keys</text>
-            <text x="890" y="176" fill="#b7c1e1" text-anchor="middle" font-size="13">request index</text>
-            <text x="890" y="200" fill="#b7c1e1" text-anchor="middle" font-size="13">approved list</text>
-            <text x="890" y="224" fill="#b7c1e1" text-anchor="middle" font-size="13">review queue</text>
-            <text x="890" y="248" fill="#b7c1e1" text-anchor="middle" font-size="13">dictionary delta</text>
+            <rect x="800" y="120" width="202" height="144" rx="20" fill="#111827" stroke="#22c55e" stroke-width="2" />
+            <text x="901" y="158" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Store the result</text>
+            <text x="901" y="186" fill="#b7c1e1" text-anchor="middle" font-size="12">powered by Redis</text>
+            <text x="901" y="210" fill="#b7c1e1" text-anchor="middle" font-size="12">queue, approvals, delta</text>
 
-            <rect x="1040" y="80" width="210" height="220" rx="20" fill="#111827" stroke="#22c55e" stroke-width="2" />
-            <text x="1145" y="122" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">UI surfaces</text>
-            <text x="1145" y="152" fill="#b7c1e1" text-anchor="middle" font-size="13">/pipeline page</text>
-            <text x="1145" y="176" fill="#b7c1e1" text-anchor="middle" font-size="13">/support page</text>
-            <text x="1145" y="200" fill="#b7c1e1" text-anchor="middle" font-size="13">AtlasGame refreshPlacesDelta</text>
-            <text x="1145" y="224" fill="#b7c1e1" text-anchor="middle" font-size="13">Approved names enter dict</text>
+            <rect x="1038" y="102" width="214" height="180" rx="20" fill="#111827" stroke="#22c55e" stroke-width="2" />
+            <text x="1145" y="142" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Show it in the app</text>
+            <text x="1145" y="170" fill="#b7c1e1" text-anchor="middle" font-size="12">pipeline page</text>
+            <text x="1145" y="192" fill="#b7c1e1" text-anchor="middle" font-size="12">support page</text>
+            <text x="1145" y="214" fill="#b7c1e1" text-anchor="middle" font-size="12">refresh the local dictionary</text>
 
-            <line x1="206" y1="191" x2="255" y2="191" stroke="#67e8f9" stroke-width="4" marker-end="url(#arrow2)" />
-            <line x1="471" y1="191" x2="520" y2="191" stroke="#67e8f9" stroke-width="4" marker-end="url(#arrow2)" />
-            <line x1="740" y1="191" x2="790" y2="191" stroke="#67e8f9" stroke-width="4" marker-end="url(#arrow2)" />
-            <line x1="990" y1="191" x2="1040" y2="191" stroke="#67e8f9" stroke-width="4" marker-end="url(#arrow2)" />
+            <line x1="232" y1="191" x2="270" y2="191" stroke="#67e8f9" stroke-width="3" marker-end="url(#arrow2)" />
+            <line x1="494" y1="191" x2="540" y2="191" stroke="#67e8f9" stroke-width="3" marker-end="url(#arrow2)" />
+            <line x1="760" y1="191" x2="800" y2="191" stroke="#67e8f9" stroke-width="3" marker-end="url(#arrow2)" />
+            <line x1="1002" y1="191" x2="1038" y2="191" stroke="#67e8f9" stroke-width="3" marker-end="url(#arrow2)" />
 
-            <rect x="520" y="325" width="730" height="36" rx="18" fill="#0b1120" stroke="#334155" />
-            <text x="885" y="349" fill="#b7c1e1" text-anchor="middle" font-size="13">
-              Response codes: 201 approved, 200 deduped, 429 rate-limited, 503 backend unavailable
+            <rect x="470" y="318" width="340" height="36" rx="18" fill="#0b1120" stroke="#334155" />
+            <text x="640" y="341" fill="#b7c1e1" text-anchor="middle" font-size="12">
+              201 approved, 200 already known, 429 if over limit, 503 if the backend is down
             </text>
           </svg>
         </div>
@@ -260,49 +251,48 @@
         <div class="svg-wrap">
           <svg viewBox="0 0 1280 360" role="img" aria-label="Maestro harness diagram">
             <defs>
-              <marker id="arrow3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                <path d="M0,0 L8,4 L0,8 Z" fill="#fca5a5" />
+              <marker id="arrow3" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+                <path d="M0,0 L5,2.5 L0,5 Z" fill="#fca5a5" />
               </marker>
             </defs>
 
-            <rect x="30" y="80" width="210" height="140" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
-            <text x="135" y="122" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">maestro/atlas/*.yaml</text>
-            <text x="135" y="150" fill="#b7c1e1" text-anchor="middle" font-size="13">startup / gameplay / navigation</text>
-            <text x="135" y="174" fill="#b7c1e1" text-anchor="middle" font-size="13">plus request-add and back-nav smoke</text>
+            <rect x="24" y="86" width="220" height="128" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
+            <text x="134" y="124" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Check the app opens</text>
+            <text x="134" y="150" fill="#b7c1e1" text-anchor="middle" font-size="12">powered by Maestro</text>
+            <text x="134" y="174" fill="#b7c1e1" text-anchor="middle" font-size="12">startup test</text>
 
-            <rect x="300" y="68" width="210" height="164" rx="20" fill="#111827" stroke="#f59e0b" stroke-width="2" />
-            <text x="405" y="110" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Maestro CLI</text>
-            <text x="405" y="138" fill="#b7c1e1" text-anchor="middle" font-size="13">maestro test</text>
-            <text x="405" y="162" fill="#b7c1e1" text-anchor="middle" font-size="13">captures pass/fail logs</text>
-            <text x="405" y="186" fill="#b7c1e1" text-anchor="middle" font-size="13">runs against emulator</text>
+            <rect x="286" y="70" width="220" height="160" rx="20" fill="#111827" stroke="#f59e0b" stroke-width="2" />
+            <text x="396" y="110" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Play a quick turn</text>
+            <text x="396" y="138" fill="#b7c1e1" text-anchor="middle" font-size="12">powered by Maestro</text>
+            <text x="396" y="162" fill="#b7c1e1" text-anchor="middle" font-size="12">gameplay test</text>
+            <text x="396" y="186" fill="#b7c1e1" text-anchor="middle" font-size="12">names + save path</text>
 
-            <rect x="570" y="56" width="240" height="188" rx="20" fill="#111827" stroke="#06b6d4" stroke-width="2" />
-            <text x="690" y="100" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Android emulator</text>
-            <text x="690" y="128" fill="#b7c1e1" text-anchor="middle" font-size="13">adb install APK</text>
-            <text x="690" y="152" fill="#b7c1e1" text-anchor="middle" font-size="13">launchApp + taps + back press</text>
-            <text x="690" y="176" fill="#b7c1e1" text-anchor="middle" font-size="13">smoke checks on-device UX</text>
-            <text x="690" y="200" fill="#b7c1e1" text-anchor="middle" font-size="13">returns to game instead of exiting</text>
+            <rect x="560" y="56" width="220" height="188" rx="20" fill="#111827" stroke="#06b6d4" stroke-width="2" />
+            <text x="670" y="96" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Visit support and go back</text>
+            <text x="670" y="124" fill="#b7c1e1" text-anchor="middle" font-size="12">powered by Maestro</text>
+            <text x="670" y="148" fill="#b7c1e1" text-anchor="middle" font-size="12">navigation test</text>
+            <text x="670" y="172" fill="#b7c1e1" text-anchor="middle" font-size="12">Android back returns to game</text>
 
-            <rect x="870" y="80" width="170" height="140" rx="20" fill="#111827" stroke="#22c55e" stroke-width="2" />
-            <text x="955" y="122" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Artifacts</text>
-            <text x="955" y="150" fill="#b7c1e1" text-anchor="middle" font-size="13">result JSON</text>
-            <text x="955" y="174" fill="#b7c1e1" text-anchor="middle" font-size="13">screenshots</text>
-            <text x="955" y="198" fill="#b7c1e1" text-anchor="middle" font-size="13">logs</text>
+            <rect x="832" y="76" width="190" height="148" rx="20" fill="#111827" stroke="#22c55e" stroke-width="2" />
+            <text x="927" y="116" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Request add smoke</text>
+            <text x="927" y="142" fill="#b7c1e1" text-anchor="middle" font-size="12">powered by Maestro</text>
+            <text x="927" y="166" fill="#b7c1e1" text-anchor="middle" font-size="12">fake place + submit</text>
+            <text x="927" y="190" fill="#b7c1e1" text-anchor="middle" font-size="12">verifies the pipeline path</text>
 
-            <rect x="1085" y="68" width="165" height="164" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
-            <text x="1168" y="110" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">GitHub Actions</text>
-            <text x="1168" y="138" fill="#b7c1e1" text-anchor="middle" font-size="13">runs on push</text>
-            <text x="1168" y="162" fill="#b7c1e1" text-anchor="middle" font-size="13">uploads artifacts</text>
-            <text x="1168" y="186" fill="#b7c1e1" text-anchor="middle" font-size="13">publishes results</text>
+            <rect x="1070" y="70" width="176" height="160" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
+            <text x="1158" y="110" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Store results</text>
+            <text x="1158" y="138" fill="#b7c1e1" text-anchor="middle" font-size="12">logs + screenshots</text>
+            <text x="1158" y="162" fill="#b7c1e1" text-anchor="middle" font-size="12">publish to GitHub</text>
+            <text x="1158" y="186" fill="#b7c1e1" text-anchor="middle" font-size="12">optional CI upload</text>
 
-            <line x1="240" y1="150" x2="300" y2="150" stroke="#fca5a5" stroke-width="4" marker-end="url(#arrow3)" />
-            <line x1="510" y1="150" x2="570" y2="150" stroke="#fca5a5" stroke-width="4" marker-end="url(#arrow3)" />
-            <line x1="810" y1="150" x2="870" y2="150" stroke="#fca5a5" stroke-width="4" marker-end="url(#arrow3)" />
-            <line x1="1040" y1="150" x2="1085" y2="150" stroke="#fca5a5" stroke-width="4" marker-end="url(#arrow3)" />
+            <line x1="244" y1="150" x2="286" y2="150" stroke="#fca5a5" stroke-width="3" marker-end="url(#arrow3)" />
+            <line x1="506" y1="150" x2="560" y2="150" stroke="#fca5a5" stroke-width="3" marker-end="url(#arrow3)" />
+            <line x1="780" y1="150" x2="832" y2="150" stroke="#fca5a5" stroke-width="3" marker-end="url(#arrow3)" />
+            <line x1="1022" y1="150" x2="1070" y2="150" stroke="#fca5a5" stroke-width="3" marker-end="url(#arrow3)" />
 
-            <rect x="300" y="270" width="650" height="54" rx="18" fill="#0b1120" stroke="#334155" />
-            <text x="625" y="304" fill="#b7c1e1" text-anchor="middle" font-size="13">
-              Current checked-in tests: startup, gameplay, navigation. We also smoke-tested request-add and Android back navigation locally.
+            <rect x="340" y="266" width="580" height="48" rx="18" fill="#0b1120" stroke="#334155" />
+            <text x="630" y="296" fill="#b7c1e1" text-anchor="middle" font-size="12">
+              Current tests: startup, gameplay, navigation, request-add, and back-navigation smoke
             </text>
           </svg>
         </div>
@@ -316,40 +306,40 @@
         <div class="svg-wrap">
           <svg viewBox="0 0 1280 300" role="img" aria-label="Release flow diagram">
             <defs>
-              <marker id="arrow4" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                <path d="M0,0 L8,4 L0,8 Z" fill="#86efac" />
+              <marker id="arrow4" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+                <path d="M0,0 L5,2.5 L0,5 Z" fill="#86efac" />
               </marker>
             </defs>
 
-            <rect x="24" y="96" width="180" height="100" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
-            <text x="114" y="134" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Version bump</text>
-            <text x="114" y="160" fill="#b7c1e1" text-anchor="middle" font-size="13">lib/version.ts + Android</text>
+            <rect x="22" y="96" width="180" height="100" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
+            <text x="112" y="132" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Bump the version</text>
+            <text x="112" y="158" fill="#b7c1e1" text-anchor="middle" font-size="12">version files + Android</text>
 
-            <rect x="252" y="82" width="210" height="128" rx="20" fill="#111827" stroke="#f59e0b" stroke-width="2" />
-            <text x="357" y="120" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">npm run apk:release</text>
-            <text x="357" y="148" fill="#b7c1e1" text-anchor="middle" font-size="13">cap:sync:release</text>
-            <text x="357" y="172" fill="#b7c1e1" text-anchor="middle" font-size="13">assembleRelease</text>
+            <rect x="250" y="82" width="206" height="128" rx="20" fill="#111827" stroke="#f59e0b" stroke-width="2" />
+            <text x="353" y="120" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Build the Android app</text>
+            <text x="353" y="148" fill="#b7c1e1" text-anchor="middle" font-size="12">apk:release</text>
+            <text x="353" y="170" fill="#b7c1e1" text-anchor="middle" font-size="12">fresh web assets inside</text>
 
-            <rect x="520" y="70" width="220" height="150" rx="20" fill="#111827" stroke="#06b6d4" stroke-width="2" />
-            <text x="630" y="110" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">npm run deploy:web</text>
-            <text x="630" y="138" fill="#b7c1e1" text-anchor="middle" font-size="13">Build export with /game base path</text>
-            <text x="630" y="162" fill="#b7c1e1" text-anchor="middle" font-size="13">Copies to backend/public/game</text>
+            <rect x="516" y="70" width="214" height="150" rx="20" fill="#111827" stroke="#06b6d4" stroke-width="2" />
+            <text x="623" y="110" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Publish the web app</text>
+            <text x="623" y="138" fill="#b7c1e1" text-anchor="middle" font-size="12">deploy:web</text>
+            <text x="623" y="160" fill="#b7c1e1" text-anchor="middle" font-size="12">copies to backend/public/game</text>
 
-            <rect x="790" y="82" width="170" height="126" rx="20" fill="#111827" stroke="#22c55e" stroke-width="2" />
-            <text x="875" y="122" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Vercel backend</text>
-            <text x="875" y="150" fill="#b7c1e1" text-anchor="middle" font-size="13">backend/ root</text>
-            <text x="875" y="174" fill="#b7c1e1" text-anchor="middle" font-size="13">leaderboard, stats, tickets</text>
+            <rect x="780" y="82" width="180" height="126" rx="20" fill="#111827" stroke="#22c55e" stroke-width="2" />
+            <text x="870" y="120" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Deploy backend</text>
+            <text x="870" y="148" fill="#b7c1e1" text-anchor="middle" font-size="12">Vercel reads backend/</text>
+            <text x="870" y="172" fill="#b7c1e1" text-anchor="middle" font-size="12">leaderboard, stats, tickets</text>
 
             <rect x="1000" y="70" width="256" height="150" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
-            <text x="1128" y="110" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Published surfaces</text>
-            <text x="1128" y="138" fill="#b7c1e1" text-anchor="middle" font-size="13">APK release</text>
-            <text x="1128" y="162" fill="#b7c1e1" text-anchor="middle" font-size="13">/game static export</text>
-            <text x="1128" y="186" fill="#b7c1e1" text-anchor="middle" font-size="13">Team-facing HTML overview</text>
+            <text x="1128" y="108" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Share the overview</text>
+            <text x="1128" y="136" fill="#b7c1e1" text-anchor="middle" font-size="12">docs/atlas-repo-overview.html</text>
+            <text x="1128" y="160" fill="#b7c1e1" text-anchor="middle" font-size="12">README links to it</text>
+            <text x="1128" y="184" fill="#b7c1e1" text-anchor="middle" font-size="12">team-friendly repo map</text>
 
-            <line x1="204" y1="146" x2="252" y2="146" stroke="#86efac" stroke-width="4" marker-end="url(#arrow4)" />
-            <line x1="462" y1="146" x2="520" y2="146" stroke="#86efac" stroke-width="4" marker-end="url(#arrow4)" />
-            <line x1="740" y1="146" x2="790" y2="146" stroke="#86efac" stroke-width="4" marker-end="url(#arrow4)" />
-            <line x1="960" y1="146" x2="1000" y2="146" stroke="#86efac" stroke-width="4" marker-end="url(#arrow4)" />
+            <line x1="202" y1="146" x2="250" y2="146" stroke="#86efac" stroke-width="3" marker-end="url(#arrow4)" />
+            <line x1="456" y1="146" x2="516" y2="146" stroke="#86efac" stroke-width="3" marker-end="url(#arrow4)" />
+            <line x1="730" y1="146" x2="780" y2="146" stroke="#86efac" stroke-width="3" marker-end="url(#arrow4)" />
+            <line x1="960" y1="146" x2="1000" y2="146" stroke="#86efac" stroke-width="3" marker-end="url(#arrow4)" />
           </svg>
         </div>
       </section>
