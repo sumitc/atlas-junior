@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "buildCommand": "npm ci --prefix .. --include=dev && npm run --prefix .. deploy:web",
   "rewrites": [
     { "source": "/game", "destination": "/game/index.html" },
     { "source": "/game/leaderboard", "destination": "/game/leaderboard.html" },

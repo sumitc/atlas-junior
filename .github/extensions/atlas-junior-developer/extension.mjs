@@ -104,7 +104,8 @@ Backend must use CORS * (origin whitelist breaks the app).
 - Vercel project: atlas-junior (developsumit-4445s-projects)
 - Production URL: https://atlas-junior.vercel.app
 - Root directory in Vercel: backend/
-- vercel.json: { "version": 2 } — minimal, sufficient
+- vercel.json: { "version": 2, "buildCommand": "npm ci --prefix .. --include=dev && npm run --prefix .. deploy:web" }
+  — Vercel regenerates the /game export during deploy
 - Runtime: Node.js (default Vercel)
 
 ### Env vars (set in Vercel dashboard)
@@ -310,7 +311,7 @@ function getVercelLogs(lines = 20) {
 }
 
 // ─── Extension registration ───────────────────────────────────────────────────
-const session = await joinSession({
+await joinSession({
   hooks: {
     onSessionStart: async () => {
       return {

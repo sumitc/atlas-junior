@@ -1,0 +1,93 @@
+name: Atlas Maestro smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "components/**"
+      - "lib/**"
+      - "maestro/**"
+      - "android/**"
+      - "scripts/**"
+      - ".github/workflows/maestro-atlas.yml"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build debug APK assets
+        run: |
+          NEXT_PUBLIC_API_URL=https://atlas-junior.vercel.app NEXT_PUBLIC_DEBUG_PANEL=false npm run build
+          npx cap sync android
+          cd android && ./gradlew assembleDebug
+
+      - name: Run Maestro on emulator
+        id: maestro
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            set -euo pipefail
+            export PATH="$PATH:$HOME/.maestro/bin"
+            export MAESTRO_LOG_LEVEL=info
+            mkdir -p maestro-results
+
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+
+            run_case() {
+              local name="$1"
+              local flow="$2"
+              local out="maestro-results/${name}.txt"
+              local status="maestro-results/${name}.status"
+
+              set +e
+              maestro test "$flow" --format documentation --output "$out"
+              local exit_code=$?
+              set -e
+
+              if [ "$exit_code" -eq 0 ]; then
+                echo pass > "$status"
+              else
+                echo fail > "$status"
+              fi
+            }
+
+            run_case startup maestro/atlas/startup.yaml
+            run_case gameplay maestro/atlas/gameplay.yaml
+            run_case navigation maestro/atlas/navigation.yaml
+
+            node scripts/publish-maestro-results.mjs \
+              --reportDir=maestro-results \
+              --appId=com.fibuladreams.atlas \
+              --suiteName=atlas-smoke \
+              --startedAt="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+      - name: Upload Maestro logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-atlas-results
+          path: maestro-results

@@ -256,6 +256,45 @@ export type DebugNotificationKind =
   | "support-updated"
   | "support-closed";
 
+export type HarnessStep = {
+  name: string;
+  status: "pass" | "fail";
+  message?: string;
+  durationMs: number;
+};
+
+export type HarnessReport = {
+  buildVersion: string;
+  platform: string;
+  startedAt: string;
+  finishedAt: string;
+  passed: number;
+  failed: number;
+  steps: HarnessStep[];
+};
+
+export type HarnessResult = {
+  latest: HarnessReport | null;
+  history: HarnessReport[];
+};
+
+export async function getHarnessResults(): Promise<HarnessResult> {
+  const res = await fetch(api("/test-results"));
+  if (!res.ok) throw new Error("Could not load harness results");
+  return res.json();
+}
+
+export async function submitHarnessResults(report: HarnessReport): Promise<HarnessResult> {
+  const res = await fetch(api("/test-results"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(report),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Could not save harness results");
+  return data;
+}
+
 export async function sendDebugNotification(kind: DebugNotificationKind): Promise<void> {
   const clientId = getClientId();
   if (!clientId) {

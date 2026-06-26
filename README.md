@@ -41,8 +41,8 @@ atlas-junior/                  ← Next.js app (frontend + Capacitor source)
 │   │   └── stats.js
 │   ├── public/
 │   │   ├── index.html         ← landing page
-│   │   └── game/              ← static Next.js export for /game route (committed)
-│   └── vercel.json            ← rewrites for /game sub-routes
+│   │   └── game/              ← generated during Vercel deploy for /game
+│   └── vercel.json            ← rewrites + buildCommand for /game sub-routes
 ├── capacitor.config.ts        ← webDir: "out"
 ├── next.config.ts             ← conditional basePath via NEXT_PUBLIC_BASE_PATH
 └── .vercelignore              ← excludes node_modules, android, .places-cache, etc.
@@ -57,7 +57,7 @@ The same Next.js codebase produces **two different builds**:
 | Build | Command | basePath | Output | Used by |
 |-------|---------|----------|--------|---------|
 | Capacitor (APK) | `npm run build` | _(none)_ | `out/` | `cap sync android` |
-| Web game | `npm run build:web` | `/game` | `out/` → `backend/public/game/` | Vercel |
+| Web game | `npm run build:web` | `/game` | `out/` → `backend/public/game/` | Vercel build |
 
 **⚠️ Never run `deploy:web` before building the APK.**
 `deploy:web` writes `/game`-prefixed paths into `out/`. If Capacitor copies those files, all CSS and JS paths break in the webview (app renders as unstyled plain HTML).
@@ -104,10 +104,10 @@ Outputs:
 ## Deploy the web game to Vercel
 
 ```bash
-# Build with /game basePath + copy static export to backend/public/game/
+# Build with /game basePath + refresh the local static export
 npm run deploy:web
 
-# Push — Vercel auto-deploys from changes to backend/
+# Push to main — Vercel rebuilds the /game export from the latest commit
 git add -A && git commit -m "..." && git push
 ```
 

@@ -1,0 +1,18 @@
+appId: com.fibuladreams.atlas
+---
+- launchApp:
+    clearState: true
+- tapOn: "Player name 1"
+- eraseText
+- inputText: "Test One"
+- tapOn: "Player name 2"
+- eraseText
+- inputText: "Test Two"
+- tapOn: "Start game"
+- assertVisible: "Tap to speak"
+- assertVisible: "Letter"
+- tapOn: "Place input"
+- eraseText
+- inputText: "Andorra"
+- tapOn: "Save"
+- assertVisible: "Test Two"

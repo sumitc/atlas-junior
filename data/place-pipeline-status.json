@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-24T08:52:55.919Z",
+  "updatedAt": "2026-06-26T09:10:07.638Z",
   "source": "redis",
   "endpoint": "/api/place-pipeline",
   "openRequests": [],
@@ -70,7 +70,7 @@
   "totals": {
     "open": 0,
     "approved": 3,
-    "rejected": 2,
+    "rejected": 4,
     "review": 0
   },
   "dictionaryVersion": "2026-06-24T19:29:00.911Z",
@@ -113,6 +113,48 @@
         "savedTurns": 5,
         "totalTurns": 5,
         "suggestion": ""
+      }
+    },
+    {
+      "id": "9326d759-a650-446f-bef9-18cceba5a004",
+      "requestedName": "Aqzvoria",
+      "requestedKey": "aqzvoria",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup did not identify this as a place.",
+      "createdAt": "2026-06-26T09:10:07.638Z",
+      "updatedAt": "2026-06-26T09:10:07.638Z",
+      "details": {
+        "playerName": "Aarav",
+        "turnLetter": "a",
+        "platform": "android",
+        "appVersion": "1.0.25",
+        "clientId": "8e608b46-6a8c-4758-b750-addd79cc4b7b",
+        "savedTurns": 0,
+        "totalTurns": 0,
+        "suggestion": ""
+      }
+    },
+    {
+      "id": "d745525d-8e7a-4e54-880b-adac681d9cb6",
+      "requestedName": "nasthiya",
+      "requestedKey": "nasthiya",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup did not identify this as a place.",
+      "createdAt": "2026-06-26T09:00:26.776Z",
+      "updatedAt": "2026-06-26T09:00:26.776Z",
+      "details": {
+        "playerName": "Sumit",
+        "turnLetter": "n",
+        "platform": "android",
+        "appVersion": "1.0.25",
+        "clientId": "0a45f706-83ff-4ddf-90c5-09ad94716724",
+        "savedTurns": 1,
+        "totalTurns": 1,
+        "suggestion": "Nahiya"
       }
     }
   ]

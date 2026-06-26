@@ -966,9 +966,7 @@ export function AtlasGame() {
     }
   }
 
-  function startGame(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
+  function startGameFromNames() {
     const names = playerNames.map((name) => name.trim()).filter(Boolean);
 
     if (names.length < 2) {
@@ -1276,7 +1274,10 @@ export function AtlasGame() {
           </span>
         </div>
       )}
-      <main className="app-safe-area-shell min-h-screen bg-[radial-gradient(circle_at_top,_#fde68a,_#f5d0fe_42%,_#bfdbfe_78%,_#ffffff)] sm:px-6">
+      <main
+        className="app-safe-area-shell min-h-screen bg-[radial-gradient(circle_at_top,_#fde68a,_#f5d0fe_42%,_#bfdbfe_78%,_#ffffff)] sm:px-6"
+        data-testid="atlas-game-root"
+      >
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 pb-36">
           <header className="relative flex items-start justify-between gap-3 rounded-[2rem] bg-white/75 px-5 py-4 pr-16 shadow-lg shadow-violet-200/50 backdrop-blur sm:px-6">
             <div className="min-w-0 flex-1">
@@ -1306,6 +1307,9 @@ export function AtlasGame() {
                     Setup players
                   </h1>
                   <p className="mt-1 text-sm text-slate-600">{game.statusMessage}</p>
+                  <p className="sr-only" data-testid="harness-ready-banner">
+                    Atlas game ready
+                  </p>
                 </div>
 
                 <button className={secondaryButton} onClick={addPlayerField} type="button">
@@ -1313,7 +1317,7 @@ export function AtlasGame() {
                 </button>
               </div>
 
-              <form className="mt-5 space-y-4" onSubmit={startGame}>
+              <div className="mt-5 space-y-4">
                 {playerNames.map((name, index) => (
                   <div
                     className="flex items-center gap-3 rounded-[1.5rem] bg-gradient-to-r from-amber-100 via-pink-100 to-cyan-100 p-3"
@@ -1326,6 +1330,8 @@ export function AtlasGame() {
                       className="w-full rounded-full border border-white bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition focus:border-fuchsia-300 focus:ring-4 focus:ring-fuchsia-100"
                       onChange={(event) => updatePlayerName(index, event.target.value)}
                       placeholder={`Player ${index + 1}`}
+                      aria-label={`Player name ${index + 1}`}
+                      data-testid={`player-name-${index}`}
                       value={name}
                     />
                     <button
@@ -1340,11 +1346,16 @@ export function AtlasGame() {
                 ))}
 
                 <div className="pt-2">
-                  <button className={`${primaryButton} w-full sm:w-auto`} type="submit">
+                  <button
+                    className={`${primaryButton} w-full sm:w-auto`}
+                    onClick={startGameFromNames}
+                    type="button"
+                    data-testid="start-game-button"
+                  >
                     Start game
                   </button>
                 </div>
-              </form>
+              </div>
             </section>
           ) : (
             <section className="grid gap-5">
@@ -1363,7 +1374,7 @@ export function AtlasGame() {
                     <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-700">
                       Letter
                     </p>
-                    <p className="text-3xl font-black uppercase text-slate-900">
+                    <p className="text-3xl font-black uppercase text-slate-900" data-testid="required-letter">
                       {game.requiredLetter}
                     </p>
                   </div>
@@ -1376,6 +1387,7 @@ export function AtlasGame() {
                   <p
                     className="animate-turn-pop mt-1 text-2xl font-black text-slate-900"
                     key={currentPlayer?.id ?? "no-player"}
+                    data-testid="current-player-name"
                   >
                     {currentPlayer?.name}
                   </p>
@@ -1455,6 +1467,9 @@ export function AtlasGame() {
                               ? `Listening… tap to stop | ${formatTurnTimeStep(turnSecondsRemaining)}`
                               : `Tap to speak | ${formatTurnTimeStep(turnSecondsRemaining)}`)}
                       </p>
+                        <p className="sr-only" data-testid="turn-timer">
+                          {formatTurnTimeStep(turnSecondsRemaining)}
+                        </p>
                   </div>
 
                   {/* ── Text input ── */}
@@ -1466,13 +1481,15 @@ export function AtlasGame() {
                       setDraftPlace(event.target.value);
                     }}
                     placeholder={`Needs ${game.requiredLetter.toUpperCase()}…`}
+                    aria-label="Place input"
+                    data-testid="place-input"
                     ref={placeInputRef}
                     value={draftPlace}
                   />
 
                   {/* ── Save (only when letter is correct and no pending check) ── */}
                   {hasDraftPlace && placesReady && placeKeyOk && !placeCheck && !duplicateChallenge && (
-                    <button className={`${primaryButton} w-full`} type="submit">
+                    <button className={`${primaryButton} w-full`} type="submit" data-testid="save-button">
                       Save
                     </button>
                   )}
@@ -1514,6 +1531,7 @@ export function AtlasGame() {
                           onClick={() => saveTurnInternal({ overridePlace: placeCheck.suggestion })}
                           disabled={placeRequestState === "submitting"}
                           type="button"
+                          data-testid="request-add-accept-button"
                         >
                           Yes ✓
                         </button>
@@ -1522,6 +1540,7 @@ export function AtlasGame() {
                           disabled={placeRequestState === "submitting"}
                           onClick={() => void requestPlaceAdd()}
                           type="button"
+                          data-testid="request-add-button"
                         >
                           {placeRequestState === "submitting"
                             ? "Requesting…"
@@ -1603,6 +1622,7 @@ export function AtlasGame() {
             className="hover:text-fuchsia-600 transition"
             onClick={() => void shareAtlas()}
             type="button"
+            data-testid="share-button"
           >
             {shareCopied ? "✓ Copied" : "📤 Share"}
           </button>

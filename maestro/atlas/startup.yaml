@@ -1,0 +1,7 @@
+appId: com.fibuladreams.atlas
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Atlas"
+- assertVisible: "Setup players"
+- assertVisible: "Start game"
