@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Atlas Junior Repo Overview</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: rgba(255, 255, 255, 0.08);
+        --panel-strong: rgba(255, 255, 255, 0.12);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: #eef2ff;
+        --muted: #b7c1e1;
+        --accent: #8b5cf6;
+        --accent-2: #22c55e;
+        --accent-3: #f59e0b;
+        --accent-4: #06b6d4;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; background: radial-gradient(circle at top, #1c2752 0%, var(--bg) 60%); color: var(--text); font: 16px/1.5 Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      a { color: inherit; }
+      .wrap { max-width: 1300px; margin: 0 auto; padding: 32px 20px 48px; }
+      .hero { display: grid; gap: 16px; grid-template-columns: 1.4fr 0.9fr; align-items: end; margin-bottom: 28px; }
+      .hero h1 { margin: 0; font-size: clamp(2rem, 4vw, 4rem); line-height: 1.03; letter-spacing: -0.04em; }
+      .hero p { margin: 0; max-width: 72ch; color: var(--muted); }
+      .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+      .pill { border: 1px solid var(--border); background: var(--panel); padding: 8px 12px; border-radius: 999px; color: var(--muted); }
+      .grid { display: grid; gap: 18px; }
+      .cards { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 20px; }
+      .card, .section { border: 1px solid var(--border); background: linear-gradient(180deg, var(--panel-strong), var(--panel)); border-radius: 22px; box-shadow: 0 16px 50px rgba(0, 0, 0, 0.24); }
+      .card { padding: 18px; min-height: 126px; }
+      .card h3, .section h2 { margin: 0 0 8px; font-size: 1rem; }
+      .card p, .section p, .section li { margin: 0; color: var(--muted); }
+      .section { padding: 18px; margin-top: 18px; }
+      .section + .section { margin-top: 18px; }
+      .section-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-bottom: 14px; }
+      .section-head small { color: var(--muted); }
+      .svg-wrap { overflow: auto; border-radius: 18px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); }
+      svg { display: block; width: 100%; height: auto; min-width: 980px; }
+      .legend { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+      .legend .card { min-height: auto; }
+      .tag { display: inline-block; margin-bottom: 10px; padding: 4px 10px; border-radius: 999px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+      .tag.orange { background: rgba(245, 158, 11, 0.14); color: #fcd34d; }
+      .tag.green { background: rgba(34, 197, 94, 0.14); color: #86efac; }
+      .tag.cyan { background: rgba(6, 182, 212, 0.14); color: #67e8f9; }
+      .tag.violet { background: rgba(139, 92, 246, 0.18); color: #c4b5fd; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+      ul { padding-left: 18px; }
+      li + li { margin-top: 8px; }
+      .footer { margin-top: 24px; color: var(--muted); font-size: 14px; }
+      .kvs { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 12px; }
+      .kv { padding: 10px 12px; border-radius: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06); }
+      .kv span { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; margin-bottom: 4px; }
+      @media (max-width: 1050px) {
+        .hero, .cards, .legend, .kvs { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 720px) {
+        .wrap { padding: 20px 14px 34px; }
+        .card, .section { border-radius: 18px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="hero">
+        <div>
+          <div class="pill-row">
+            <span class="pill">Atlas Junior</span>
+            <span class="pill">Capacitor + Next.js</span>
+            <span class="pill">Vercel backend</span>
+            <span class="pill">Maestro smoke tests</span>
+          </div>
+          <h1>How the repo fits together</h1>
+          <p>
+            This page maps the three living systems in the repo: the on-device game, the always-running
+            place pipeline, and the APK test harness. It also includes the release/export flow and the
+            native shell pieces that keep Android behaving like a real app.
+          </p>
+        </div>
+        <div class="card">
+          <h3>What matters most</h3>
+          <p>Game logic stays local. Server calls are only for leaderboard, stats, tickets, notifications, and place pipeline.</p>
+          <div class="kvs">
+            <div class="kv"><span>APK build</span><strong class="mono">npm run apk:release</strong></div>
+            <div class="kv"><span>Web export</span><strong class="mono">npm run deploy:web</strong></div>
+            <div class="kv"><span>Pipeline API</span><strong class="mono">/api/place-pipeline</strong></div>
+            <div class="kv"><span>Maestro suite</span><strong class="mono">maestro/atlas/*.yaml</strong></div>
+          </div>
+        </div>
+      </header>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>1. Core app runtime</h2>
+          <small>Game UI, native shell, and server touchpoints</small>
+        </div>
+        <div class="svg-wrap">
+          <svg viewBox="0 0 1280 360" role="img" aria-label="Core app runtime diagram">
+            <defs>
+              <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#c4b5fd" />
+              </marker>
+            </defs>
+
+            <rect x="35" y="70" width="180" height="100" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
+            <text x="125" y="108" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Android APK</text>
+            <text x="125" y="135" fill="#b7c1e1" text-anchor="middle" font-size="13">Capacitor WebView</text>
+            <text x="125" y="155" fill="#b7c1e1" text-anchor="middle" font-size="13">window.location.origin = localhost</text>
+
+            <rect x="250" y="54" width="220" height="132" rx="20" fill="#111827" stroke="#22c55e" stroke-width="2" />
+            <text x="360" y="94" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">app/page.tsx</text>
+            <text x="360" y="120" fill="#b7c1e1" text-anchor="middle" font-size="13">Home route renders AtlasGame</text>
+            <text x="360" y="144" fill="#b7c1e1" text-anchor="middle" font-size="13">Static export also serves /game</text>
+
+            <rect x="520" y="42" width="250" height="156" rx="20" fill="#111827" stroke="#06b6d4" stroke-width="2" />
+            <text x="645" y="84" fill="#eef2ff" text-anchor="middle" font-size="20" font-weight="700">components/AtlasGame.tsx</text>
+            <text x="645" y="112" fill="#b7c1e1" text-anchor="middle" font-size="13">All game state runs locally</text>
+            <text x="645" y="136" fill="#b7c1e1" text-anchor="middle" font-size="13">Turns, timer, speech, duplicate checks</text>
+            <text x="645" y="160" fill="#b7c1e1" text-anchor="middle" font-size="13">Save score + request add + end game</text>
+
+            <rect x="845" y="54" width="190" height="132" rx="20" fill="#111827" stroke="#f59e0b" stroke-width="2" />
+            <text x="940" y="94" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">NotificationCenter</text>
+            <text x="940" y="120" fill="#b7c1e1" text-anchor="middle" font-size="13">Native bell only</text>
+            <text x="940" y="144" fill="#b7c1e1" text-anchor="middle" font-size="13">Refreshes inbox on push</text>
+
+            <rect x="1090" y="42" width="155" height="156" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
+            <text x="1167" y="84" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">Backend APIs</text>
+            <text x="1167" y="111" fill="#b7c1e1" text-anchor="middle" font-size="12">leaderboard</text>
+            <text x="1167" y="132" fill="#b7c1e1" text-anchor="middle" font-size="12">stats</text>
+            <text x="1167" y="153" fill="#b7c1e1" text-anchor="middle" font-size="12">tickets</text>
+            <text x="1167" y="174" fill="#b7c1e1" text-anchor="middle" font-size="12">notifications</text>
+
+            <line x1="215" y1="120" x2="250" y2="120" stroke="#c4b5fd" stroke-width="4" marker-end="url(#arrow)" />
+            <line x1="470" y1="120" x2="520" y2="120" stroke="#c4b5fd" stroke-width="4" marker-end="url(#arrow)" />
+            <line x1="770" y1="120" x2="845" y2="120" stroke="#c4b5fd" stroke-width="4" marker-end="url(#arrow)" />
+            <line x1="1035" y1="120" x2="1090" y2="120" stroke="#c4b5fd" stroke-width="4" marker-end="url(#arrow)" />
+
+            <rect x="520" y="235" width="250" height="92" rx="18" fill="#0f172a" stroke="#22c55e" stroke-width="2" />
+            <text x="645" y="272" fill="#eef2ff" text-anchor="middle" font-size="18" font-weight="700">NativeBackHandler</text>
+            <text x="645" y="296" fill="#b7c1e1" text-anchor="middle" font-size="12">Back from Support/Leaderboard/Pipeline returns to /</text>
+
+            <line x1="645" y1="198" x2="645" y2="235" stroke="#86efac" stroke-width="4" marker-end="url(#arrow)" />
+          </svg>
+        </div>
+
+        <div class="legend">
+          <div class="card">
+            <span class="tag violet">Local only</span>
+            <h3>Game logic</h3>
+            <p>Turn timer, speech, duplicate detection, scoring, and save flow all stay on device.</p>
+          </div>
+          <div class="card">
+            <span class="tag green">Server calls</span>
+            <h3>Leaderboard / stats / tickets</h3>
+            <p>The backend is only used for persistent shared state, support, and notifications.</p>
+          </div>
+          <div class="card">
+            <span class="tag orange">Native shell</span>
+            <h3>Android-only pieces</h3>
+            <p>Push, native back behavior, and Capacitor-specific UI gating live in the shell.</p>
+          </div>
+          <div class="card">
+            <span class="tag cyan">Web export</span>
+            <h3>Static /game build</h3>
+            <p>Vercel serves the exported app from <span class="mono">backend/public/game</span>.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>2. Place request pipeline</h2>
+          <small>Always-on dictionary updates for new place approvals</small>
+        </div>
+        <div class="svg-wrap">
+          <svg viewBox="0 0 1280 390" role="img" aria-label="Place pipeline diagram">
+            <defs>
+              <marker id="arrow2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#67e8f9" />
+              </marker>
+            </defs>
+
+            <rect x="28" y="136" width="178" height="110" rx="20" fill="#111827" stroke="#06b6d4" stroke-width="2" />
+            <text x="117" y="175" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Player taps</text>
+            <text x="117" y="201" fill="#b7c1e1" text-anchor="middle" font-size="13">Request add</text>
+            <text x="117" y="223" fill="#b7c1e1" text-anchor="middle" font-size="13">from game UI</text>
+
+            <rect x="255" y="116" width="216" height="150" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
+            <text x="363" y="156" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">POST /api/place-pipeline</text>
+            <text x="363" y="184" fill="#b7c1e1" text-anchor="middle" font-size="13">Rate limit: Redis INCR + EXPIRE</text>
+            <text x="363" y="208" fill="#b7c1e1" text-anchor="middle" font-size="13">10 requests / 5 min / IP</text>
+            <text x="363" y="232" fill="#b7c1e1" text-anchor="middle" font-size="13">Dedupes and persists records</text>
+
+            <rect x="520" y="80" width="220" height="220" rx="20" fill="#111827" stroke="#f59e0b" stroke-width="2" />
+            <text x="630" y="122" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Classifiers</text>
+            <text x="630" y="152" fill="#b7c1e1" text-anchor="middle" font-size="13">Country lookup</text>
+            <text x="630" y="176" fill="#b7c1e1" text-anchor="middle" font-size="13">restcountries.com</text>
+            <text x="630" y="204" fill="#b7c1e1" text-anchor="middle" font-size="13">Web place lookup</text>
+            <text x="630" y="228" fill="#b7c1e1" text-anchor="middle" font-size="13">Wikidata</text>
+            <text x="630" y="256" fill="#b7c1e1" text-anchor="middle" font-size="13">Approve / review / reject</text>
+
+            <rect x="790" y="80" width="200" height="220" rx="20" fill="#111827" stroke="#22c55e" stroke-width="2" />
+            <text x="890" y="122" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Redis</text>
+            <text x="890" y="152" fill="#b7c1e1" text-anchor="middle" font-size="13">atlas:place-pipeline:* keys</text>
+            <text x="890" y="176" fill="#b7c1e1" text-anchor="middle" font-size="13">request index</text>
+            <text x="890" y="200" fill="#b7c1e1" text-anchor="middle" font-size="13">approved list</text>
+            <text x="890" y="224" fill="#b7c1e1" text-anchor="middle" font-size="13">review queue</text>
+            <text x="890" y="248" fill="#b7c1e1" text-anchor="middle" font-size="13">dictionary delta</text>
+
+            <rect x="1040" y="80" width="210" height="220" rx="20" fill="#111827" stroke="#22c55e" stroke-width="2" />
+            <text x="1145" y="122" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">UI surfaces</text>
+            <text x="1145" y="152" fill="#b7c1e1" text-anchor="middle" font-size="13">/pipeline page</text>
+            <text x="1145" y="176" fill="#b7c1e1" text-anchor="middle" font-size="13">/support page</text>
+            <text x="1145" y="200" fill="#b7c1e1" text-anchor="middle" font-size="13">AtlasGame refreshPlacesDelta</text>
+            <text x="1145" y="224" fill="#b7c1e1" text-anchor="middle" font-size="13">Approved names enter dict</text>
+
+            <line x1="206" y1="191" x2="255" y2="191" stroke="#67e8f9" stroke-width="4" marker-end="url(#arrow2)" />
+            <line x1="471" y1="191" x2="520" y2="191" stroke="#67e8f9" stroke-width="4" marker-end="url(#arrow2)" />
+            <line x1="740" y1="191" x2="790" y2="191" stroke="#67e8f9" stroke-width="4" marker-end="url(#arrow2)" />
+            <line x1="990" y1="191" x2="1040" y2="191" stroke="#67e8f9" stroke-width="4" marker-end="url(#arrow2)" />
+
+            <rect x="520" y="325" width="730" height="36" rx="18" fill="#0b1120" stroke="#334155" />
+            <text x="885" y="349" fill="#b7c1e1" text-anchor="middle" font-size="13">
+              Response codes: 201 approved, 200 deduped, 429 rate-limited, 503 backend unavailable
+            </text>
+          </svg>
+        </div>
+
+        <div class="legend">
+          <div class="card">
+            <span class="tag orange">Always-on</span>
+            <h3>Background pipeline</h3>
+            <p>It keeps the dictionary moving even when the app is idle.</p>
+          </div>
+          <div class="card">
+            <span class="tag green">Redis-backed</span>
+            <h3>Requests + dictionary delta</h3>
+            <p>Approved names are persisted and become visible to the game via delta refresh.</p>
+          </div>
+          <div class="card">
+            <span class="tag violet">External lookups</span>
+            <h3>Country + web place checks</h3>
+            <p>Countries auto-approve; web lookups decide place/reject/review.</p>
+          </div>
+          <div class="card">
+            <span class="tag cyan">Shared UI</span>
+            <h3>Pipeline + support page</h3>
+            <p>The support page exposes the live queue and the pipeline page shows current status.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>3. APK Maestro test harness</h2>
+          <small>Local smoke suite plus GitHub Actions</small>
+        </div>
+        <div class="svg-wrap">
+          <svg viewBox="0 0 1280 360" role="img" aria-label="Maestro harness diagram">
+            <defs>
+              <marker id="arrow3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#fca5a5" />
+              </marker>
+            </defs>
+
+            <rect x="30" y="80" width="210" height="140" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
+            <text x="135" y="122" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">maestro/atlas/*.yaml</text>
+            <text x="135" y="150" fill="#b7c1e1" text-anchor="middle" font-size="13">startup / gameplay / navigation</text>
+            <text x="135" y="174" fill="#b7c1e1" text-anchor="middle" font-size="13">plus request-add and back-nav smoke</text>
+
+            <rect x="300" y="68" width="210" height="164" rx="20" fill="#111827" stroke="#f59e0b" stroke-width="2" />
+            <text x="405" y="110" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Maestro CLI</text>
+            <text x="405" y="138" fill="#b7c1e1" text-anchor="middle" font-size="13">maestro test</text>
+            <text x="405" y="162" fill="#b7c1e1" text-anchor="middle" font-size="13">captures pass/fail logs</text>
+            <text x="405" y="186" fill="#b7c1e1" text-anchor="middle" font-size="13">runs against emulator</text>
+
+            <rect x="570" y="56" width="240" height="188" rx="20" fill="#111827" stroke="#06b6d4" stroke-width="2" />
+            <text x="690" y="100" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Android emulator</text>
+            <text x="690" y="128" fill="#b7c1e1" text-anchor="middle" font-size="13">adb install APK</text>
+            <text x="690" y="152" fill="#b7c1e1" text-anchor="middle" font-size="13">launchApp + taps + back press</text>
+            <text x="690" y="176" fill="#b7c1e1" text-anchor="middle" font-size="13">smoke checks on-device UX</text>
+            <text x="690" y="200" fill="#b7c1e1" text-anchor="middle" font-size="13">returns to game instead of exiting</text>
+
+            <rect x="870" y="80" width="170" height="140" rx="20" fill="#111827" stroke="#22c55e" stroke-width="2" />
+            <text x="955" y="122" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Artifacts</text>
+            <text x="955" y="150" fill="#b7c1e1" text-anchor="middle" font-size="13">result JSON</text>
+            <text x="955" y="174" fill="#b7c1e1" text-anchor="middle" font-size="13">screenshots</text>
+            <text x="955" y="198" fill="#b7c1e1" text-anchor="middle" font-size="13">logs</text>
+
+            <rect x="1085" y="68" width="165" height="164" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
+            <text x="1168" y="110" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">GitHub Actions</text>
+            <text x="1168" y="138" fill="#b7c1e1" text-anchor="middle" font-size="13">runs on push</text>
+            <text x="1168" y="162" fill="#b7c1e1" text-anchor="middle" font-size="13">uploads artifacts</text>
+            <text x="1168" y="186" fill="#b7c1e1" text-anchor="middle" font-size="13">publishes results</text>
+
+            <line x1="240" y1="150" x2="300" y2="150" stroke="#fca5a5" stroke-width="4" marker-end="url(#arrow3)" />
+            <line x1="510" y1="150" x2="570" y2="150" stroke="#fca5a5" stroke-width="4" marker-end="url(#arrow3)" />
+            <line x1="810" y1="150" x2="870" y2="150" stroke="#fca5a5" stroke-width="4" marker-end="url(#arrow3)" />
+            <line x1="1040" y1="150" x2="1085" y2="150" stroke="#fca5a5" stroke-width="4" marker-end="url(#arrow3)" />
+
+            <rect x="300" y="270" width="650" height="54" rx="18" fill="#0b1120" stroke="#334155" />
+            <text x="625" y="304" fill="#b7c1e1" text-anchor="middle" font-size="13">
+              Current checked-in tests: startup, gameplay, navigation. We also smoke-tested request-add and Android back navigation locally.
+            </text>
+          </svg>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>4. Release and publish flow</h2>
+          <small>What needs to stay in sync before pushing main</small>
+        </div>
+        <div class="svg-wrap">
+          <svg viewBox="0 0 1280 300" role="img" aria-label="Release flow diagram">
+            <defs>
+              <marker id="arrow4" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#86efac" />
+              </marker>
+            </defs>
+
+            <rect x="24" y="96" width="180" height="100" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
+            <text x="114" y="134" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Version bump</text>
+            <text x="114" y="160" fill="#b7c1e1" text-anchor="middle" font-size="13">lib/version.ts + Android</text>
+
+            <rect x="252" y="82" width="210" height="128" rx="20" fill="#111827" stroke="#f59e0b" stroke-width="2" />
+            <text x="357" y="120" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">npm run apk:release</text>
+            <text x="357" y="148" fill="#b7c1e1" text-anchor="middle" font-size="13">cap:sync:release</text>
+            <text x="357" y="172" fill="#b7c1e1" text-anchor="middle" font-size="13">assembleRelease</text>
+
+            <rect x="520" y="70" width="220" height="150" rx="20" fill="#111827" stroke="#06b6d4" stroke-width="2" />
+            <text x="630" y="110" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">npm run deploy:web</text>
+            <text x="630" y="138" fill="#b7c1e1" text-anchor="middle" font-size="13">Build export with /game base path</text>
+            <text x="630" y="162" fill="#b7c1e1" text-anchor="middle" font-size="13">Copies to backend/public/game</text>
+
+            <rect x="790" y="82" width="170" height="126" rx="20" fill="#111827" stroke="#22c55e" stroke-width="2" />
+            <text x="875" y="122" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Vercel backend</text>
+            <text x="875" y="150" fill="#b7c1e1" text-anchor="middle" font-size="13">backend/ root</text>
+            <text x="875" y="174" fill="#b7c1e1" text-anchor="middle" font-size="13">leaderboard, stats, tickets</text>
+
+            <rect x="1000" y="70" width="256" height="150" rx="20" fill="#111827" stroke="#8b5cf6" stroke-width="2" />
+            <text x="1128" y="110" fill="#eef2ff" text-anchor="middle" font-size="19" font-weight="700">Published surfaces</text>
+            <text x="1128" y="138" fill="#b7c1e1" text-anchor="middle" font-size="13">APK release</text>
+            <text x="1128" y="162" fill="#b7c1e1" text-anchor="middle" font-size="13">/game static export</text>
+            <text x="1128" y="186" fill="#b7c1e1" text-anchor="middle" font-size="13">Team-facing HTML overview</text>
+
+            <line x1="204" y1="146" x2="252" y2="146" stroke="#86efac" stroke-width="4" marker-end="url(#arrow4)" />
+            <line x1="462" y1="146" x2="520" y2="146" stroke="#86efac" stroke-width="4" marker-end="url(#arrow4)" />
+            <line x1="740" y1="146" x2="790" y2="146" stroke="#86efac" stroke-width="4" marker-end="url(#arrow4)" />
+            <line x1="960" y1="146" x2="1000" y2="146" stroke="#86efac" stroke-width="4" marker-end="url(#arrow4)" />
+          </svg>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>Also part of the architecture</h2>
+          <small>Useful extras to keep the repo understandable</small>
+        </div>
+        <div class="kvs">
+          <div class="kv"><span>Leaderboard</span><strong>Saved turns are the score. Higher is better.</strong></div>
+          <div class="kv"><span>Support</span><strong>GitHub issues with the atlas-app label.</strong></div>
+          <div class="kv"><span>Notifications</span><strong>NotificationCenter is native-only; web hides the bell.</strong></div>
+          <div class="kv"><span>Back gesture</span><strong>NativeBackHandler routes Android back to / instead of exiting.</strong></div>
+          <div class="kv"><span>Debug panel</span><strong>Compiled in only when NEXT_PUBLIC_DEBUG_PANEL=true.</strong></div>
+          <div class="kv"><span>CORS</span><strong>Backend allows * because Capacitor WebView origin is localhost.</strong></div>
+          <div class="kv"><span>Place pipeline data</span><strong>Approved names refresh the local dictionary delta.</strong></div>
+          <div class="kv"><span>Maestro CI</span><strong>Startup, gameplay, navigation today; request-add/back-nav can join next.</strong></div>
+        </div>
+      </section>
+
+      <p class="footer">
+        File: <span class="mono">docs/atlas-repo-overview.html</span> · Built as a self-contained share page for the team.
+      </p>
+    </div>
+  </body>
+</html>

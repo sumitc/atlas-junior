@@ -10,6 +10,9 @@ Available as:
 
 ## Architecture overview
 
+Shareable visual map:
+- `docs/atlas-repo-overview.html` — diagrams for the game runtime, place pipeline, Maestro harness, and release flow.
+
 ```
 atlas-junior/                  ← Next.js app (frontend + Capacitor source)
 ├── app/                       ← Next.js App Router pages
@@ -138,13 +141,15 @@ The GitHub Actions workflow in `.github/workflows/place-dictionary-pipeline.yml`
 
 ---
 
-## Key features (current — v1.0.24)
+## Key features (current — v1.0.25)
 
 - **Voice-first gameplay** — tap microphone, speak a place name, and auto-save when speech stops or pauses
 - **Offline place validation** — bundled GeoNames dictionary with fuzzy "Did you mean?" suggestions
 - **Turn timer + stricter rules** — shared countdown timer, auto-skip on timeout, and tighter duplicate/save validation
 - **Leaderboard + support** — Upstash Redis leaderboard, GitHub Issues support tickets, and live place-request pipeline
 - **Notifications v2** — in-app bell, unread count, read-state fading, deep links, and Android push alerts
+- **Native Android shell** — back navigation returns from support/leaderboard/pipeline to the game instead of exiting
+- **APK test harness** — Maestro startup/gameplay/navigation plus request-add and back-nav smoke checks
 - **Mobile-friendly UI** — polished cards, flying save animation, and version footer across web + APK
 
 ---
