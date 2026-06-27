@@ -13,7 +13,7 @@ appId: com.fibuladreams.atlas
 - assertVisible: "Requested"
 - launchApp:
     clearState: false
-- tapOn: "Notifications"
 - assertVisible: "1 unread"
+- tapOn: "Notifications"
 - assertVisible: "Your place was rejected"
 - assertVisible: "Azzzzville was rejected by the pipeline."

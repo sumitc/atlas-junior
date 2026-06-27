@@ -1287,6 +1287,16 @@ export function AtlasGame() {
               <p className="truncate text-sm font-medium text-slate-500">
                 Colourful place-name game
               </p>
+              {showDebug && (
+                <button
+                  className="mt-2 inline-flex rounded-full border border-fuchsia-200 bg-fuchsia-50 px-3 py-1 text-[11px] font-bold text-fuchsia-700 transition hover:bg-fuchsia-100"
+                  onClick={() => void fireDebugNotification()}
+                  type="button"
+                  data-testid="quick-test-notification-button"
+                >
+                  Send test notification
+                </button>
+              )}
             </div>
 
             <button
@@ -1685,6 +1695,7 @@ export function AtlasGame() {
                   setDebugNotificationKind(nextKind.kind);
                 }
               }}
+              data-testid="debug-notification-kind"
             >
               {DEBUG_NOTIFICATION_OPTIONS.map((option) => (
                 <option key={option.kind} value={option.kind}>
@@ -1697,6 +1708,7 @@ export function AtlasGame() {
               onClick={() => void fireDebugNotification()}
               type="button"
               disabled={debugNotificationSending}
+              data-testid="send-test-notification-button"
             >
               {debugNotificationSending ? "Sending…" : "Send test notification"}
             </button>

@@ -1,5 +1,12 @@
 # Atlas Junior — Changelog
 
+## v1.0.27 (versionCode 28) — 2026-06-27
+
+- Homepage QR updated and the alpha label now reads “Now in Beta”
+- Release artifacts bumped together so the AAB/Play Console submission can proceed
+
+---
+
 ## v1.0.26 (versionCode 27) — 2026-06-26
 
 - Web export now rebuilds from the latest `main` during Vercel deploys, so `/game` stays in sync without committing generated files

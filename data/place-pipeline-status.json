@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-26T10:43:42.253Z",
+  "updatedAt": "2026-06-27T06:45:47.238Z",
   "source": "redis",
   "endpoint": "/api/place-pipeline",
   "openRequests": [],
@@ -64,16 +64,37 @@
         "totalTurns": 19,
         "suggestion": ""
       }
+    },
+    {
+      "id": "e476eeea-1452-4dc2-a72c-97e84485b4dd",
+      "requestedName": "Allah",
+      "requestedKey": "allah",
+      "canonicalName": "Prayagraj district",
+      "status": "approved",
+      "source": "wikidata",
+      "reason": "Auto-approved by web lookup (district of uttar pradesh, india).",
+      "createdAt": "2026-06-26T11:27:15.814Z",
+      "updatedAt": "2026-06-26T11:27:15.814Z",
+      "details": {
+        "playerName": "Sumit",
+        "turnLetter": "a",
+        "platform": "android",
+        "appVersion": "1.0.26",
+        "clientId": "0a45f706-83ff-4ddf-90c5-09ad94716724",
+        "savedTurns": 3,
+        "totalTurns": 3,
+        "suggestion": "Allai"
+      }
     }
   ],
   "needsReview": [],
   "totals": {
     "open": 0,
-    "approved": 3,
-    "rejected": 5,
+    "approved": 4,
+    "rejected": 7,
     "review": 0
   },
-  "dictionaryVersion": "2026-06-24T19:29:00.911Z",
+  "dictionaryVersion": "2026-06-26T11:38:35.385Z",
   "rejectedRequests": [
     {
       "id": "9791fabd-d5c9-4db1-acd8-e92f8b34cf68",
@@ -176,6 +197,48 @@
         "savedTurns": 0,
         "totalTurns": 0,
         "suggestion": ""
+      }
+    },
+    {
+      "id": "48da21b5-b00d-4515-ba29-486a9bb3714d",
+      "requestedName": "nhicken",
+      "requestedKey": "nhicken",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup did not identify this as a place.",
+      "createdAt": "2026-06-26T11:24:56.202Z",
+      "updatedAt": "2026-06-26T11:24:56.202Z",
+      "details": {
+        "playerName": "Aarav",
+        "turnLetter": "n",
+        "platform": "web",
+        "appVersion": "1.0.26",
+        "clientId": "68093a5f-ed8c-4f17-9dec-c7deaa895f98",
+        "savedTurns": 2,
+        "totalTurns": 2,
+        "suggestion": ""
+      }
+    },
+    {
+      "id": "55fff8dc-be2d-4144-b6b1-299b887509c9",
+      "requestedName": "Etanagar",
+      "requestedKey": "etanagar",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup did not identify this as a place.",
+      "createdAt": "2026-06-27T06:45:47.238Z",
+      "updatedAt": "2026-06-27T06:45:47.238Z",
+      "details": {
+        "playerName": "Mia",
+        "turnLetter": "e",
+        "platform": "android",
+        "appVersion": "1.0.26",
+        "clientId": "2bb83664-ed6a-4b4e-807b-3324650d370c",
+        "savedTurns": 3,
+        "totalTurns": 3,
+        "suggestion": "Elanagar"
       }
     }
   ]

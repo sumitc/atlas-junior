@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "364210990509",
+    "project_id": "atlas-junior-249ee",
+    "storage_bucket": "atlas-junior-249ee.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:364210990509:android:b71adfec278ac3ea9b8524",
+        "android_client_info": {
+          "package_name": "com.fibuladreams.atlas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCszTco8vxpT3agjx9GGZd3wMwszVJ-AY4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

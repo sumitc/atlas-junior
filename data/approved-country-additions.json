@@ -1,6 +1,26 @@
 {
-  "updatedAt": "2026-06-26T11:19:22.879Z",
+  "updatedAt": "2026-06-27T07:45:16.876Z",
   "entries": [
+    {
+      "requestedName": "Allah",
+      "requestedKey": "allah",
+      "canonicalName": "Prayagraj district",
+      "status": "approved",
+      "source": "wikidata",
+      "reason": "Auto-approved by web lookup (district of uttar pradesh, india).",
+      "createdAt": "2026-06-26T11:27:15.814Z",
+      "updatedAt": "2026-06-26T11:27:15.814Z",
+      "details": {
+        "playerName": "Sumit",
+        "turnLetter": "a",
+        "platform": "android",
+        "appVersion": "1.0.26",
+        "clientId": "0a45f706-83ff-4ddf-90c5-09ad94716724",
+        "savedTurns": 3,
+        "totalTurns": 3,
+        "suggestion": "Allai"
+      }
+    },
     {
       "requestedName": "egg",
       "requestedKey": "egg",

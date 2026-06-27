@@ -3,7 +3,7 @@
 A turn-based kids geography word-chain game. Players take turns naming places that start with the last letter of the previous place. Supports voice input, offline place validation, a global leaderboard, and in-app support.
 
 Available as:
-- **Android app** — [Google Play Store](https://play.google.com/store/apps/details?id=com.fibuladreams.atlas) (v1.0.26)
+- **Android app** — [Google Play Store](https://play.google.com/store/apps/details?id=com.fibuladreams.atlas) (v1.0.27)
 - **Web app** — [atlas-junior.vercel.app/game](https://atlas-junior.vercel.app/game)
 
 ---
@@ -141,7 +141,7 @@ The GitHub Actions workflow in `.github/workflows/place-dictionary-pipeline.yml`
 
 ---
 
-## Key features (current — v1.0.26)
+## Key features (current — v1.0.27)
 
 - **Voice-first gameplay** — tap microphone, speak a place name, and auto-save when speech stops or pauses
 - **Offline place validation** — bundled GeoNames dictionary with fuzzy "Did you mean?" suggestions
