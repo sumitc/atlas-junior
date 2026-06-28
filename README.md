@@ -149,7 +149,7 @@ The GitHub Actions workflow in `.github/workflows/place-dictionary-pipeline.yml`
 - **Leaderboard + support** — Upstash Redis leaderboard, GitHub Issues support tickets, and live place-request pipeline
 - **Notifications v2** — in-app bell, unread count, read-state fading, deep links, and Android push alerts
 - **Native Android shell** — back navigation returns from support/leaderboard/pipeline to the game instead of exiting
-- **APK test harness** — Maestro startup/gameplay/navigation plus request-add and back-nav smoke checks
+- **APK test harness** — local Maestro startup/gameplay/navigation plus request-add and back-nav smoke checks
 - **Mobile-friendly UI** — polished cards, flying save animation, and version footer across web + APK
 
 ---

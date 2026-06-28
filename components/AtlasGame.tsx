@@ -1292,6 +1292,7 @@ export function AtlasGame() {
                   className="mt-2 inline-flex rounded-full border border-fuchsia-200 bg-fuchsia-50 px-3 py-1 text-[11px] font-bold text-fuchsia-700 transition hover:bg-fuchsia-100"
                   onClick={() => void fireDebugNotification()}
                   type="button"
+                  id="quick-test-notification-button"
                   data-testid="quick-test-notification-button"
                 >
                   Send test notification

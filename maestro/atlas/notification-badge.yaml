@@ -2,11 +2,10 @@ appId: com.fibuladreams.atlas
 ---
 - launchApp:
     clearState: true
+- assertVisible: "Atlas"
+- assertVisible: "Setup players"
 - tapOn:
-    id: "quick-test-notification-button"
-- launchApp:
-    clearState: false
-- assertVisible: "1 unread"
+    point: "300,395"
 - tapOn: "Notifications"
 - assertVisible: "You're #1 on Atlas"
 - assertVisible: "Your score of 99 turns is now the top score."

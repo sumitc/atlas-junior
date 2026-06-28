@@ -163,8 +163,13 @@ export function NotificationCenter() {
           />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-fuchsia-600 px-1.5 py-0.5 text-[9px] font-bold leading-none text-white shadow">
-            {unreadCount}
+          <span
+            className="absolute -right-1 -top-1 rounded-full bg-fuchsia-600 px-1.5 py-0.5 text-[9px] font-bold leading-none whitespace-nowrap text-white shadow"
+            id="notifications-badge"
+            data-testid="notifications-badge"
+            aria-label={`${unreadCount} unread`}
+          >
+            {unreadCount} unread
           </span>
         )}
       </button>
