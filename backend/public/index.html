@@ -110,26 +110,12 @@
     .support-btn:hover { background: #d97706; }
 
     .lb-card { background: rgba(255,255,255,0.85); border-radius: 1.5rem; padding: 1.75rem; box-shadow: 0 4px 20px #7c3aed10; }
-    .lb-header { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
-    .lb-header-left { min-width: 0; display: flex; align-items: center; gap: 0.5rem; }
+    .lb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
     .lb-title { font-size: 1.1rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 0.5rem; }
-    .lb-meta {
-      display: inline-flex; align-items: center; gap: 0.4rem;
-      border-radius: 999px; padding: 0.4rem 0.8rem;
-      background: #f5f3ff; border: 1px solid #ddd6fe;
-      color: #6d28d9; font-size: 0.8rem; font-weight: 700;
-      white-space: nowrap;
-    }
-    .lb-meta strong { font-size: 0.95rem; font-weight: 900; color: #4c1d95; }
     .lb-refresh { background: none; border: none; cursor: pointer; font-size: 1rem; color: #94a3b8; padding: 0.25rem; border-radius: 50%; transition: transform 0.4s; }
     .lb-refresh:hover { color: #7c3aed; }
     .lb-refresh.spinning { animation: spin 0.6s linear; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    @media(max-width:480px){
-      .lb-header { flex-wrap: wrap; }
-      .lb-meta { width: 100%; justify-content: center; order: 3; }
-      .lb-refresh { margin-left: auto; }
-    }
     .lb-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border-radius: 0.75rem; }
     .lb-row:nth-child(odd) { background: #f8fafc; }
     .lb-medal { font-size: 1.2rem; width: 1.6rem; text-align: center; flex-shrink: 0; }
@@ -231,10 +217,7 @@
 
     <div class="lb-card">
       <div class="lb-header">
-        <div class="lb-header-left">
-          <div class="lb-title">🏆 Global Leaderboard</div>
-        </div>
-        <div class="lb-meta">📊 Total games <strong id="lbGames">—</strong></div>
+        <div class="lb-title">🏆 Global Leaderboard</div>
         <button class="lb-refresh" id="lbRefresh" onclick="loadLeaderboard()" title="Refresh">↻</button>
       </div>
       <div id="lbBody"><div class="lb-loading">Loading…</div></div>
@@ -302,16 +285,10 @@
     async function loadLeaderboard() {
       const btn = document.getElementById("lbRefresh");
       const body = document.getElementById("lbBody");
-      const games = document.getElementById("lbGames");
       btn.classList.add("spinning");
       try {
-        const [leaderboardRes, statsRes] = await Promise.all([
-          fetch("/api/leaderboard"),
-          fetch("/api/stats"),
-        ]);
-        const { entries } = await leaderboardRes.json();
-        const { games: totalGames } = await statsRes.json();
-        games.textContent = typeof totalGames === "number" ? String(totalGames) : "—";
+        const res = await fetch("/api/leaderboard");
+        const { entries } = await res.json();
         if (!entries || entries.length === 0) {
           body.innerHTML = '<div class="lb-empty">No scores yet — be the first! 🌍</div>';
           return;
@@ -324,7 +301,6 @@
             <span class="lb-score">${e.score} turns</span>
           </div>`).join("");
       } catch {
-        games.textContent = "—";
         body.innerHTML = '<div class="lb-empty">Could not load — try again later.</div>';
       } finally {
         btn.classList.remove("spinning");

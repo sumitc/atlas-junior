@@ -1708,10 +1708,18 @@ export function AtlasGame() {
                 ))}
                   <span className="mx-1 h-8 w-px shrink-0 bg-slate-300" aria-hidden="true" />
                   <button
-                    className={`${endGameButton} shrink-0 whitespace-nowrap`}
-                    onClick={openEndGame}
+                  className={`${secondaryButton} shrink-0 whitespace-nowrap`}
+                  onClick={returnToSetup}
                     type="button"
                   >
+                  New game
+                </button>
+                <span className="h-8 w-px shrink-0 bg-slate-300" aria-hidden="true" />
+                <button
+                  className={`${endGameButton} shrink-0 whitespace-nowrap`}
+                  onClick={openEndGame}
+                  type="button"
+                >
                     End game
                   </button>
                 </div>

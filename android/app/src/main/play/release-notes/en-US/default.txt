@@ -3,4 +3,5 @@
 This release keeps the app and web version aligned:
 
 • Random start-letter roll is now stronger and avoids repeating the same start letter back-to-back
+• Release builds now use R8 and resource shrinking for better performance and smaller app size
 • Web and Android app versions are now kept in sync at v1.0.31
