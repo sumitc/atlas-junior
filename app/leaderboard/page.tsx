@@ -106,14 +106,35 @@ function LeaderboardContent() {
 
   return (
     <div className="space-y-4">
-      {gamesPlayed !== null && (
-        <div className="rounded-[1.5rem] bg-white/85 px-5 py-4 text-center shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-400">
-            Total games played
-          </p>
-          <p className="mt-1 text-3xl font-black text-slate-900">#{gamesPlayed}</p>
+      <div className="mb-6 flex items-center gap-3">
+        <Link
+          href="/"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-slate-600 shadow-sm transition hover:bg-white"
+          data-testid="leaderboard-home-link"
+        >
+          ←
+        </Link>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="font-mono text-2xl font-black tracking-tight text-slate-900" data-testid="leaderboard-page-title">
+                🏆 HIGH SCORES
+              </h1>
+              <p className="text-xs text-slate-500" data-testid="leaderboard-page-subtitle">
+                Total turns across all players per game
+              </p>
+            </div>
+            {gamesPlayed !== null && (
+              <div className="shrink-0 rounded-2xl bg-white/85 px-3 py-2 text-right shadow-sm">
+                <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">
+                  Total games
+                </p>
+                <p className="text-xl font-black text-slate-900">{gamesPlayed}</p>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </div>
 
       {highlightEntry && <ShareCard entry={highlightEntry} rank={highlightEntry.rank} />}
 
@@ -177,23 +198,6 @@ export default function LeaderboardPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-violet-100 via-pink-50 to-cyan-100 px-4 py-8 sm:px-6">
       <div className="mx-auto max-w-lg">
-        {/* Header */}
-        <div className="mb-6 flex items-center gap-3">
-          <Link
-            href="/"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-slate-600 shadow-sm transition hover:bg-white"
-            data-testid="leaderboard-home-link"
-          >
-            ←
-          </Link>
-          <div>
-            <h1 className="font-mono text-2xl font-black tracking-tight text-slate-900" data-testid="leaderboard-page-title">
-              🏆 HIGH SCORES
-            </h1>
-            <p className="text-xs text-slate-500" data-testid="leaderboard-page-subtitle">Total turns across all players per game</p>
-          </div>
-        </div>
-
         <Suspense fallback={<div className="py-16 text-center text-slate-400">Loading…</div>}>
           <LeaderboardContent />
         </Suspense>
