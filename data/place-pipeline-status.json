@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-27T06:45:47.238Z",
+  "updatedAt": "2026-08-14T11:21:42.579Z",
   "source": "redis",
   "endpoint": "/api/place-pipeline",
   "openRequests": [],
@@ -85,16 +85,58 @@
         "totalTurns": 3,
         "suggestion": "Allai"
       }
+    },
+    {
+      "id": "cc99d6d3-4b2f-49bb-b551-cd9f40603683",
+      "requestedName": "Himalaya",
+      "requestedKey": "himalaya",
+      "canonicalName": "Himalayas",
+      "status": "approved",
+      "source": "wikidata",
+      "reason": "Auto-approved by web lookup (mountain range in asia).",
+      "createdAt": "2026-07-30T12:37:23.121Z",
+      "updatedAt": "2026-07-30T12:37:23.121Z",
+      "details": {
+        "playerName": "Ishi",
+        "turnLetter": "h",
+        "platform": "android",
+        "appVersion": "1.0.27",
+        "clientId": "2bb83664-ed6a-4b4e-807b-3324650d370c",
+        "savedTurns": 40,
+        "totalTurns": 40,
+        "suggestion": "Himalayas"
+      }
+    },
+    {
+      "id": "bed2fc33-769f-4384-975e-b6101ece3abe",
+      "requestedName": "Goa",
+      "requestedKey": "goa",
+      "canonicalName": "Goa",
+      "status": "approved",
+      "source": "wikidata",
+      "reason": "Auto-approved by web lookup (municipality of the philippines in the province of camarines sur).",
+      "createdAt": "2026-07-05T11:58:53.893Z",
+      "updatedAt": "2026-07-05T11:58:53.893Z",
+      "details": {
+        "playerName": "Shravan",
+        "turnLetter": "g",
+        "platform": "android",
+        "appVersion": "1.0.27",
+        "clientId": "f8817c01-eba2-41fd-8824-0da33ef10881",
+        "savedTurns": 11,
+        "totalTurns": 11,
+        "suggestion": ""
+      }
     }
   ],
   "needsReview": [],
   "totals": {
     "open": 0,
-    "approved": 4,
-    "rejected": 7,
+    "approved": 6,
+    "rejected": 18,
     "review": 0
   },
-  "dictionaryVersion": "2026-06-26T11:38:35.385Z",
+  "dictionaryVersion": "2026-08-07T13:30:31.974Z",
   "rejectedRequests": [
     {
       "id": "9791fabd-d5c9-4db1-acd8-e92f8b34cf68",
@@ -239,6 +281,237 @@
         "savedTurns": 3,
         "totalTurns": 3,
         "suggestion": "Elanagar"
+      }
+    },
+    {
+      "id": "ceccc0d9-887d-48b3-9635-8c7745f79b05",
+      "requestedName": "Dholakpur",
+      "requestedKey": "dholakpur",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup did not identify this as a place.",
+      "createdAt": "2026-07-30T14:39:28.145Z",
+      "updatedAt": "2026-07-30T14:39:28.145Z",
+      "details": {
+        "playerName": "Sumit",
+        "turnLetter": "d",
+        "platform": "android",
+        "appVersion": "1.0.27",
+        "clientId": "2bb83664-ed6a-4b4e-807b-3324650d370c",
+        "savedTurns": 49,
+        "totalTurns": 49,
+        "suggestion": "Dhalapur"
+      }
+    },
+    {
+      "id": "a5915f48-ec42-4af1-b2b8-c4072b850615",
+      "requestedName": "dhakkala",
+      "requestedKey": "dhakkala",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup did not identify this as a place.",
+      "createdAt": "2026-07-30T12:52:48.717Z",
+      "updatedAt": "2026-07-30T12:52:48.717Z",
+      "details": {
+        "playerName": "Ishi",
+        "turnLetter": "d",
+        "platform": "android",
+        "appVersion": "1.0.27",
+        "clientId": "2bb83664-ed6a-4b4e-807b-3324650d370c",
+        "savedTurns": 68,
+        "totalTurns": 68,
+        "suggestion": "Dhakwala"
+      }
+    },
+    {
+      "id": "76830dee-6dbf-4128-b092-844f38e2e553",
+      "requestedName": "Disneyland",
+      "requestedKey": "disneyland",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup found a non-place entry (american theme park in california owned by the walt disney company).",
+      "createdAt": "2026-07-30T12:52:26.664Z",
+      "updatedAt": "2026-07-30T12:52:26.664Z",
+      "details": {
+        "playerName": "Ishi",
+        "turnLetter": "d",
+        "platform": "android",
+        "appVersion": "1.0.27",
+        "clientId": "2bb83664-ed6a-4b4e-807b-3324650d370c",
+        "savedTurns": 68,
+        "totalTurns": 68,
+        "suggestion": ""
+      }
+    },
+    {
+      "id": "ef256294-0709-456d-959c-0c11cec0a613",
+      "requestedName": "Nathula Pass",
+      "requestedKey": "nathulapass",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup did not identify this as a place.",
+      "createdAt": "2026-07-30T12:45:31.528Z",
+      "updatedAt": "2026-07-30T12:45:31.528Z",
+      "details": {
+        "playerName": "Ishi",
+        "turnLetter": "n",
+        "platform": "android",
+        "appVersion": "1.0.27",
+        "clientId": "2bb83664-ed6a-4b4e-807b-3324650d370c",
+        "savedTurns": 60,
+        "totalTurns": 60,
+        "suggestion": ""
+      }
+    },
+    {
+      "id": "df046d9e-a250-40eb-81f9-7c6cc779f953",
+      "requestedName": "nitrogen",
+      "requestedKey": "nitrogen",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup did not identify this as a place.",
+      "createdAt": "2026-07-30T12:42:49.974Z",
+      "updatedAt": "2026-07-30T12:42:49.974Z",
+      "details": {
+        "playerName": "Ishi",
+        "turnLetter": "n",
+        "platform": "android",
+        "appVersion": "1.0.27",
+        "clientId": "2bb83664-ed6a-4b4e-807b-3324650d370c",
+        "savedTurns": 54,
+        "totalTurns": 54,
+        "suggestion": ""
+      }
+    },
+    {
+      "id": "0a3a2396-c008-49ce-95f8-886ecae4a071",
+      "requestedName": "Daman and Diu",
+      "requestedKey": "damananddiu",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup did not identify this as a place.",
+      "createdAt": "2026-07-30T12:31:12.342Z",
+      "updatedAt": "2026-07-30T12:31:12.342Z",
+      "details": {
+        "playerName": "Ishi",
+        "turnLetter": "n",
+        "platform": "android",
+        "appVersion": "1.0.27",
+        "clientId": "2bb83664-ed6a-4b4e-807b-3324650d370c",
+        "savedTurns": 24,
+        "totalTurns": 24,
+        "suggestion": ""
+      }
+    },
+    {
+      "id": "7cb2b962-f43b-4d17-b558-c7299b04dca5",
+      "requestedName": "Antarctic Ocean",
+      "requestedKey": "antarcticocean",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup did not identify this as a place.",
+      "createdAt": "2026-07-30T12:27:07.059Z",
+      "updatedAt": "2026-07-30T12:27:07.059Z",
+      "details": {
+        "playerName": "Papa",
+        "turnLetter": "c",
+        "platform": "android",
+        "appVersion": "1.0.27",
+        "clientId": "2bb83664-ed6a-4b4e-807b-3324650d370c",
+        "savedTurns": 13,
+        "totalTurns": 13,
+        "suggestion": ""
+      }
+    },
+    {
+      "id": "dc00de19-0adb-4087-943a-cbc31c19192a",
+      "requestedName": "Azhar Bhaijaan",
+      "requestedKey": "azharbhaijaan",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup did not identify this as a place.",
+      "createdAt": "2026-07-05T11:59:45.673Z",
+      "updatedAt": "2026-07-05T11:59:45.673Z",
+      "details": {
+        "playerName": "Shravan",
+        "turnLetter": "a",
+        "platform": "android",
+        "appVersion": "1.0.27",
+        "clientId": "f8817c01-eba2-41fd-8824-0da33ef10881",
+        "savedTurns": 13,
+        "totalTurns": 13,
+        "suggestion": ""
+      }
+    },
+    {
+      "id": "5fd929a3-a2d0-4d9b-98cf-3958a44a1f15",
+      "requestedName": "Dadar and Nagar Haveli",
+      "requestedKey": "dadarandnagarhaveli",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup did not identify this as a place.",
+      "createdAt": "2026-07-03T14:47:57.279Z",
+      "updatedAt": "2026-07-03T14:47:57.279Z",
+      "details": {
+        "playerName": "M",
+        "turnLetter": "d",
+        "platform": "android",
+        "appVersion": "1.0.27",
+        "clientId": "b703da1f-e931-4bf9-b6f4-ff70de3f6440",
+        "savedTurns": 13,
+        "totalTurns": 13,
+        "suggestion": ""
+      }
+    },
+    {
+      "id": "e81b6a61-4b27-4c80-9434-8aa28c288f5d",
+      "requestedName": "madhanadhapuram",
+      "requestedKey": "madhanadhapuram",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup did not identify this as a place.",
+      "createdAt": "2026-08-14T11:21:42.579Z",
+      "updatedAt": "2026-08-14T11:21:42.579Z",
+      "details": {
+        "playerName": "Mia",
+        "turnLetter": "m",
+        "platform": "web",
+        "appVersion": "1.0.27",
+        "clientId": "551866b9-1cfc-4591-bb0b-1b498a9ab839",
+        "savedTurns": 13,
+        "totalTurns": 13,
+        "suggestion": ""
+      }
+    },
+    {
+      "id": "7d0cfd3d-881b-49c6-99f5-85b611c31a61",
+      "requestedName": "A for apple",
+      "requestedKey": "aforapple",
+      "canonicalName": null,
+      "status": "rejected",
+      "source": "wikidata",
+      "reason": "Web lookup found a non-place entry (2019 film directed by b. madhu and s. kumar).",
+      "createdAt": "2026-08-11T14:36:36.810Z",
+      "updatedAt": "2026-08-11T14:36:36.810Z",
+      "details": {
+        "playerName": "Aarav",
+        "turnLetter": "a",
+        "platform": "android",
+        "appVersion": "1.0.27",
+        "clientId": "2d11ad5f-98d6-4956-b763-f72642be864e",
+        "savedTurns": 0,
+        "totalTurns": 0,
+        "suggestion": ""
       }
     }
   ]

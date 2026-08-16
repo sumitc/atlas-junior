@@ -33,6 +33,24 @@ function isRejectedBareWord(name) {
   return key.length > 0 && key.length < MIN_BARE_WORD_LENGTH;
 }
 
+function buildSuggestionSeeds(key) {
+  const seeds = [key];
+  const maxTrim = Math.min(6, Math.max(0, key.length - 4));
+  for (let trim = 1; trim <= maxTrim; trim += 1) {
+    const trimmed = key.slice(trim);
+    if (trimmed.length >= 4) {
+      seeds.push(trimmed);
+    }
+  }
+  return [...new Set(seeds)];
+}
+
+function maxDistanceForSeed(seed) {
+  if (seed.length <= 6) return 2;
+  if (seed.length <= 10) return 3;
+  return 4;
+}
+
 function levenshtein(a, b, maxDist) {
   if (a === b) return 0;
   if (Math.abs(a.length - b.length) > maxDist) return maxDist + 1;
@@ -52,18 +70,39 @@ function levenshtein(a, b, maxDist) {
   return prev[n];
 }
 
-function findSuggestion(name) {
+function findSuggestions(name, limit = 3) {
   const key = normalizePlaceKey(name);
-  if (!key) return null;
-  const bucket = placesData.byFirstLetter[key[0]];
-  if (!bucket) return null;
-  let bestKey = null, bestDist = 3;
-  for (const candidate of bucket) {
-    if (Math.abs(candidate.length - key.length) > 2) continue;
-    const dist = levenshtein(key, candidate, bestDist - 1);
-    if (dist < bestDist) { bestDist = dist; bestKey = candidate; }
+  if (!key) return [];
+
+  const seen = new Set();
+  const ranked = [];
+
+  for (const seed of buildSuggestionSeeds(key)) {
+    const bucket = placesData.byFirstLetter[seed[0]];
+    if (!bucket) continue;
+
+    const maxDist = maxDistanceForSeed(seed);
+    for (const candidate of bucket) {
+      if (seen.has(candidate)) continue;
+      if (candidate.length < 5) continue;
+      if (Math.abs(candidate.length - seed.length) > maxDist + 1) continue;
+      const dist = levenshtein(seed, candidate, maxDist);
+      if (dist > maxDist) continue;
+      const normalizedDistance = dist / Math.max(seed.length, candidate.length);
+      if (normalizedDistance > 0.34) continue;
+      seen.add(candidate);
+      ranked.push({ key: candidate, score: normalizedDistance * 100 + Math.abs(candidate.length - seed.length) });
+    }
   }
-  return bestKey ? (placesData.map[bestKey] ?? bestKey) : null;
+
+  return ranked
+    .sort((a, b) => a.score - b.score || a.key.localeCompare(b.key))
+    .slice(0, limit)
+    .map((entry) => placesData.map[entry.key] ?? entry.key);
+}
+
+function findSuggestion(name) {
+  return findSuggestions(name, 1)[0] ?? null;
 }
 
 // ── Replicate game save logic (pure, no React state) ─────────────────────────
@@ -201,6 +240,18 @@ test("'Prayagrajj' gets a suggestion (1-2 char difference from a real place)", (
   const s = findSuggestion("Prayagrajj");
   assertTruthy(s, `Expected a suggestion for 'Prayagrajj', got: ${s}`);
   console.log(`     (suggested: ${s})`);
+});
+
+test("Speech-like typo 'rename_adisababa' offers Addis Ababa", () => {
+  const s = findSuggestions("rename_adisababa");
+  assertTruthy(s.length > 0, `Expected suggestions for 'rename_adisababa', got: ${s}`);
+  console.log(`     (suggested: ${s.join(", ")})`);
+});
+
+test("Speech-like typo 'rename azhar bhaijaan' offers a nearest option", () => {
+  const s = findSuggestions("rename azhar bhaijaan");
+  assertTruthy(s.length > 0, `Expected suggestions for 'rename azhar bhaijaan', got: ${s}`);
+  console.log(`     (suggested: ${s.join(", ")})`);
 });
 
 test("'Pariss' suggests 'Paris' or similar", () => {

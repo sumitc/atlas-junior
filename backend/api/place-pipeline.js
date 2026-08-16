@@ -226,7 +226,7 @@ async function resolveCountry(requestedName) {
 
 const PLACE_DESC_KEYWORDS = [
   "district", "city", "town", "village", "municipality", "county", "province", "state", "region",
-  "country", "island", "river", "lake", "mountain", "bay", "gulf", "strait", "channel", "peninsula",
+  "country", "territory", "island", "river", "lake", "mountain", "bay", "gulf", "strait", "channel", "peninsula",
   "cape", "valley", "forest", "desert", "park", "reservoir", "reef", "plain", "plateau", "suburb",
 ];
 const NON_PLACE_DESC_KEYWORDS = [

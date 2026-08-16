@@ -16,7 +16,7 @@ import {
 } from "@/lib/api";
 import {
   applyPlaceDictionaryDelta,
-  findSuggestion,
+  findSuggestions,
   getPlacesVersion,
   isKnownPlace,
   isRejectedBareWord,
@@ -44,7 +44,7 @@ type DuplicateChallenge = {
 };
 
 type PlaceCheckState =
-  | { status: "suggest"; suggestion: string }
+  | { status: "suggest"; suggestions: string[] }
   | { status: "unknown" };
 
 type GameState = {
@@ -651,6 +651,26 @@ export function AtlasGame() {
     setSpeechMessageTone(tone);
   }
 
+  function speechUnavailableMessage() {
+    return "Speech input isn't available on this device right now. Type the place name instead.";
+  }
+
+  function speechPermissionMessage() {
+    return "Microphone access is blocked. Allow microphone permission in device settings, then tap Listen again.";
+  }
+
+  function speechNoisyAudioMessage() {
+    return "I couldn't hear you clearly. Try speaking closer to the mic in a quieter place, then tap Listen again.";
+  }
+
+  function speechNetworkMessage() {
+    return "Speech needs an internet connection here. Check your connection and try again, or type the place name.";
+  }
+
+  function speechStartFailureMessage() {
+    return "I couldn't start speech on this device. Check mic permission and try again, or type the place name.";
+  }
+
   function dbg(msg: string) {
     const ts = new Date().toLocaleTimeString("en-GB", { hour12: false });
     setDebugLogs((prev) => {
@@ -807,10 +827,7 @@ export function AtlasGame() {
         dbg(`startListening: permission=${grantedPermissions.speechRecognition}`);
 
         if (grantedPermissions.speechRecognition !== "granted") {
-          updateSpeechMessage(
-            "Microphone access was blocked. Allow it in app permissions or type the place name instead.",
-            "error",
-          );
+          updateSpeechMessage(speechPermissionMessage(), "error");
           placeInputRef.current?.focus();
           return;
         }
@@ -837,7 +854,7 @@ export function AtlasGame() {
               commitSpeechTranscript(transcript, "native speech commit");
             }
             if (!transcript) {
-              updateSpeechMessage("Didn't catch that — tap Listen to try again.");
+              updateSpeechMessage(speechNoisyAudioMessage(), "error");
             }
           }
         });
@@ -859,10 +876,7 @@ export function AtlasGame() {
 
         if (!available) {
         dbg("startListening: online speech unavailable");
-        updateSpeechMessage(
-          "Speech input is not available in this app. Allow mic access or type the place name instead.",
-          "error",
-        );
+        updateSpeechMessage(speechUnavailableMessage(), "error");
         placeInputRef.current?.focus();
         return;
         }
@@ -872,17 +886,14 @@ export function AtlasGame() {
       } catch (e) {
         dbg(`startListening: CATCH ${String(e)}`);
         setIsListening(false);
-        updateSpeechMessage("I could not start speech in the app. Allow mic access or type the place name instead.", "error");
+        updateSpeechMessage(speechStartFailureMessage(), "error");
         placeInputRef.current?.focus();
       }
       return;
     }
 
     if (!speechSupported) {
-      updateSpeechMessage(
-        "Speech input is not available in this browser. Type the place name instead.",
-        "error",
-      );
+      updateSpeechMessage(speechUnavailableMessage(), "error");
       placeInputRef.current?.focus();
       return;
     }
@@ -890,10 +901,7 @@ export function AtlasGame() {
     const Recognition = window.SpeechRecognition ?? window.webkitSpeechRecognition;
 
     if (!Recognition) {
-      updateSpeechMessage(
-        "Speech input is not available in this browser. Type the place name instead.",
-        "error",
-      );
+      updateSpeechMessage(speechUnavailableMessage(), "error");
       placeInputRef.current?.focus();
       return;
     }
@@ -929,10 +937,10 @@ export function AtlasGame() {
     recognition.onerror = (event) => {
       updateSpeechMessage(
         event.error === "not-allowed"
-          ? "Microphone access was blocked. Allow it or type the place name."
+          ? speechPermissionMessage()
           : event.error === "network"
-            ? "Speech needs a network connection here. Try again or type the place name."
-            : "I could not hear that clearly. Try again or type the place name.",
+            ? speechNetworkMessage()
+            : speechNoisyAudioMessage(),
         "error",
       );
       setIsListening(false);
@@ -958,10 +966,7 @@ export function AtlasGame() {
       setIsListening(true);
     } catch {
       setIsListening(false);
-      updateSpeechMessage(
-        "I could not start the microphone. Allow mic access or type the place name instead.",
-        "error",
-      );
+      updateSpeechMessage(speechStartFailureMessage(), "error");
       placeInputRef.current?.focus();
     }
   }
@@ -999,7 +1004,7 @@ export function AtlasGame() {
 
     try {
       const suggestedPlace =
-        placeCheck?.status === "suggest" ? placeCheck.suggestion : null;
+        placeCheck?.status === "suggest" ? placeCheck.suggestions[0] ?? null : null;
 
       const result = await submitPlaceRequest({
         requestedName: requestedPlace,
@@ -1121,9 +1126,9 @@ export function AtlasGame() {
     const isBlockedWord = isRejectedBareWord(placeValue);
 
     if (!bypassDictionaryCheck && (isBlockedWord || !isKnownPlace(placeValue))) {
-      const suggestion = isBlockedWord ? null : findSuggestion(placeValue);
+      const suggestions = isBlockedWord ? [] : findSuggestions(placeValue, 3);
       setDuplicateChallenge(null);
-      setPlaceCheck(suggestion ? { status: "suggest", suggestion } : { status: "unknown" });
+      setPlaceCheck(suggestions.length > 0 ? { status: "suggest", suggestions } : { status: "unknown" });
       return false;
     }
 
@@ -1534,18 +1539,23 @@ export function AtlasGame() {
 
                   {/* ── Place-check feedback ── */}
                   {placeCheck?.status === "suggest" && (
-                    <div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800 space-y-2">
-                      <p>Did you mean <strong>{placeCheck.suggestion}</strong>?</p>
+                    <div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800 space-y-3">
+                      <p>Did you mean one of these?</p>
+                      <div className="flex flex-wrap gap-2">
+                        {placeCheck.suggestions.map((suggestion, index) => (
+                          <button
+                            key={suggestion}
+                            className="rounded-xl bg-amber-200 px-3 py-1.5 font-semibold hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                            onClick={() => saveTurnInternal({ overridePlace: suggestion })}
+                            disabled={placeRequestState === "submitting"}
+                            type="button"
+                            data-testid={`request-add-accept-button-${index}`}
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
                       <div className="flex gap-2">
-                        <button
-                          className="flex-1 rounded-xl bg-amber-200 px-3 py-1.5 font-semibold hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
-                          onClick={() => saveTurnInternal({ overridePlace: placeCheck.suggestion })}
-                          disabled={placeRequestState === "submitting"}
-                          type="button"
-                          data-testid="request-add-accept-button"
-                        >
-                          Yes ✓
-                        </button>
                         <button
                           className="flex-1 rounded-xl bg-white border border-amber-300 px-3 py-1.5 font-semibold hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-60"
                           disabled={placeRequestState === "submitting"}

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-28T05:09:31.547Z",
+  "updatedAt": "2026-08-16T10:52:12.603Z",
   "entries": [
     {
       "requestedName": "Allah",
@@ -38,6 +38,46 @@
         "savedTurns": 3,
         "totalTurns": 4,
         "suggestion": "egg"
+      }
+    },
+    {
+      "requestedName": "Goa",
+      "requestedKey": "goa",
+      "canonicalName": "Goa",
+      "status": "approved",
+      "source": "wikidata",
+      "reason": "Auto-approved by web lookup (municipality of the philippines in the province of camarines sur).",
+      "createdAt": "2026-07-05T11:58:53.893Z",
+      "updatedAt": "2026-07-05T11:58:53.893Z",
+      "details": {
+        "playerName": "Shravan",
+        "turnLetter": "g",
+        "platform": "android",
+        "appVersion": "1.0.27",
+        "clientId": "f8817c01-eba2-41fd-8824-0da33ef10881",
+        "savedTurns": 11,
+        "totalTurns": 11,
+        "suggestion": ""
+      }
+    },
+    {
+      "requestedName": "Himalaya",
+      "requestedKey": "himalaya",
+      "canonicalName": "Himalayas",
+      "status": "approved",
+      "source": "wikidata",
+      "reason": "Auto-approved by web lookup (mountain range in asia).",
+      "createdAt": "2026-07-30T12:37:23.121Z",
+      "updatedAt": "2026-07-30T12:37:23.121Z",
+      "details": {
+        "playerName": "Ishi",
+        "turnLetter": "h",
+        "platform": "android",
+        "appVersion": "1.0.27",
+        "clientId": "2bb83664-ed6a-4b4e-807b-3324650d370c",
+        "savedTurns": 40,
+        "totalTurns": 40,
+        "suggestion": "Himalayas"
       }
     },
     {

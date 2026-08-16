@@ -12,6 +12,7 @@ import { getPlaceDictionaryDelta, type PlaceDictionaryDeltaItem } from "@/lib/ap
 interface PlacesData {
   map: Record<string, string>;
   byFirstLetter: Record<string, string[]>;
+  allKeys: string[];
 }
 
 const MIN_BARE_WORD_LENGTH = 4;
@@ -41,7 +42,11 @@ export async function loadPlaces(): Promise<void> {
   loadPromise = (async () => {
     const res = await fetch(`${BASE_PATH}/places.json?v=${encodeURIComponent(PLACE_DICTIONARY_VERSION)}`);
     if (!res.ok) throw new Error(`Failed to load places.json: ${res.status}`);
-    placesData = await res.json();
+    const loaded = await res.json();
+    placesData = {
+      ...loaded,
+      allKeys: Object.keys(loaded.map ?? {}),
+    };
     placesVersion = PLACE_DICTIONARY_VERSION;
     if (pendingDeltaItems.length > 0) {
       const queued = pendingDeltaItems;
@@ -50,6 +55,10 @@ export async function loadPlaces(): Promise<void> {
       placesVersion = pendingDeltaVersion ?? placesVersion;
       pendingDeltaVersion = null;
     }
+
+    // Apply the full approved overlay once so the shipped GeoNames snapshot
+    // stays in sync with places approved after the dictionary was last rebuilt.
+    await refreshPlacesDelta("1970-01-01T00:00:00.000Z").catch(() => {});
   })();
   return loadPromise;
 }
@@ -72,6 +81,9 @@ function addDictionaryEntry(key: string, displayName: string): void {
   const bucket = data.byFirstLetter[firstLetter] ?? (data.byFirstLetter[firstLetter] = []);
   if (!bucket.includes(normalizedKey)) {
     bucket.push(normalizedKey);
+  }
+  if (!data.allKeys.includes(normalizedKey)) {
+    data.allKeys.push(normalizedKey);
   }
 }
 
@@ -125,32 +137,69 @@ export function isRejectedBareWord(name: string): boolean {
   return key.length > 0 && key.length < MIN_BARE_WORD_LENGTH;
 }
 
-/**
- * Returns the display name of a close match (Levenshtein ≤ 2) within the
- * first-letter bucket, or null if no good suggestion found.
- */
-export function findSuggestion(name: string): string | null {
-  if (!placesData) return null;
-  const key = normalizePlaceKey(name);
-  if (!key) return null;
-  const firstLetter = key[0];
-  const bucket = placesData.byFirstLetter[firstLetter];
-  if (!bucket || bucket.length === 0) return null;
-
-  let bestKey: string | null = null;
-  let bestDist = 3; // threshold: only accept ≤ 2
-
-  for (const candidate of bucket) {
-    // Quick length gate to skip obviously wrong candidates
-    if (Math.abs(candidate.length - key.length) > 2) continue;
-    const dist = levenshtein(key, candidate, bestDist - 1);
-    if (dist < bestDist) {
-      bestDist = dist;
-      bestKey = candidate;
+function buildSuggestionSeeds(key: string): string[] {
+  const seeds = [key];
+  const maxTrim = Math.min(6, Math.max(0, key.length - 4));
+  for (let trim = 1; trim <= maxTrim; trim += 1) {
+    const trimmed = key.slice(trim);
+    if (trimmed.length >= 4) {
+      seeds.push(trimmed);
     }
   }
-  if (!bestKey) return null;
-  return placesData.map[bestKey] ?? bestKey;
+  return [...new Set(seeds)];
+}
+
+function maxDistanceForSeed(seed: string): number {
+  if (seed.length <= 6) return 2;
+  if (seed.length <= 10) return 3;
+  return 4;
+}
+
+/**
+ * Returns close matches ordered from best to worst. Uses the first-letter bucket
+ * and also tries trimmed prefixes so speech prefixes like "rename ..." can still
+ * produce useful autocorrect choices.
+ */
+export function findSuggestions(name: string, limit = 3): string[] {
+  if (!placesData) return [];
+  const key = normalizePlaceKey(name);
+  if (!key) return [];
+
+  const seen = new Set<string>();
+  const ranked: Array<{ key: string; score: number }> = [];
+
+  for (const seed of buildSuggestionSeeds(key)) {
+    const bucket = placesData.byFirstLetter[seed[0]];
+    if (!bucket || bucket.length === 0) continue;
+
+    const maxDist = maxDistanceForSeed(seed);
+    for (const candidate of bucket) {
+      if (seen.has(candidate)) continue;
+      if (candidate.length < 5) continue;
+      if (Math.abs(candidate.length - seed.length) > maxDist + 1) continue;
+
+      const dist = levenshtein(seed, candidate, maxDist);
+      if (dist > maxDist) continue;
+
+      const normalizedDistance = dist / Math.max(seed.length, candidate.length);
+      if (normalizedDistance > 0.34) continue;
+
+      seen.add(candidate);
+      ranked.push({
+        key: candidate,
+        score: normalizedDistance * 100 + Math.abs(candidate.length - seed.length),
+      });
+    }
+  }
+
+  return ranked
+    .sort((first, second) => first.score - second.score || first.key.localeCompare(second.key))
+    .slice(0, limit)
+    .map((entry) => placesData?.map[entry.key] ?? entry.key);
+}
+
+export function findSuggestion(name: string): string | null {
+  return findSuggestions(name, 1)[0] ?? null;
 }
 
 /**
