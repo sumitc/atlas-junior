@@ -1,5 +1,12 @@
 # Atlas Junior — Changelog
 
+## v1.0.30 (versionCode 31) — 2026-08-16
+
+- Version bump for a clean Play Store submission
+- Web and Android app versions are now kept in sync at v1.0.30
+
+---
+
 ## v1.0.29 (versionCode 30) — 2026-08-16
 
 - Offline place validation now merges approved-place overlays on startup

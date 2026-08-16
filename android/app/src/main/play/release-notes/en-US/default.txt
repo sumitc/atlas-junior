@@ -1,9 +1,6 @@
-🌍 Atlas Junior v1.0.29
+🌍 Atlas Junior v1.0.30
 
 This release keeps the app and web version aligned:
 
-• Offline place validation now merges approved-place overlays on startup, so newly approved geography names show up without waiting for a full rebuild
-• Speech typos now offer multiple tappable autocorrect choices instead of a single guess
-• Speech failures now explain what went wrong and how to fix it (permission, noise, network, or device support)
-• Android target API updated to 36 for Play Store compliance
-• Web and Android app versions are now kept in sync at v1.0.29
+• Version bump for a clean Play Store submission
+• Web and Android app versions are now kept in sync at v1.0.30
