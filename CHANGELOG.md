@@ -1,5 +1,12 @@
 # Atlas Junior — Changelog
 
+## v1.0.31 (versionCode 32) — 2026-08-16
+
+- Random start-letter roll now uses stronger randomness and avoids repeating the same start letter back-to-back
+- Web and Android app versions are now kept in sync at v1.0.31
+
+---
+
 ## v1.0.30 (versionCode 31) — 2026-08-16
 
 - Version bump for a clean Play Store submission
