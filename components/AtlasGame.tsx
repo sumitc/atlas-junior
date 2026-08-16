@@ -65,7 +65,7 @@ type StartRollState = {
   playerLabel: string;
   targetLetter: string;
   rollingLetter: string;
-  stage: "rolling" | "landing";
+  stage: "intro" | "sweep" | "selecting" | "landing";
 };
 
 interface SpeechRecognitionAlternative {
@@ -312,12 +312,19 @@ function getRandomRollLetter(): string {
   return letters[Math.floor(Math.random() * letters.length)] ?? "A";
 }
 
+function getAlphabetSweepLetter(step: number): string {
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  return letters[step % letters.length] ?? "A";
+}
+
 function StartLetterRollOverlay({ state }: { state: StartRollState | null }) {
   if (!state) {
     return null;
   }
 
   const landing = state.stage === "landing";
+  const sweeping = state.stage === "sweep";
+  const settling = state.stage === "selecting";
 
   return (
     <div className="fixed inset-0 z-50 pointer-events-none">
@@ -332,20 +339,26 @@ function StartLetterRollOverlay({ state }: { state: StartRollState | null }) {
           <p className="text-[10px] font-black uppercase tracking-[0.35em] text-slate-500">
             Starting letter
           </p>
-          <p className="mt-1 text-4xl font-black uppercase text-slate-900">
-            {state.targetLetter}
+          <p
+            className={`mt-1 text-4xl font-black uppercase text-slate-900 ${
+              landing ? "animate-[slotPulse_900ms_ease-out_1]" : "text-slate-300"
+            }`}
+          >
+            {landing ? state.targetLetter : "?"}
           </p>
         </div>
       </div>
 
       <div
-        className={`absolute left-1/2 top-[55%] -translate-x-1/2 transition-all duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
-          landing ? "-translate-y-[250px] scale-75" : "translate-y-0 scale-100"
+        className={`absolute left-1/2 -translate-x-1/2 transition-all ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
+          landing
+            ? "top-[18%] scale-[0.38] opacity-90 duration-[900ms]"
+            : "top-[55%] scale-100 opacity-100 duration-[450ms]"
         }`}
       >
         <div
-          className={`relative flex h-28 w-28 items-center justify-center rounded-[1.75rem] border border-white/60 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-amber-400 shadow-2xl shadow-fuchsia-400/40 ${
-            landing ? "rotate-0" : "-rotate-6"
+          className={`relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[1.75rem] border border-white/60 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-amber-400 shadow-2xl shadow-fuchsia-400/40 ${
+            landing ? "rotate-0" : sweeping ? "animate-[diceWobble_560ms_ease-in-out_infinite]" : "animate-[diceWait_900ms_ease-in-out_infinite]"
           }`}
         >
           <span className="absolute inset-3 rounded-[1.35rem] border border-white/25" />
@@ -353,12 +366,21 @@ function StartLetterRollOverlay({ state }: { state: StartRollState | null }) {
           <span className="absolute right-4 top-4 h-3 w-3 rounded-full bg-white/80" />
           <span className="absolute left-4 bottom-4 h-3 w-3 rounded-full bg-white/80" />
           <span className="absolute right-4 bottom-4 h-3 w-3 rounded-full bg-white/80" />
-          <span className="text-6xl font-black uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.2)]">
+          <span
+            key={`${state.id}-${state.stage}-${state.rollingLetter}`}
+            className={`absolute inset-0 flex items-center justify-center text-6xl font-black uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.2)] [backface-visibility:hidden] [transform-style:preserve-3d] ${
+              landing
+            ? "animate-[letterSettle_950ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
+                : settling
+              ? "animate-[letterRollFast_260ms_linear_1]"
+              : "animate-[letterRoll_420ms_ease-in-out_1]"
+            }`}
+          >
             {state.rollingLetter}
           </span>
         </div>
         <p className="mt-3 text-center text-xs font-bold uppercase tracking-[0.3em] text-white/85">
-          {landing ? "Locked in" : "Rolling..."}
+          {landing ? "Locked in" : sweeping ? "Sweeping A → Z" : "Rolling..."}
         </p>
       </div>
 
@@ -366,7 +388,13 @@ function StartLetterRollOverlay({ state }: { state: StartRollState | null }) {
         <p className="max-w-sm rounded-full bg-white/85 px-4 py-2 text-center text-sm font-semibold text-slate-700 shadow-lg shadow-slate-900/10">
           {state.mode === "preview"
             ? "Preview only — tap Start game when you're ready."
-            : "The game will start with the locked letter after the roll finishes."}
+            : state.stage === "intro"
+              ? "Starting to roll the dice to choose the first letter."
+              : state.stage === "sweep"
+                ? "The dice is slowly sweeping through the alphabet."
+                : state.stage === "selecting"
+                  ? "Now slowing down to choose the final starting letter."
+                  : "The game will start with the locked letter after the roll finishes."}
         </p>
       </div>
     </div>
@@ -667,13 +695,46 @@ export function AtlasGame() {
     }
 
     const roll = startRoll;
+    const rollStartedAt = Date.now();
+    const introDurationMs = 650;
+    const sweepStepMs = 130;
+    const sweepDurationMs = 26 * sweepStepMs;
+    const selectDurationMs = 1500;
+    const landingDelayMs = introDurationMs + sweepDurationMs + selectDurationMs;
 
     clearStartRollTimers();
 
     const letterTick = window.setInterval(() => {
       setStartRoll((current) =>
         current && current.id === roll.id
-          ? { ...current, rollingLetter: getRandomRollLetter() }
+          ? (() => {
+              const elapsed = Date.now() - rollStartedAt;
+
+              if (elapsed < introDurationMs) {
+                return { ...current, stage: "intro", rollingLetter: "A" };
+              }
+
+              if (elapsed < introDurationMs + sweepDurationMs) {
+                const sweepIndex = Math.floor((elapsed - introDurationMs) / sweepStepMs);
+                return {
+                  ...current,
+                  stage: "sweep",
+                  rollingLetter: getAlphabetSweepLetter(sweepIndex),
+                };
+              }
+
+              if (elapsed < landingDelayMs) {
+                return {
+                  ...current,
+                  stage: "selecting",
+                  rollingLetter: getRandomRollLetter(),
+                };
+              }
+
+              return current.stage === "landing"
+                ? current
+                : { ...current, stage: "landing", rollingLetter: current.targetLetter };
+            })()
           : current,
       );
     }, 90);
@@ -684,7 +745,7 @@ export function AtlasGame() {
           ? { ...current, stage: "landing", rollingLetter: roll.targetLetter }
           : current,
       );
-    }, 1200);
+    }, landingDelayMs);
 
     const finishTimer = window.setTimeout(() => {
       clearInterval(letterTick);
@@ -697,7 +758,7 @@ export function AtlasGame() {
         setGame(createNewGame(names, roll.targetLetter));
       }
       setStartRoll(null);
-    }, 1900);
+    }, landingDelayMs + 1100);
 
     startRollTimersRef.current = [landingTimer, finishTimer];
 
@@ -936,7 +997,7 @@ export function AtlasGame() {
       playerLabel: names[0] ?? "Atlas",
       targetLetter: getRandomStartingLetter(),
       rollingLetter: getRandomRollLetter(),
-      stage: "rolling",
+      stage: "intro",
     });
   }
 
@@ -1406,6 +1467,35 @@ export function AtlasGame() {
           0%   { opacity: 1; transform: translateY(0) scale(1); }
           60%  { opacity: 0.7; transform: translateY(140px) scale(0.85); }
           100% { opacity: 0; transform: translateY(220px) scale(0.7); }
+        }
+        @keyframes diceWait {
+          0%, 100% { transform: translateY(0) rotate(-6deg); }
+          50% { transform: translateY(-6px) rotate(5deg); }
+        }
+        @keyframes diceWobble {
+          0%, 100% { transform: translateY(0) rotate(-8deg) scale(1); }
+          50% { transform: translateY(-4px) rotate(8deg) scale(1.02); }
+        }
+        @keyframes letterRoll {
+          0% { opacity: 0; transform: translateY(110%) rotateX(-90deg); }
+          20% { opacity: 1; }
+          50% { transform: translateY(0) rotateX(0deg); opacity: 1; }
+          100% { opacity: 0; transform: translateY(-110%) rotateX(90deg); }
+        }
+        @keyframes letterRollFast {
+          0% { opacity: 0; transform: translateY(120%) rotateX(-100deg); }
+          15% { opacity: 1; }
+          55% { transform: translateY(0) rotateX(0deg); opacity: 1; }
+          100% { opacity: 0; transform: translateY(-120%) rotateX(100deg); }
+        }
+        @keyframes letterSettle {
+          0% { opacity: 0.35; transform: translateY(-8%) scale(1.2); }
+          65% { opacity: 1; transform: translateY(0) scale(1); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes slotPulse {
+          0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(236,72,153,0)); }
+          45% { transform: scale(1.14); filter: drop-shadow(0 12px 18px rgba(236,72,153,0.32)); }
         }
       `}</style>
 
