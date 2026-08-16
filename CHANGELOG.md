@@ -1,5 +1,14 @@
 # Atlas Junior — Changelog
 
+## v1.0.29 (versionCode 30) — 2026-08-16
+
+- Offline place validation now merges approved-place overlays on startup
+- Speech typos now offer multiple autocorrect choices
+- Speech failures now explain how to recover
+- Android target API updated to 36 and web/app versions synced
+
+---
+
 ## v1.0.27 (versionCode 28) — 2026-06-27
 
 - Homepage QR updated and the alpha label now reads “Now in Beta”

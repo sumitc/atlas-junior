@@ -1,20 +1,9 @@
-🌍 Atlas Junior v1.0.27
+🌍 Atlas Junior v1.0.29
 
 This release keeps the app and web version aligned:
 
-• Homepage QR image updated and the landing page subtitle now reads “Now in Beta”
-• Web export now rebuilds from the latest `main` during Vercel deploys, so `/game` stays in sync without committing generated files
-• Maestro smoke harness now captures and stores test results for startup, gameplay, and navigation
-• Android back navigation now returns from support/leaderboard/pipeline screens to the game instead of exiting
-• Fixed the Android launch crash by gating push startup until Firebase is configured
-• Full turn-based kids geography gameplay with voice input
-• Smoother speech auto-save and better mobile mic behavior
-• Shared turn timer, auto-skip on timeout, and stricter duplicate/save validation
-• Offline place validation to keep play fast and reliable
-• Leaderboard, support tickets, and place-request pipeline
-• In-app notifications plus Android push alerts
-• Deep links from notifications to leaderboard, pipeline, and support screens
-• Approved place requests now save immediately and refresh the dictionary on demand
-• Web share now falls back cleanly in the browser, and leaderboard loads reliably on web
-• Speech turns now commit only once so the per-turn timer keeps running reliably
-• Countdown now uses a deadline-based timer so web turns keep ticking reliably
+• Offline place validation now merges approved-place overlays on startup, so newly approved geography names show up without waiting for a full rebuild
+• Speech typos now offer multiple tappable autocorrect choices instead of a single guess
+• Speech failures now explain what went wrong and how to fix it (permission, noise, network, or device support)
+• Android target API updated to 36 for Play Store compliance
+• Web and Android app versions are now kept in sync at v1.0.29
