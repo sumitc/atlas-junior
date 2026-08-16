@@ -18,6 +18,7 @@ import {
   applyPlaceDictionaryDelta,
   findSuggestions,
   getPlacesVersion,
+  getRandomStartingLetter,
   isKnownPlace,
   isRejectedBareWord,
   loadPlaces,
@@ -55,6 +56,16 @@ type GameState = {
   usedPlaceKeys: string[];
   moves: Move[];
   statusMessage: string;
+};
+
+type StartRollState = {
+  id: string;
+  mode: "start" | "preview";
+  playerNames: string[];
+  playerLabel: string;
+  targetLetter: string;
+  rollingLetter: string;
+  stage: "rolling" | "landing";
 };
 
 interface SpeechRecognitionAlternative {
@@ -279,7 +290,7 @@ function createSetupState(statusMessage = "Tap About for the rules, then add the
   };
 }
 
-function createNewGame(names: string[]): GameState {
+function createNewGame(names: string[], startLetter = "a"): GameState {
   const players = names.map((name) => ({
     id: makeId(),
     name,
@@ -289,11 +300,77 @@ function createNewGame(names: string[]): GameState {
     phase: "playing",
     players,
     currentPlayerIndex: 0,
-    requiredLetter: "a",
+    requiredLetter: startLetter,
     usedPlaceKeys: [],
     moves: [],
-    statusMessage: `Atlas! ${players[0].name} starts with A.`,
+    statusMessage: `Atlas! ${players[0].name} starts with ${startLetter.toUpperCase()}.`,
   };
+}
+
+function getRandomRollLetter(): string {
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  return letters[Math.floor(Math.random() * letters.length)] ?? "A";
+}
+
+function StartLetterRollOverlay({ state }: { state: StartRollState | null }) {
+  if (!state) {
+    return null;
+  }
+
+  const landing = state.stage === "landing";
+
+  return (
+    <div className="fixed inset-0 z-50 pointer-events-none">
+      <div className="absolute inset-0 bg-slate-950/25 backdrop-blur-[2px]" />
+
+      <div className="absolute left-1/2 top-6 -translate-x-1/2 rounded-full bg-white/85 px-4 py-2 text-[10px] font-black uppercase tracking-[0.35em] text-slate-600 shadow-lg shadow-slate-900/10">
+        {state.mode === "preview" ? "Previewing start roll" : `Rolling for ${state.playerLabel}`}
+      </div>
+
+      <div className="absolute left-1/2 top-[16%] -translate-x-1/2">
+        <div className="rounded-[1.5rem] border border-white/80 bg-white/90 px-5 py-4 text-center shadow-xl shadow-slate-900/10">
+          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-slate-500">
+            Starting letter
+          </p>
+          <p className="mt-1 text-4xl font-black uppercase text-slate-900">
+            {state.targetLetter}
+          </p>
+        </div>
+      </div>
+
+      <div
+        className={`absolute left-1/2 top-[55%] -translate-x-1/2 transition-all duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
+          landing ? "-translate-y-[250px] scale-75" : "translate-y-0 scale-100"
+        }`}
+      >
+        <div
+          className={`relative flex h-28 w-28 items-center justify-center rounded-[1.75rem] border border-white/60 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-amber-400 shadow-2xl shadow-fuchsia-400/40 ${
+            landing ? "rotate-0" : "-rotate-6"
+          }`}
+        >
+          <span className="absolute inset-3 rounded-[1.35rem] border border-white/25" />
+          <span className="absolute left-4 top-4 h-3 w-3 rounded-full bg-white/80" />
+          <span className="absolute right-4 top-4 h-3 w-3 rounded-full bg-white/80" />
+          <span className="absolute left-4 bottom-4 h-3 w-3 rounded-full bg-white/80" />
+          <span className="absolute right-4 bottom-4 h-3 w-3 rounded-full bg-white/80" />
+          <span className="text-6xl font-black uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.2)]">
+            {state.rollingLetter}
+          </span>
+        </div>
+        <p className="mt-3 text-center text-xs font-bold uppercase tracking-[0.3em] text-white/85">
+          {landing ? "Locked in" : "Rolling..."}
+        </p>
+      </div>
+
+      <div className="absolute inset-x-0 bottom-8 flex justify-center px-6">
+        <p className="max-w-sm rounded-full bg-white/85 px-4 py-2 text-center text-sm font-semibold text-slate-700 shadow-lg shadow-slate-900/10">
+          {state.mode === "preview"
+            ? "Preview only — tap Start game when you're ready."
+            : "The game will start with the locked letter after the roll finishes."}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function getNextPlayerIndex(players: Player[], currentIndex: number): number {
@@ -420,12 +497,14 @@ export function AtlasGame() {
   const [nativeSpeechAvailable, setNativeSpeechAvailable] = useState<boolean | null>(null);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const [showDebug, setShowDebug] = useState(process.env.NEXT_PUBLIC_DEBUG_PANEL === "true");
+  const [startRoll, setStartRoll] = useState<StartRollState | null>(null);
   const [debugNotificationKind, setDebugNotificationKind] = useState<DebugNotificationKind>(
     "leaderboard-top",
   );
   const [debugNotificationSending, setDebugNotificationSending] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const debugScrollRef = useRef<HTMLDivElement | null>(null);
+  const startRollTimersRef = useRef<number[]>([]);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const placeInputRef = useRef<HTMLInputElement | null>(null);
   // Tracks the latest speech transcript so listeningState/onend handlers can auto-save
@@ -459,6 +538,13 @@ export function AtlasGame() {
   const turnDeadlineRef = useRef(
     Date.now() + ((getInitialGameSession()?.turnSecondsRemaining ?? TURN_TIME_LIMIT_SECONDS) * 1000),
   );
+
+  function clearStartRollTimers() {
+    for (const timer of startRollTimersRef.current) {
+      clearTimeout(timer);
+    }
+    startRollTimersRef.current = [];
+  }
 
   function clearTurnTimerInterval() {
     if (turnTimerIntervalRef.current) {
@@ -499,6 +585,8 @@ export function AtlasGame() {
   // Score counts only saved moves (skipped moves were removed)
   const savedTurns = game.moves.filter((m) => m.kind === "saved").length;
   const totalTurns = game.moves.length;
+  const trimmedPlayerNames = playerNames.map((name) => name.trim()).filter(Boolean);
+  const previewPlayerNames = trimmedPlayerNames.length >= 2 ? trimmedPlayerNames : DEFAULT_PLAYER_NAMES;
 
   const calledPlaces = useMemo(
     () =>
@@ -571,6 +659,53 @@ export function AtlasGame() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!startRoll) {
+      clearStartRollTimers();
+      return undefined;
+    }
+
+    const roll = startRoll;
+
+    clearStartRollTimers();
+
+    const letterTick = window.setInterval(() => {
+      setStartRoll((current) =>
+        current && current.id === roll.id
+          ? { ...current, rollingLetter: getRandomRollLetter() }
+          : current,
+      );
+    }, 90);
+
+    const landingTimer = window.setTimeout(() => {
+      setStartRoll((current) =>
+        current && current.id === roll.id
+          ? { ...current, stage: "landing", rollingLetter: roll.targetLetter }
+          : current,
+      );
+    }, 1200);
+
+    const finishTimer = window.setTimeout(() => {
+      clearInterval(letterTick);
+      if (roll.mode === "start") {
+        const names = roll.playerNames.map((name) => name.trim()).filter(Boolean);
+        setPlayerNames(names);
+        clearTurnDraftState();
+        resetTurnTimer();
+        statsSubmittedRef.current = false;
+        setGame(createNewGame(names, roll.targetLetter));
+      }
+      setStartRoll(null);
+    }, 1900);
+
+    startRollTimersRef.current = [landingTimer, finishTimer];
+
+    return () => {
+      clearInterval(letterTick);
+      clearStartRollTimers();
+    };
+  }, [startRoll?.id]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -787,6 +922,24 @@ export function AtlasGame() {
     setPlayerNames((current) => current.filter((_, currentIndex) => currentIndex !== index));
   }
 
+  function beginStartRoll(names: string[], mode: "start" | "preview") {
+    if (startRoll) {
+      return;
+    }
+
+    clearStartRollTimers();
+
+    setStartRoll({
+      id: makeId(),
+      mode,
+      playerNames: names,
+      playerLabel: names[0] ?? "Atlas",
+      targetLetter: getRandomStartingLetter(),
+      rollingLetter: getRandomRollLetter(),
+      stage: "rolling",
+    });
+  }
+
   async function stopListening() {
     clearNativeSpeechAutoSaveTimer();
     recognitionRef.current?.stop();
@@ -972,7 +1125,7 @@ export function AtlasGame() {
   }
 
   function startGameFromNames() {
-    const names = playerNames.map((name) => name.trim()).filter(Boolean);
+    const names = trimmedPlayerNames;
 
     if (names.length < 2) {
       setGame(createSetupState("Add at least two players before starting."));
@@ -980,10 +1133,7 @@ export function AtlasGame() {
     }
 
     setPlayerNames(names);
-    clearTurnDraftState();
-    resetTurnTimer();
-    statsSubmittedRef.current = false;
-    setGame(createNewGame(names));
+    beginStartRoll(names, "start");
   }
 
   async function requestPlaceAdd(): Promise<void> {
@@ -1259,6 +1409,8 @@ export function AtlasGame() {
         }
       `}</style>
 
+      <StartLetterRollOverlay state={startRoll} />
+
       {/* Floating chip that flies toward Past places on save */}
       {flyingWord && (
         <div
@@ -1364,12 +1516,23 @@ export function AtlasGame() {
                 <div className="pt-2">
                   <button
                     className={`${primaryButton} w-full sm:w-auto`}
+                    disabled={Boolean(startRoll)}
                     onClick={startGameFromNames}
                     type="button"
                     data-testid="start-game-button"
                   >
-                    Start game
+                    {startRoll ? "Rolling..." : "Start game"}
                   </button>
+                  {showDebug && (
+                    <button
+                      className="mt-3 w-full rounded-full border border-fuchsia-200 bg-fuchsia-50 px-4 py-3 text-sm font-semibold text-fuchsia-700 transition hover:bg-fuchsia-100 sm:w-auto"
+                        onClick={() => beginStartRoll(previewPlayerNames, "preview")}
+                      type="button"
+                      disabled={Boolean(startRoll)}
+                    >
+                      Preview start roll
+                    </button>
+                  )}
                 </div>
               </div>
             </section>

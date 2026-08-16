@@ -91,6 +91,22 @@ export function getPlacesVersion(): string {
   return placesVersion;
 }
 
+export function getRandomStartingLetter(): string {
+  const data = placesData;
+  if (!data) {
+    return "a";
+  }
+
+  const letters = Object.keys(data.byFirstLetter).filter(
+    (letter) => (data.byFirstLetter[letter]?.length ?? 0) > 0,
+  );
+  if (letters.length === 0) {
+    return "a";
+  }
+
+  return letters[Math.floor(Math.random() * letters.length)] ?? "a";
+}
+
 export function applyPlaceDictionaryDelta(items: PlaceDictionaryDeltaItem[], version?: string): void {
   if (!placesData) {
     pendingDeltaItems = [...pendingDeltaItems, ...items];
