@@ -336,7 +336,7 @@ function StartLetterRollOverlay({ state }: { state: StartRollState | null }) {
       <div
         className={`absolute left-1/2 -translate-x-1/2 transition-all ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
           landing
-            ? "top-[17%] scale-[0.35] opacity-100 duration-[1200ms]"
+            ? "top-[18%] scale-[0.42] opacity-100 duration-[1400ms]"
             : "top-[55%] scale-100 opacity-100 duration-[550ms]"
         }`}
       >
@@ -355,8 +355,8 @@ function StartLetterRollOverlay({ state }: { state: StartRollState | null }) {
               key={`${state.id}-${state.stage}-out-${outgoingLetter}`}
               className={`absolute inset-0 flex items-center justify-center text-6xl font-black uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.2)] [backface-visibility:hidden] [transform-style:preserve-3d] ${
                 landing
-                  ? "animate-[letterRollOut_1200ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
-                  : "animate-[letterRollOut_720ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
+                  ? "animate-[letterRollOut_1400ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
+                  : "animate-[letterRollOut_860ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
               }`}
             >
               {outgoingLetter}
@@ -366,10 +366,10 @@ function StartLetterRollOverlay({ state }: { state: StartRollState | null }) {
             key={`${state.id}-${state.stage}-in-${incomingLetter}`}
             className={`absolute inset-0 flex items-center justify-center text-6xl font-black uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.2)] [backface-visibility:hidden] [transform-style:preserve-3d] ${
               landing
-                ? "animate-[letterSettle_1400ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
+                ? "animate-[letterSettle_1600ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
                 : settling
-                  ? "animate-[letterRollInFast_760ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
-                  : "animate-[letterRollIn_900ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
+                  ? "animate-[letterRollInFast_900ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
+                  : "animate-[letterRollIn_1050ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
             }`}
           >
             {incomingLetter}
@@ -675,10 +675,10 @@ export function AtlasGame() {
 
     const roll = startRoll;
     const rollStartedAt = Date.now();
-    const introDurationMs = 650;
-    const sweepStepMs = 130;
+    const introDurationMs = 850;
+    const sweepStepMs = 160;
     const sweepDurationMs = 26 * sweepStepMs;
-    const selectDurationMs = 1500;
+    const selectDurationMs = 1900;
     const landingDelayMs = introDurationMs + sweepDurationMs + selectDurationMs;
 
     clearStartRollTimers();
@@ -740,7 +740,7 @@ export function AtlasGame() {
         setGame(createNewGame(names, roll.targetLetter));
       }
       setStartRoll(null);
-    }, landingDelayMs + 1100);
+    }, landingDelayMs + 1500);
 
     startRollTimersRef.current = [landingTimer, finishTimer];
 
@@ -1460,19 +1460,19 @@ export function AtlasGame() {
           50% { transform: translateY(-4px) rotate(8deg) scale(1.02); }
         }
         @keyframes letterRoll {
-          0% { opacity: 0; transform: translateY(110%) rotateX(-90deg); }
+          0% { opacity: 0; transform: translateY(48%) rotateX(-90deg) scale(0.9); }
           20% { opacity: 1; }
           50% { transform: translateY(0) rotateX(0deg); opacity: 1; }
-          100% { opacity: 0; transform: translateY(-110%) rotateX(90deg); }
+          100% { opacity: 0; transform: translateY(-48%) rotateX(90deg) scale(0.9); }
         }
         @keyframes letterRollFast {
-          0% { opacity: 0; transform: translateY(120%) rotateX(-100deg); }
+          0% { opacity: 0; transform: translateY(52%) rotateX(-100deg) scale(0.9); }
           15% { opacity: 1; }
           55% { transform: translateY(0) rotateX(0deg); opacity: 1; }
-          100% { opacity: 0; transform: translateY(-120%) rotateX(100deg); }
+          100% { opacity: 0; transform: translateY(-52%) rotateX(100deg) scale(0.9); }
         }
         @keyframes letterSettle {
-          0% { opacity: 0.35; transform: translateY(-8%) scale(1.2); }
+          0% { opacity: 0.35; transform: translateY(-4%) scale(1.14); }
           65% { opacity: 1; transform: translateY(0) scale(1); }
           100% { opacity: 1; transform: translateY(0) scale(1); }
         }
@@ -1481,19 +1481,19 @@ export function AtlasGame() {
           45% { transform: scale(1.14); filter: drop-shadow(0 12px 18px rgba(236,72,153,0.32)); }
         }
         @keyframes letterRollIn {
-          0% { opacity: 0; transform: translateY(130%) rotateX(-105deg); }
-          40% { opacity: 1; }
+          0% { opacity: 0; transform: translateY(44%) rotateX(-105deg) scale(0.9); }
+          30% { opacity: 1; }
           100% { opacity: 1; transform: translateY(0) rotateX(0deg); }
         }
         @keyframes letterRollInFast {
-          0% { opacity: 0; transform: translateY(150%) rotateX(-110deg); }
-          35% { opacity: 1; }
+          0% { opacity: 0; transform: translateY(48%) rotateX(-110deg) scale(0.9); }
+          30% { opacity: 1; }
           100% { opacity: 1; transform: translateY(0) rotateX(0deg); }
         }
         @keyframes letterRollOut {
           0% { opacity: 1; transform: translateY(0) rotateX(0deg); }
           55% { opacity: 1; }
-          100% { opacity: 0; transform: translateY(-140%) rotateX(110deg); }
+          100% { opacity: 0; transform: translateY(-50%) rotateX(110deg) scale(0.9); }
         }
       `}</style>
 
