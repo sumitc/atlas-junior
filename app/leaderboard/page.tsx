@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { APP_VERSION } from "@/lib/version";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { getLeaderboard, type LeaderboardEntry } from "@/lib/api";
+import { getLeaderboard, getStats, type LeaderboardEntry } from "@/lib/api";
 
 // ── Share card shown when ?entry=<id> is in the URL ──────────────────────────
 
@@ -81,14 +81,16 @@ function LeaderboardContent() {
   const highlightId = searchParams.get("entry");
 
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [gamesPlayed, setGamesPlayed] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const highlightRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    getLeaderboard()
-      .then((scores) => {
+    Promise.all([getLeaderboard(), getStats()])
+      .then(([scores, stats]) => {
         setEntries(scores);
+        setGamesPlayed(stats.games);
       })
       .catch(() => setError("Couldn't load scores. Try again later."))
       .finally(() => setLoading(false));
@@ -104,6 +106,15 @@ function LeaderboardContent() {
 
   return (
     <div className="space-y-4">
+      {gamesPlayed !== null && (
+        <div className="rounded-[1.5rem] bg-white/85 px-5 py-4 text-center shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-400">
+            Total games played
+          </p>
+          <p className="mt-1 text-3xl font-black text-slate-900">{gamesPlayed}</p>
+        </div>
+      )}
+
       <div className="mb-6 flex items-center gap-3">
         <Link
           href="/"
