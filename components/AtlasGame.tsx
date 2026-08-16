@@ -310,6 +310,24 @@ function createNewGame(names: string[], startLetter = "a"): GameState {
 
 function getRandomRollLetter(): string {
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  if (letters.length <= 1) {
+    return "A";
+  }
+
+  const cryptoObj = globalThis.crypto;
+  if (cryptoObj?.getRandomValues) {
+    const limit = Math.floor(0x100000000 / letters.length) * letters.length;
+    const buffer = new Uint32Array(1);
+    let value = 0;
+
+    do {
+      cryptoObj.getRandomValues(buffer);
+      value = buffer[0] ?? 0;
+    } while (value >= limit);
+
+    return letters[value % letters.length] ?? "A";
+  }
+
   return letters[Math.floor(Math.random() * letters.length)] ?? "A";
 }
 
@@ -512,6 +530,7 @@ export function AtlasGame() {
   const [shareCopied, setShareCopied] = useState(false);
   const debugScrollRef = useRef<HTMLDivElement | null>(null);
   const startRollTimersRef = useRef<number[]>([]);
+  const lastStartLetterRef = useRef<string | null>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const placeInputRef = useRef<HTMLInputElement | null>(null);
   // Tracks the latest speech transcript so listeningState/onend handlers can auto-save
@@ -972,12 +991,23 @@ export function AtlasGame() {
 
     clearStartRollTimers();
 
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let targetLetter = getRandomStartingLetter().toUpperCase();
+    if (alphabet.length > 1) {
+      let guard = 0;
+      while (targetLetter === lastStartLetterRef.current && guard < 8) {
+        targetLetter = getRandomStartingLetter().toUpperCase();
+        guard += 1;
+      }
+    }
+    lastStartLetterRef.current = targetLetter;
+
     setStartRoll({
       id: makeId(),
       mode,
       playerNames: names,
       playerLabel: names[0] ?? "Atlas",
-      targetLetter: getRandomStartingLetter(),
+      targetLetter,
       rollingLetter: "A",
       previousLetter: null,
       stage: "intro",

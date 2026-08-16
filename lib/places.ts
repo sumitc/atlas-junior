@@ -23,6 +23,28 @@ let placesVersion = PLACE_DICTIONARY_VERSION;
 let pendingDeltaItems: PlaceDictionaryDeltaItem[] = [];
 let pendingDeltaVersion: string | null = null;
 
+function getRandomIndex(length: number): number {
+  if (length <= 1) {
+    return 0;
+  }
+
+  const cryptoObj = globalThis.crypto;
+  if (cryptoObj?.getRandomValues) {
+    const limit = Math.floor(0x100000000 / length) * length;
+    const buffer = new Uint32Array(1);
+    let value = 0;
+
+    do {
+      cryptoObj.getRandomValues(buffer);
+      value = buffer[0] ?? 0;
+    } while (value >= limit);
+
+    return value % length;
+  }
+
+  return Math.floor(Math.random() * length);
+}
+
 /** Normalize a place name to its lookup key (must mirror createPlaceKey in AtlasGame.tsx) */
 export function normalizePlaceKey(name: string): string {
   return name
@@ -104,7 +126,7 @@ export function getRandomStartingLetter(): string {
     return "a";
   }
 
-  return letters[Math.floor(Math.random() * letters.length)] ?? "a";
+  return letters[getRandomIndex(letters.length)] ?? "a";
 }
 
 export function applyPlaceDictionaryDelta(items: PlaceDictionaryDeltaItem[], version?: string): void {
