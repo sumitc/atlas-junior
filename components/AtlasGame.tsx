@@ -22,6 +22,8 @@ import {
   isKnownPlace,
   isRejectedBareWord,
   loadPlaces,
+  normalizePlaceKey,
+  normalizeRequiredLetter,
   refreshPlacesDelta,
 } from "@/lib/places";
 import { APP_VERSION } from "@/lib/version";
@@ -151,7 +153,8 @@ function normalizePlaceName(value: string): string {
 }
 
 function createPlaceKey(value: string): string {
-  return normalizePlaceName(value).replace(/[^a-z]/g, "");
+  // Single source of truth: NFD + diacritic strip + lowercase + a-z only.
+  return normalizePlaceKey(value);
 }
 
 function getNormalizedTokens(value: string): string[] {
@@ -296,15 +299,17 @@ function createNewGame(names: string[], startLetter = "a"): GameState {
     id: makeId(),
     name,
   }));
+  // The roll overlay uses uppercase for display; state and checks are always lowercase.
+  const requiredLetter = normalizeRequiredLetter(startLetter) || "a";
 
   return {
     phase: "playing",
     players,
     currentPlayerIndex: 0,
-    requiredLetter: startLetter,
+    requiredLetter,
     usedPlaceKeys: [],
     moves: [],
-    statusMessage: `Atlas! ${players[0].name} starts with ${startLetter.toUpperCase()}.`,
+    statusMessage: `Atlas! ${players[0].name} starts with ${requiredLetter.toUpperCase()}.`,
   };
 }
 
@@ -354,13 +359,13 @@ function StartLetterRollOverlay({ state }: { state: StartRollState | null }) {
       <div
         className={`absolute left-1/2 -translate-x-1/2 transition-all ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
           landing
-            ? "top-[18%] scale-[0.42] opacity-100 duration-[1400ms]"
-            : "top-[55%] scale-100 opacity-100 duration-[550ms]"
+            ? "top-[18%] scale-[0.42] opacity-100 duration-[550ms]"
+            : "top-[55%] scale-100 opacity-100 duration-[240ms]"
         }`}
       >
         <div
           className={`relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[1.75rem] border border-white/60 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-amber-400 shadow-2xl shadow-fuchsia-400/40 ${
-            landing ? "rotate-0" : sweeping ? "animate-[diceWobble_560ms_ease-in-out_infinite]" : "animate-[diceWait_900ms_ease-in-out_infinite]"
+            landing ? "rotate-0" : sweeping ? "animate-[diceWobble_300ms_ease-in-out_infinite]" : "animate-[diceWait_400ms_ease-in-out_infinite]"
           }`}
         >
           <span className="absolute inset-3 rounded-[1.35rem] border border-white/25" />
@@ -373,8 +378,8 @@ function StartLetterRollOverlay({ state }: { state: StartRollState | null }) {
               key={`${state.id}-${state.stage}-out-${outgoingLetter}`}
               className={`absolute inset-0 flex items-center justify-center text-6xl font-black uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.2)] [backface-visibility:hidden] [transform-style:preserve-3d] ${
                 landing
-                  ? "animate-[letterRollOut_1400ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
-                  : "animate-[letterRollOut_860ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
+                  ? "animate-[letterRollOut_450ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
+                  : "animate-[letterRollOut_300ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
               }`}
             >
               {outgoingLetter}
@@ -384,10 +389,10 @@ function StartLetterRollOverlay({ state }: { state: StartRollState | null }) {
             key={`${state.id}-${state.stage}-in-${incomingLetter}`}
             className={`absolute inset-0 flex items-center justify-center text-6xl font-black uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.2)] [backface-visibility:hidden] [transform-style:preserve-3d] ${
               landing
-                ? "animate-[letterSettle_1600ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
+                ? "animate-[letterSettle_550ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
                 : settling
-                  ? "animate-[letterRollInFast_900ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
-                  : "animate-[letterRollIn_1050ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
+                  ? "animate-[letterRollInFast_320ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
+                  : "animate-[letterRollIn_380ms_cubic-bezier(0.2,0.8,0.2,1)_1]"
             }`}
           >
             {incomingLetter}
@@ -448,9 +453,20 @@ function isPersistedGameSession(value: unknown): value is PersistedGameSession {
     (candidate.game.phase === "playing" || candidate.game.phase === "setup") &&
     Array.isArray(candidate.game.players) &&
     Array.isArray(candidate.game.moves) &&
+    typeof candidate.game.requiredLetter === "string" &&
+    Array.isArray(candidate.game.usedPlaceKeys) &&
     typeof candidate.draftPlace === "string" &&
     typeof candidate.turnSecondsRemaining === "number"
   );
+}
+
+/** Keep the invariant: persisted games always carry lowercase letters/keys. */
+function normalizePersistedGame(game: GameState): GameState {
+  return {
+    ...game,
+    requiredLetter: normalizeRequiredLetter(game.requiredLetter) || "a",
+    usedPlaceKeys: game.usedPlaceKeys.map(createPlaceKey).filter(Boolean),
+  };
 }
 
 function getInitialGameSession(): PersistedGameSession | null {
@@ -466,7 +482,7 @@ function getInitialGameSession(): PersistedGameSession | null {
   try {
     const parsed = JSON.parse(raw) as unknown;
     if (isPersistedGameSession(parsed) && parsed.game.phase === "playing") {
-      return parsed;
+      return { ...parsed, game: normalizePersistedGame(parsed.game) };
     }
   } catch {
     window.sessionStorage.removeItem(GAME_SESSION_STORAGE_KEY);
@@ -506,9 +522,11 @@ function TopThree({ entries, highlightId }: { entries: import("@/lib/api").Leade
 }
 
 export function AtlasGame() {
+  // Read the persisted session once so all initial state/deadline values agree.
+  const [initialSession] = useState(() => getInitialGameSession());
   const [playerNames, setPlayerNames] = useState(getInitialPlayerNames);
-  const [game, setGame] = useState<GameState>(() => getInitialGameSession()?.game ?? createSetupState());
-  const [draftPlace, setDraftPlace] = useState(() => getInitialGameSession()?.draftPlace ?? "");
+  const [game, setGame] = useState<GameState>(() => initialSession?.game ?? createSetupState());
+  const [draftPlace, setDraftPlace] = useState(() => initialSession?.draftPlace ?? "");
   const [speechMessage, setSpeechMessage] = useState("");
   const [speechMessageTone, setSpeechMessageTone] = useState<"neutral" | "error" | "success">(
     "neutral",
@@ -552,18 +570,22 @@ export function AtlasGame() {
   const [endGameQualifies, setEndGameQualifies] = useState(false);
   const [endGameLeaderboard, setEndGameLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [endGameResult, setEndGameResult] = useState<{ rank: number | null; entryId: string; onLeaderboard: boolean } | null>(null);
-  const [turnSecondsRemaining, setTurnSecondsRemaining] = useState(
-    () => getInitialGameSession()?.turnSecondsRemaining ?? TURN_TIME_LIMIT_SECONDS,
+  const [initialTurnSeconds] = useState(() =>
+    Math.max(
+      0,
+      Math.min(TURN_TIME_LIMIT_SECONDS, initialSession?.turnSecondsRemaining ?? TURN_TIME_LIMIT_SECONDS),
+    ),
   );
+  const [turnSecondsRemaining, setTurnSecondsRemaining] = useState(initialTurnSeconds);
+  // Bumping this guarantees the timer effect restarts even when phase/player index don't change.
+  const [turnGeneration, setTurnGeneration] = useState(0);
   const [placeRequestState, setPlaceRequestState] = useState<"idle" | "submitting" | "done" | "error">("idle");
   const [placeRequestError, setPlaceRequestError] = useState<string | null>(null);
   const [placesReady, setPlacesReady] = useState(false);
   const statsSubmittedRef = useRef(false);
   const turnTimeoutHandledRef = useRef(false);
   const turnTimerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const turnDeadlineRef = useRef(
-    Date.now() + ((getInitialGameSession()?.turnSecondsRemaining ?? TURN_TIME_LIMIT_SECONDS) * 1000),
-  );
+  const turnDeadlineRef = useRef(Date.now() + initialTurnSeconds * 1000);
 
   function clearStartRollTimers() {
     for (const timer of startRollTimersRef.current) {
@@ -584,6 +606,7 @@ export function AtlasGame() {
     turnTimeoutHandledRef.current = false;
     turnDeadlineRef.current = Date.now() + TURN_TIME_LIMIT_SECONDS * 1000;
     setTurnSecondsRemaining(TURN_TIME_LIMIT_SECONDS);
+    setTurnGeneration((generation) => generation + 1);
   }
 
   function clearTurnDraftState() {
@@ -603,7 +626,9 @@ export function AtlasGame() {
   const currentPlayer =
     game.phase === "playing" ? game.players[game.currentPlayerIndex] : null;
   const hasDraftPlace = draftPlace.trim().length > 0;
-  const placeKeyOk = hasDraftPlace && createPlaceKey(draftPlace).startsWith(game.requiredLetter);
+  const requiredLetter = normalizeRequiredLetter(game.requiredLetter);
+  const placeKeyOk =
+    hasDraftPlace && !!requiredLetter && createPlaceKey(draftPlace).startsWith(requiredLetter);
   const turnRemainingProgress = Math.max(
     0,
     Math.min(1, turnSecondsRemaining / TURN_TIME_LIMIT_SECONDS),
@@ -694,10 +719,10 @@ export function AtlasGame() {
 
     const roll = startRoll;
     const rollStartedAt = Date.now();
-    const introDurationMs = 850;
-    const sweepStepMs = 160;
+    const introDurationMs = 300;
+    const sweepStepMs = 70;
     const sweepDurationMs = 26 * sweepStepMs;
-    const selectDurationMs = 1900;
+    const selectDurationMs = 450;
     const landingDelayMs = introDurationMs + sweepDurationMs + selectDurationMs;
 
     clearStartRollTimers();
@@ -738,7 +763,7 @@ export function AtlasGame() {
             })()
           : current,
       );
-    }, 90);
+    }, 50);
 
     const landingTimer = window.setTimeout(() => {
       setStartRoll((current) =>
@@ -759,7 +784,7 @@ export function AtlasGame() {
         setGame(createNewGame(names, roll.targetLetter));
       }
       setStartRoll(null);
-    }, landingDelayMs + 1500);
+    }, landingDelayMs + 600);
 
     startRollTimersRef.current = [landingTimer, finishTimer];
 
@@ -824,7 +849,7 @@ export function AtlasGame() {
     return () => {
      clearTurnTimerInterval();
     };
-  }, [game.phase, game.currentPlayerIndex, showEndGame]);
+  }, [game.phase, game.currentPlayerIndex, showEndGame, turnGeneration]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
   // Clear all validation state when user edits the input (fixes stale duplicateChallenge bug)
@@ -1045,6 +1070,15 @@ export function AtlasGame() {
         setNativeSpeechAvailable(available);
         dbg(`startListening: available=${available}`);
 
+        // Fail fast on devices with no speech service — don't ask for a mic
+        // permission that can't lead to working speech recognition.
+        if (!available) {
+          dbg("startListening: online speech unavailable");
+          updateSpeechMessage(speechUnavailableMessage(), "error");
+          placeInputRef.current?.focus();
+          return;
+        }
+
         dbg("startListening: checking permissions");
         const currentPermissions = await SpeechRecognition.checkPermissions();
         const grantedPermissions =
@@ -1100,13 +1134,6 @@ export function AtlasGame() {
         dbg("startListening: start() resolved");
         setIsListening(true);
         };
-
-        if (!available) {
-        dbg("startListening: online speech unavailable");
-        updateSpeechMessage(speechUnavailableMessage(), "error");
-        placeInputRef.current?.focus();
-        return;
-        }
 
         await onlineStart();
         return;
@@ -1233,7 +1260,7 @@ export function AtlasGame() {
       const result = await submitPlaceRequest({
         requestedName: requestedPlace,
         playerName: currentPlayer.name,
-        turnLetter: game.requiredLetter,
+        turnLetter: normalizeRequiredLetter(game.requiredLetter),
         platform: Capacitor.getPlatform(),
         appVersion: APP_VERSION,
         savedTurns,
@@ -1314,11 +1341,13 @@ export function AtlasGame() {
       return false;
     }
 
-    if (!placeKey.startsWith(game.requiredLetter)) {
+    const requiredLetter = normalizeRequiredLetter(game.requiredLetter);
+
+    if (!requiredLetter || !placeKey.startsWith(requiredLetter)) {
       setDuplicateChallenge(null);
       setPlaceCheck(null);
       updateSpeechMessage(
-        `This turn must start with ${game.requiredLetter.toUpperCase()}.`,
+        `This turn must start with ${requiredLetter.toUpperCase() || "A"}.`,
         "error",
       );
       return false;
@@ -1356,7 +1385,7 @@ export function AtlasGame() {
       return false;
     }
 
-    const nextLetter = getLastLetter(normalized);
+    const nextLetter = normalizeRequiredLetter(getLastLetter(normalized));
 
     if (!nextLetter) {
       setDuplicateChallenge(null);
@@ -1672,7 +1701,7 @@ export function AtlasGame() {
                       Letter
                     </p>
                     <p className="text-3xl font-black uppercase text-slate-900" data-testid="required-letter">
-                      {game.requiredLetter}
+                      {requiredLetter.toUpperCase() || "A"}
                     </p>
                   </div>
                 </div>

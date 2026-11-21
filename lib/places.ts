@@ -15,6 +15,11 @@ interface PlacesData {
   allKeys: string[];
 }
 
+interface RawPlacesData {
+  map?: Record<string, unknown>;
+  byFirstLetter?: Record<string, unknown>;
+}
+
 const MIN_BARE_WORD_LENGTH = 4;
 
 let placesData: PlacesData | null = null;
@@ -54,6 +59,47 @@ export function normalizePlaceKey(name: string): string {
     .replace(/[^a-z]/g, "");
 }
 
+/**
+ * Normalize a game letter to a single lowercase a-z character.
+ * Use this for EVERY requiredLetter comparison — never compare raw letters.
+ */
+export function normalizeRequiredLetter(letter: unknown): string {
+  return normalizePlaceKey(String(letter ?? "")).slice(0, 1);
+}
+
+/**
+ * Normalize dictionary keys loaded from places.json/delta responses.
+ * Source data should already be lowercase, but normalizing here guarantees
+ * that an uppercase key from any source cannot reintroduce case-sensitive checks.
+ */
+function normalizeDictionaryData(loaded: RawPlacesData | null | undefined): PlacesData {
+  const map: Record<string, string> = {};
+  const byFirstLetter: Record<string, string[]> = {};
+
+  for (const [rawKey, rawDisplayName] of Object.entries(loaded?.map ?? {})) {
+    const key = normalizePlaceKey(String(rawKey));
+    const displayName = String(rawDisplayName ?? "").trim();
+    if (key && displayName) {
+      map[key] = displayName;
+    }
+  }
+
+  for (const [rawLetter, rawKeys] of Object.entries(loaded?.byFirstLetter ?? {})) {
+    const letter = normalizeRequiredLetter(rawLetter);
+    if (!letter || !Array.isArray(rawKeys)) continue;
+
+    const bucket = byFirstLetter[letter] ?? (byFirstLetter[letter] = []);
+    for (const rawKey of rawKeys) {
+      const key = normalizePlaceKey(String(rawKey));
+      if (key && !bucket.includes(key)) {
+        bucket.push(key);
+      }
+    }
+  }
+
+  return { map, byFirstLetter, allKeys: Object.keys(map) };
+}
+
 // Baked at build time by Next.js — empty string for Capacitor, '/game' for web deployment
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -64,11 +110,8 @@ export async function loadPlaces(): Promise<void> {
   loadPromise = (async () => {
     const res = await fetch(`${BASE_PATH}/places.json?v=${encodeURIComponent(PLACE_DICTIONARY_VERSION)}`);
     if (!res.ok) throw new Error(`Failed to load places.json: ${res.status}`);
-    const loaded = await res.json();
-    placesData = {
-      ...loaded,
-      allKeys: Object.keys(loaded.map ?? {}),
-    };
+    const loaded = normalizeDictionaryData(await res.json());
+    placesData = loaded;
     placesVersion = PLACE_DICTIONARY_VERSION;
     if (pendingDeltaItems.length > 0) {
       const queued = pendingDeltaItems;
@@ -126,7 +169,7 @@ export function getRandomStartingLetter(): string {
     return "a";
   }
 
-  return letters[getRandomIndex(letters.length)] ?? "a";
+  return normalizeRequiredLetter(letters[getRandomIndex(letters.length)] ?? "a") || "a";
 }
 
 export function applyPlaceDictionaryDelta(items: PlaceDictionaryDeltaItem[], version?: string): void {

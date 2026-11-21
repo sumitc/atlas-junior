@@ -1,7 +1,4 @@
-🌍 Atlas Junior v1.0.31
+🌍 Atlas Junior v1.0.35
 
-This release keeps the app and web version aligned:
-
-• Random start-letter roll is now stronger and avoids repeating the same start letter back-to-back
-• Release builds now use R8 and resource shrinking for better performance and smaller app size
-• Web and Android app versions are now kept in sync at v1.0.31
+• Fixed the turn timer sometimes staying at 3:00 and never counting down
+• Made the start-letter roll animation much quicker

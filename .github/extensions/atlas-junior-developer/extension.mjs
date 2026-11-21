@@ -11,7 +11,7 @@ const BACKEND_URL  = "https://atlas-junior.vercel.app";
 
 // ─── Architecture knowledge ───────────────────────────────────────────────────
 const ARCHITECTURE = `
-# Atlas Junior — Architecture Reference (updated 2026-05)
+# Atlas Junior — Architecture Reference (updated 2026-11)
 
 ## Overview
 Atlas Junior is a kids geography word game — a Capacitor Android APK with a Vercel serverless
@@ -72,6 +72,36 @@ Backend must use CORS * (origin whitelist breaks the app).
 - partialResults listener + listeningState listener
 - stopListening(): always clears UI immediately, then awaits plugin (never blocks UI)
 - dbg() helper logs to the in-app debug panel (gated by NEXT_PUBLIC_DEBUG_PANEL)
+
+### Place/word checks — case-insensitive by design (2026-11)
+- ALL place and letter checks operate on normalized lowercase ASCII keys, never raw strings.
+- \`normalizePlaceKey()\` in \`lib/places.ts\` is the canonical normalizer:
+  NFD → strip combining diacritics → lowercase → keep only a-z.
+- \`createPlaceKey()\` in \`AtlasGame.tsx\` delegates to \`normalizePlaceKey()\`.
+  Do not reintroduce a second, hand-rolled normalizer in the component.
+- \`normalizeRequiredLetter()\` in \`lib/places.ts\` returns a single lowercase a-z letter.
+  EVERY requiredLetter comparison (start check, next-letter derivation, API turnLetter, display) must use it.
+- GameState invariant: \`requiredLetter\` and every entry in \`usedPlaceKeys\` are lowercase.
+  Persisted sessions are normalized on load via \`normalizePersistedGame()\`.
+- Dictionary keys from \`places.json\` and delta/approved entries are normalized on load/add, so
+  an uppercase key from data or the API cannot reintroduce case-sensitive checks.
+- The backend place pipeline uses its own \`normalize()\` with identical rules for dedupe/index/delta records.
+- Regression tests: \`node scripts/test-places.mjs\` — includes uppercase rolled letter,
+  uppercase dictionary lookup, and uppercase stored duplicate-key cases.
+- ⚠️  GOTCHA: The roll overlay shows an uppercase letter, but that value must be normalized before
+  it reaches \`requiredLetter\`. A raw \`"Q"\` compared to lowercase key \`"queensland"\` rejects correct answers.
+
+### Turn timer & start-roll animation (2026-11)
+- \`TURN_TIME_LIMIT_SECONDS = 180\` (displayed as 3:00). The timer is deadline-based
+  (\`turnDeadlineRef\`), not a decrementing counter.
+- The persisted session is read ONCE into \`initialSession\`; \`initialTurnSeconds\` is clamped to
+  0..180 and used for both the initial display and the initial deadline.
+- \`resetTurnTimer()\` bumps \`turnGeneration\`. The timer effect depends on \`turnGeneration\`,
+  so the interval ALWAYS restarts after a reset even when \`game.phase\` / \`currentPlayerIndex\`
+  do not change. ⚠️  Never remove \`turnGeneration\` from the effect deps — the clock can freeze at 3:00.
+- Start-roll animation is intentionally short (~3.1s total): intro 300ms + 26×70ms sweep +
+  450ms select + 600ms landing hold. CSS letter/dice animation durations were reduced to match.
+  If these timings change, keep the landing/letterSettle CSS durations <= the final hold.
 
 ### Debug panel
 - Gated by: {process.env.NEXT_PUBLIC_DEBUG_PANEL === "true" && <div>…</div>}
@@ -247,6 +277,16 @@ Destructure:    [,        ,     ,                  rank  ]  → index [3]
 10. Vercel root directory must be set to "backend/" for serverless functions to deploy correctly.
     vercel.json needs only { "version": 2 } — do not add rewrites or builds.
 
+### Word/letter validation
+11. Never compare raw place strings or raw letters. A rolled "Q" stored unnormalized makes
+    "Queensland" fail because place keys are lowercase. Always use normalizePlaceKey() and
+    normalizeRequiredLetter(). Keep requiredLetter and usedPlaceKeys lowercase in state and
+    normalize persisted sessions on load. Backend dedupe/delta records use the same lowercase rules.
+
+12. Timer GOTCHA: resetTurnTimer() must bump turnGeneration, and the timer effect must keep
+    turnGeneration in its dependency array. Relying only on phase/currentPlayerIndex changes can
+    leave the interval stopped and the clock stuck at 3:00.
+
 ---
 
 ## Common commands
@@ -331,6 +371,8 @@ Key facts:
 - Capacitor GOTCHA: window.location.origin = "http://localhost" — hide URL-based features in native.
 - State GOTCHA: openEndGame() must reset ALL modal state, not just result/loading.
 - Redis GOTCHA: always Promise.all([INCR, EXPIRE]) — separate calls risk TTL-less keys.
+- WORD CHECK GOTCHA: all place/letter checks use normalizePlaceKey()/normalizeRequiredLetter() lowercase keys; never compare raw strings.
+- TIMER GOTCHA: resetTurnTimer() bumps turnGeneration — keep it in the effect deps or the clock can freeze at 3:00.
 Call atlas_junior_get_context for the full architecture reference including all gotchas.
 `,
       };

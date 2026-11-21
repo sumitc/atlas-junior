@@ -118,6 +118,9 @@ function normalizePlaceName(value) {
 function createPlaceKey(value) {
   return normalizePlaceName(value).replace(/[^a-z]/g, "");
 }
+function normalizeRequiredLetter(value) {
+  return createPlaceKey(String(value ?? "")).slice(0, 1);
+}
 function getLastLetter(normalized) {
   const letters = normalized.replace(/[^a-z]/g, "");
   return letters[letters.length - 1] ?? null;
@@ -129,9 +132,14 @@ function getLastLetter(normalized) {
  */
 function simulateSave(placeValue, { requiredLetter, usedPlaceKeys = [] } = {}) {
   const placeKey = createPlaceKey(placeValue);
+  const normalizedRequiredLetter = normalizeRequiredLetter(requiredLetter);
+  const normalizedUsedPlaceKeys = usedPlaceKeys.map((key) => createPlaceKey(String(key ?? "")));
+
   if (!placeKey) return { outcome: "empty" };
-  if (!placeKey.startsWith(requiredLetter)) return { outcome: "letter_error" };
-  if (usedPlaceKeys.includes(placeKey)) return { outcome: "duplicate" };
+  if (!normalizedRequiredLetter || !placeKey.startsWith(normalizedRequiredLetter)) {
+    return { outcome: "letter_error" };
+  }
+  if (normalizedUsedPlaceKeys.includes(placeKey)) return { outcome: "duplicate" };
 
   const blocked = isRejectedBareWord(placeValue);
   if (blocked || !isKnownPlace(placeValue)) {
@@ -141,7 +149,7 @@ function simulateSave(placeValue, { requiredLetter, usedPlaceKeys = [] } = {}) {
       : { outcome: "unknown" };
   }
 
-  const nextLetter = getLastLetter(normalizePlaceName(placeValue));
+  const nextLetter = normalizeRequiredLetter(getLastLetter(normalizePlaceName(placeValue)));
   if (!nextLetter) return { outcome: "no_next_letter" };
   return { outcome: "saved", nextLetter, savedAs: placeValue.trim() };
 }
@@ -175,6 +183,9 @@ console.log("\n── 1. Dictionary lookups ────────────
 
 test("Known country 'Angola' is recognised", () =>
   assertTruthy(isKnownPlace("Angola")));
+
+test("Uppercase 'QUEENSLAND' is recognised (case-insensitive)", () =>
+  assertTruthy(isKnownPlace("QUEENSLAND")));
 
 test("Known country 'India' is recognised", () =>
   assertTruthy(isKnownPlace("India")));
@@ -289,6 +300,20 @@ test("Known place saves immediately, advances turn", () => {
   const r = simulateSave("Angola", { requiredLetter: "a" });
   assert(r.outcome, "saved");
   assert(r.nextLetter, "a"); // Angola → last letter 'a'
+});
+
+test("Uppercase rolled letter accepts mixed-case place", () => {
+  const r = simulateSave("Queensland", { requiredLetter: "Q" });
+  assert(r.outcome, "saved");
+  assert(r.nextLetter, "d");
+});
+
+test("Uppercase stored duplicate key is still detected", () => {
+  const r = simulateSave("Queensland", {
+    requiredLetter: "Q",
+    usedPlaceKeys: ["QUEENSLAND"],
+  });
+  assert(r.outcome, "duplicate");
 });
 
 test("Bare four-letter word 'ball' saves as a valid place", () => {

@@ -1,5 +1,40 @@
 # Atlas Junior — Changelog
 
+## v1.0.35 (versionCode 36) — 2026-11-22
+
+- Fixed the turn timer sometimes staying at 3:00 and never counting down: timer resets now always restart the interval via a generation counter
+- Initial session time is clamped and shared between the displayed clock and the deadline
+- Shortened the start-letter roll animation from ~8.4s to ~3.1s and reduced matching CSS animation durations
+- Recorded timer/animation behaviour in the Atlas Junior developer skill
+
+---
+
+## v1.0.34 (versionCode 35) — 2026-11-22
+
+- Made every place and letter check case-insensitive by routing all comparisons through lowercase normalization
+- Normalized dictionary keys, persisted games, rolled letters, duplicate checks, and the place-request payload
+- Added regression tests for uppercase letters, uppercase dictionary lookups, and uppercase duplicate keys
+- Recorded the case-insensitive-word-check rule in the Atlas Junior developer skill
+
+---
+
+## v1.0.33 (versionCode 34) — 2026-11-22
+
+- Fixed the first turn after the start-letter roll rejecting correct answers: the rolled letter was stored uppercase, but place keys are lowercase
+- Voice answers such as "Queensland" for Q are now accepted on the first turn
+
+---
+
+## v1.0.32 (versionCode 33) — 2026-11-22
+
+- Fixed a launch crash on phones without a usable speech recognition service: the microphone plugin no longer dereferences a null `SpeechRecognizer` during app startup
+- Speech setup errors are now contained so they can never prevent the app from opening
+- On unsupported devices, tapping the mic now shows the recovery message immediately without asking for a mic permission that cannot help
+- Added R8 keep rules for Capacitor plugin annotations — fixes the release-build crash when tapping the mic (`NullPointerException` in `Plugin.getPermissionStates()`)
+- Removed the stale `arm64-v8a` ABI filter left over from the retired offline speech build
+
+---
+
 ## v1.0.31 (versionCode 32) — 2026-08-16
 
 - Random start-letter roll now uses stronger randomness and avoids repeating the same start letter back-to-back
