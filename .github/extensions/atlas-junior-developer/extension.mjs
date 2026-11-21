@@ -91,6 +91,13 @@ Backend must use CORS * (origin whitelist breaks the app).
   uppercase dictionary lookup, and uppercase stored duplicate-key cases.
 - ⚠️  GOTCHA: The roll overlay shows an uppercase letter, but that value must be normalized before
   it reaches \`requiredLetter\`. A raw \`"Q"\` compared to lowercase key \`"queensland"\` rejects correct answers.
+- ⚠️  PERFORMANCE GOTCHA (2026-11): \`normalizeDictionaryData()\` must stay O(n). The shipped
+  \`places.json\` has 356k keys. An earlier version rebuilt \`byFirstLetter\` with
+  \`bucket.includes(key)\` per entry — O(n²), ~4s on a Mac and long enough on a phone that taps on
+  Start game were queued until the main thread unblocked. Derive buckets from the normalized map
+  keys instead, and keep the \`/^[a-z]+$/\` fast path in \`normalizePlaceKey()\`.
+- The Start game button is disabled with a "Loading places..." label until \`placesReady\` is true.
+  Keep this guard — without it, early taps are swallowed or start the game with the fallback letter A.
 
 ### Turn timer & start-roll animation (2026-11)
 - \`TURN_TIME_LIMIT_SECONDS = 180\` (displayed as 3:00). The timer is deadline-based
@@ -291,6 +298,10 @@ Destructure:    [,        ,     ,                  rank  ]  → index [3]
 13. Play mandate (2026-11): minSdkVersion must stay at 24. Google Play rejects new uploads with
     minSdk 23. It is set in android/variables.gradle — do not revert it to 23.
 
+14. Dictionary load GOTCHA: normalizeDictionaryData() must be O(n). Never use bucket.includes()
+    while rebuilding byFirstLetter for 356k keys — it blocks the WebView main thread and makes the
+    Start game button look dead for the first few taps after launch. Derive buckets from the map.
+
 ---
 
 ## Common commands
@@ -378,6 +389,7 @@ Key facts:
 - WORD CHECK GOTCHA: all place/letter checks use normalizePlaceKey()/normalizeRequiredLetter() lowercase keys; never compare raw strings.
 - TIMER GOTCHA: resetTurnTimer() bumps turnGeneration — keep it in the effect deps or the clock can freeze at 3:00.
 - PLAY GOTCHA: minSdkVersion must remain 24 (Google Play mandate); do not lower it back to 23.
+- DICTIONARY LOAD GOTCHA: keep normalizeDictionaryData() O(n) — bucket.includes() over 356k keys freezes the UI and swallows Start taps.
 Call atlas_junior_get_context for the full architecture reference including all gotchas.
 `,
       };

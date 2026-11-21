@@ -1,7 +1,6 @@
-🌍 Atlas Junior v1.0.36
+🌍 Atlas Junior v1.0.37
 
-• Fixed a crash on launch or when tapping the mic on some phones
-• Fixed correct answers like "Queensland" for Q being rejected on the first turn
-• Made all place-name and letter checks case-insensitive
-• Fixed the turn timer sometimes staying at 3:00 and never counting down
-• Made the start-letter roll animation much quicker
+• Fixed the Start game button sometimes not responding for the first few taps after launch
+• Start now shows "Loading places..." until the place dictionary is ready
+• Faster startup: the place dictionary now loads without freezing the app
+• The first start letter is now random straight away instead of always A

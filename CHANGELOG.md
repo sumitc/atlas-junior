@@ -1,5 +1,15 @@
 # Atlas Junior — Changelog
 
+## v1.0.37 (versionCode 38) — 2026-11-22
+
+- Fixed the Start game button appearing unresponsive for the first few taps after launch
+- The case-insensitive dictionary normalization was O(n²) on 356k place keys and blocked the app's main thread for seconds; it is now O(n)
+- Added a fast path to place-key normalization for already-lowercase keys
+- The Start game button now shows "Loading places..." and stays disabled until the dictionary is ready, instead of swallowing early taps
+- The random start letter is now available immediately instead of falling back to A while the dictionary loads
+
+---
+
 ## v1.0.36 (versionCode 37) — 2026-11-22
 
 - Raised `minSdkVersion` from 23 to 24 to meet the latest Google Play requirement

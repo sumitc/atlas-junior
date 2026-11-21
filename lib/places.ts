@@ -52,6 +52,12 @@ function getRandomIndex(length: number): number {
 
 /** Normalize a place name to its lookup key (must mirror createPlaceKey in AtlasGame.tsx) */
 export function normalizePlaceKey(name: string): string {
+  // Fast path: the shipped dictionary is already lowercase a-z. Skipping the
+  // regex/NFD work for 356k keys keeps app startup responsive on phones.
+  if (/^[a-z]+$/.test(name)) {
+    return name;
+  }
+
   return name
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -84,17 +90,14 @@ function normalizeDictionaryData(loaded: RawPlacesData | null | undefined): Plac
     }
   }
 
-  for (const [rawLetter, rawKeys] of Object.entries(loaded?.byFirstLetter ?? {})) {
-    const letter = normalizeRequiredLetter(rawLetter);
-    if (!letter || !Array.isArray(rawKeys)) continue;
-
+  // Derive buckets from the normalized map instead of re-normalizing the source
+  // buckets with an O(n²) includes() check. The source buckets and map contain
+  // the same keys, and addDictionaryEntry() keeps both in sync at runtime.
+  for (const key of Object.keys(map)) {
+    const letter = key[0];
+    if (!letter) continue;
     const bucket = byFirstLetter[letter] ?? (byFirstLetter[letter] = []);
-    for (const rawKey of rawKeys) {
-      const key = normalizePlaceKey(String(rawKey));
-      if (key && !bucket.includes(key)) {
-        bucket.push(key);
-      }
-    }
+    bucket.push(key);
   }
 
   return { map, byFirstLetter, allKeys: Object.keys(map) };

@@ -1663,12 +1663,12 @@ export function AtlasGame() {
                 <div className="pt-2">
                   <button
                     className={`${primaryButton} w-full sm:w-auto`}
-                    disabled={Boolean(startRoll)}
+                    disabled={Boolean(startRoll) || !placesReady}
                     onClick={startGameFromNames}
                     type="button"
                     data-testid="start-game-button"
                   >
-                    {startRoll ? "Rolling..." : "Start game"}
+                    {startRoll ? "Rolling..." : placesReady ? "Start game" : "Loading places..."}
                   </button>
                   {showDebug && (
                     <button
