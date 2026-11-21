@@ -1,5 +1,12 @@
 # Atlas Junior — Changelog
 
+## v1.0.36 (versionCode 37) — 2026-11-22
+
+- Raised `minSdkVersion` from 23 to 24 to meet the latest Google Play requirement
+- Regenerated signed release APK and AAB for the Play update
+
+---
+
 ## v1.0.35 (versionCode 36) — 2026-11-22
 
 - Fixed the turn timer sometimes staying at 3:00 and never counting down: timer resets now always restart the interval via a generation counter

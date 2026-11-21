@@ -49,6 +49,7 @@ hit for leaderboard, stats, and support tickets.
 - JAVA_HOME must be set: \$(brew --prefix openjdk@21)
 - ⚠️  Always cap:sync BEFORE assembleDebug/Release — stale JS otherwise ships in APK.
 - ⚠️  apk:release MUST chain cap:sync:release internally (it does — don't run them separately).
+- ⚠️  minSdkVersion is 24 (Google Play mandate as of 2026-11). Do NOT lower it back to 23.
 
 ### Key env vars (.env.local — gitignored)
 - NEXT_PUBLIC_API_URL=https://atlas-junior.vercel.app  (baked at build time)
@@ -287,6 +288,9 @@ Destructure:    [,        ,     ,                  rank  ]  → index [3]
     turnGeneration in its dependency array. Relying only on phase/currentPlayerIndex changes can
     leave the interval stopped and the clock stuck at 3:00.
 
+13. Play mandate (2026-11): minSdkVersion must stay at 24. Google Play rejects new uploads with
+    minSdk 23. It is set in android/variables.gradle — do not revert it to 23.
+
 ---
 
 ## Common commands
@@ -373,6 +377,7 @@ Key facts:
 - Redis GOTCHA: always Promise.all([INCR, EXPIRE]) — separate calls risk TTL-less keys.
 - WORD CHECK GOTCHA: all place/letter checks use normalizePlaceKey()/normalizeRequiredLetter() lowercase keys; never compare raw strings.
 - TIMER GOTCHA: resetTurnTimer() bumps turnGeneration — keep it in the effect deps or the clock can freeze at 3:00.
+- PLAY GOTCHA: minSdkVersion must remain 24 (Google Play mandate); do not lower it back to 23.
 Call atlas_junior_get_context for the full architecture reference including all gotchas.
 `,
       };

@@ -1,4 +1,4 @@
-🌍 Atlas Junior v1.0.35
+🌍 Atlas Junior v1.0.36
 
 • Fixed a crash on launch or when tapping the mic on some phones
 • Fixed correct answers like "Queensland" for Q being rejected on the first turn
