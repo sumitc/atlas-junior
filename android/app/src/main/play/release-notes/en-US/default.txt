@@ -1,4 +1,7 @@
 🌍 Atlas Junior v1.0.35
 
+• Fixed a crash on launch or when tapping the mic on some phones
+• Fixed correct answers like "Queensland" for Q being rejected on the first turn
+• Made all place-name and letter checks case-insensitive
 • Fixed the turn timer sometimes staying at 3:00 and never counting down
 • Made the start-letter roll animation much quicker
