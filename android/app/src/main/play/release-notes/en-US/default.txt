@@ -1,6 +1,4 @@
-🌍 Atlas Junior v1.0.37
+🌍 Atlas Junior v1.0.38
 
-• Fixed the Start game button sometimes not responding for the first few taps after launch
-• Start now shows "Loading places..." until the place dictionary is ready
-• Faster startup: the place dictionary now loads without freezing the app
-• The first start letter is now random straight away instead of always A
+• Fixed a false red "couldn't hear you" message flashing under the mic even when the place was accepted
+• Voice answers now feel smoother — no more error flicker before the word is saved

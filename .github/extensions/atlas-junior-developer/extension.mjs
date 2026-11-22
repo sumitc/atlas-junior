@@ -99,6 +99,16 @@ Backend must use CORS * (origin whitelist breaks the app).
 - The Start game button is disabled with a "Loading places..." label until \`placesReady\` is true.
   Keep this guard — without it, early taps are swallowed or start the game with the fallback letter A.
 
+### Native speech UI (2026-11)
+- Android plugin emits \`listeningState: "stopped"\` from \`onEndOfSpeech()\` — BEFORE \`onResults()\`
+  delivers the final transcript via the \`partialResults\` event. Treating an empty transcript at
+  "stopped" as "couldn't hear you" produces a FALSE red error on every successful recognition.
+- \`speechStoppedTimerRef\` holds the error for \`SPEECH_RESULT_GRACE_MS\` (1200ms). A real
+  \`partialResults\` event clears it. ⚠️  Never show the noisy-audio error immediately on "stopped".
+- Never clear \`latestTranscriptRef.current\` on an empty partial result — it can erase a transcript
+  that is still queued for auto-save.
+- Red mic message = \`speechMessage\` with tone "error" (\`text-rose-500\`); neutral is \`text-sky-600\`.
+
 ### Turn timer & start-roll animation (2026-11)
 - \`TURN_TIME_LIMIT_SECONDS = 180\` (displayed as 3:00). The timer is deadline-based
   (\`turnDeadlineRef\`), not a decrementing counter.
@@ -302,6 +312,10 @@ Destructure:    [,        ,     ,                  rank  ]  → index [3]
     while rebuilding byFirstLetter for 356k keys — it blocks the WebView main thread and makes the
     Start game button look dead for the first few taps after launch. Derive buckets from the map.
 
+15. Native speech GOTCHA: listeningState "stopped" fires before onResults delivers the transcript.
+    Delay the "couldn't hear you" error by SPEECH_RESULT_GRACE_MS and cancel it when a real
+    partialResults event arrives — otherwise every successful mic input flashes a false red error.
+
 ---
 
 ## Common commands
@@ -390,6 +404,7 @@ Key facts:
 - TIMER GOTCHA: resetTurnTimer() bumps turnGeneration — keep it in the effect deps or the clock can freeze at 3:00.
 - PLAY GOTCHA: minSdkVersion must remain 24 (Google Play mandate); do not lower it back to 23.
 - DICTIONARY LOAD GOTCHA: keep normalizeDictionaryData() O(n) — bucket.includes() over 356k keys freezes the UI and swallows Start taps.
+- SPEECH GOTCHA: "stopped" fires before onResults — delay the red "couldn't hear you" error, cancel it on a real transcript.
 Call atlas_junior_get_context for the full architecture reference including all gotchas.
 `,
       };

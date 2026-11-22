@@ -1,5 +1,14 @@
 # Atlas Junior — Changelog
 
+## v1.0.38 (versionCode 39) — 2026-11-22
+
+- Fixed the false red "couldn't hear you" message that flashed under the mic on successful voice inputs
+- Android emits listeningState "stopped" before the final transcript arrives; the error is now held briefly and cancelled when the result comes in
+- Empty partial results no longer erase a transcript that is queued for auto-save
+- Recorded the native speech event ordering in the Atlas Junior developer skill
+
+---
+
 ## v1.0.37 (versionCode 38) — 2026-11-22
 
 - Fixed the Start game button appearing unresponsive for the first few taps after launch

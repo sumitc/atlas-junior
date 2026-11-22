@@ -555,7 +555,12 @@ export function AtlasGame() {
   const latestTranscriptRef = useRef("");
   const nativeSpeechAutoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nativeSpeechAutoSaveHandledRef = useRef(false);
+  // Android emits listeningState "stopped" on onEndOfSpeech(), which is BEFORE
+  // onResults() delivers the final transcript. Hold the "couldn't hear you"
+  // error briefly so a successful recognition doesn't flash a false error.
+  const speechStoppedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const NATIVE_SPEECH_AUTO_SAVE_DELAY_MS = 150;
+  const SPEECH_RESULT_GRACE_MS = 1200;
   const isNativeApp = typeof window !== "undefined" && Capacitor.getPlatform() !== "web";
   const browserSpeechSupported =
     typeof window !== "undefined" &&
@@ -964,6 +969,13 @@ export function AtlasGame() {
     }
   }
 
+  function clearSpeechStoppedTimer() {
+    if (speechStoppedTimerRef.current) {
+      clearTimeout(speechStoppedTimerRef.current);
+      speechStoppedTimerRef.current = null;
+    }
+  }
+
   function scheduleNativeSpeechAutoSave(transcript: string) {
     if (!transcript) {
       return;
@@ -1041,6 +1053,7 @@ export function AtlasGame() {
 
   async function stopListening() {
     clearNativeSpeechAutoSaveTimer();
+    clearSpeechStoppedTimer();
     recognitionRef.current?.stop();
     recognitionRef.current?.abort();
 
@@ -1062,6 +1075,7 @@ export function AtlasGame() {
 
   async function startListening() {
     setDuplicateChallenge(null);
+    clearSpeechStoppedTimer();
 
     if (isNativeApp) {
       try {
@@ -1099,25 +1113,41 @@ export function AtlasGame() {
         await SpeechRecognition.addListener("partialResults", ({ matches }) => {
           const transcript = matches?.[0]?.trim() ?? "";
           dbg(`partialResults: "${transcript}"`);
+          if (!transcript) {
+            updateSpeechMessage("I am still listening...");
+            return;
+          }
+          // A real result arrived — cancel any pending "couldn't hear you" error.
+          clearSpeechStoppedTimer();
           latestTranscriptRef.current = transcript;
           setDraftPlace(transcript);
-          updateSpeechMessage(
-            transcript ? `I heard: "${transcript}"` : "I am still listening...",
-          );
+          updateSpeechMessage(`I heard: "${transcript}"`);
           scheduleNativeSpeechAutoSave(transcript);
         });
         await SpeechRecognition.addListener("listeningState", ({ status }) => {
           dbg(`listeningState: ${status}`);
           setIsListening(status === "started");
-          if (status === "stopped") {
-            const transcript = latestTranscriptRef.current;
-            if (transcript) {
-              commitSpeechTranscript(transcript, "native speech commit");
-            }
-            if (!transcript) {
-              updateSpeechMessage(speechNoisyAudioMessage(), "error");
-            }
+          if (status !== "stopped") {
+            return;
           }
+
+          const transcript = latestTranscriptRef.current;
+          if (transcript) {
+            clearSpeechStoppedTimer();
+            commitSpeechTranscript(transcript, "native speech commit");
+            return;
+          }
+
+          // onEndOfSpeech() fires "stopped" before onResults() delivers the
+          // final transcript. Wait for that result before showing an error.
+          clearSpeechStoppedTimer();
+          speechStoppedTimerRef.current = setTimeout(() => {
+            speechStoppedTimerRef.current = null;
+            if (nativeSpeechAutoSaveHandledRef.current || latestTranscriptRef.current) {
+              return;
+            }
+            updateSpeechMessage(speechNoisyAudioMessage(), "error");
+          }, SPEECH_RESULT_GRACE_MS);
         });
 
         latestTranscriptRef.current = "";
