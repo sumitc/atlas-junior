@@ -1,4 +1,3 @@
-🌍 Atlas Junior v1.0.38
+🌍 Atlas Junior v1.0.39
 
-• Fixed a false red "couldn't hear you" message flashing under the mic even when the place was accepted
-• Voice answers now feel smoother — no more error flicker before the word is saved
+• Fixed the turn timer disappearing after an on-screen message — messages now show briefly, then the countdown returns

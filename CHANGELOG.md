@@ -1,5 +1,13 @@
 # Atlas Junior — Changelog
 
+## v1.0.39 (versionCode 40) — 2026-11-22
+
+- Messages under the mic now auto-clear (errors after 5s, info after 2s) so the turn timer always reappears
+- Fixed the countdown disappearing permanently when a speech/validation message stayed on screen
+- Recorded the mic-message-versus-timer behaviour in the Atlas Junior developer skill
+
+---
+
 ## v1.0.38 (versionCode 39) — 2026-11-22
 
 - Fixed the false red "couldn't hear you" message that flashed under the mic on successful voice inputs

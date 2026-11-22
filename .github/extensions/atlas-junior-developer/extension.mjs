@@ -108,6 +108,9 @@ Backend must use CORS * (origin whitelist breaks the app).
 - Never clear \`latestTranscriptRef.current\` on an empty partial result — it can erase a transcript
   that is still queued for auto-save.
 - Red mic message = \`speechMessage\` with tone "error" (\`text-rose-500\`); neutral is \`text-sky-600\`.
+- ⚠️  The message line REPLACES the countdown under the mic. \`updateSpeechMessage()\` must auto-clear
+  every message (\`SPEECH_ERROR_DISPLAY_MS\` 5s, \`SPEECH_INFO_DISPLAY_MS\` 2s) so the timer always
+  comes back. Never leave a speech message set indefinitely — users see it as "the timer went away".
 
 ### Turn timer & start-roll animation (2026-11)
 - \`TURN_TIME_LIMIT_SECONDS = 180\` (displayed as 3:00). The timer is deadline-based
@@ -405,6 +408,7 @@ Key facts:
 - PLAY GOTCHA: minSdkVersion must remain 24 (Google Play mandate); do not lower it back to 23.
 - DICTIONARY LOAD GOTCHA: keep normalizeDictionaryData() O(n) — bucket.includes() over 356k keys freezes the UI and swallows Start taps.
 - SPEECH GOTCHA: "stopped" fires before onResults — delay the red "couldn't hear you" error, cancel it on a real transcript.
+- MIC MESSAGE GOTCHA: speech messages replace the timer display; always auto-clear them so the countdown returns.
 Call atlas_junior_get_context for the full architecture reference including all gotchas.
 `,
       };

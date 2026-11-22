@@ -559,8 +559,13 @@ export function AtlasGame() {
   // onResults() delivers the final transcript. Hold the "couldn't hear you"
   // error briefly so a successful recognition doesn't flash a false error.
   const speechStoppedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Messages shown under the mic temporarily replace the countdown. Every
+  // message must auto-clear so the timer always comes back.
+  const speechMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const NATIVE_SPEECH_AUTO_SAVE_DELAY_MS = 150;
   const SPEECH_RESULT_GRACE_MS = 1200;
+  const SPEECH_ERROR_DISPLAY_MS = 5000;
+  const SPEECH_INFO_DISPLAY_MS = 2000;
   const isNativeApp = typeof window !== "undefined" && Capacitor.getPlatform() !== "web";
   const browserSpeechSupported =
     typeof window !== "undefined" &&
@@ -870,12 +875,27 @@ export function AtlasGame() {
     return () => window.clearTimeout(clearValidation);
   }, [draftPlace]);
 
+  function clearSpeechMessageTimer() {
+    if (speechMessageTimerRef.current) {
+      clearTimeout(speechMessageTimerRef.current);
+      speechMessageTimerRef.current = null;
+    }
+  }
+
   function updateSpeechMessage(
     message: string,
     tone: "neutral" | "error" | "success" = "neutral",
   ) {
+    clearSpeechMessageTimer();
     setSpeechMessage(message);
     setSpeechMessageTone(tone);
+
+    if (message) {
+      speechMessageTimerRef.current = setTimeout(() => {
+        speechMessageTimerRef.current = null;
+        setSpeechMessage("");
+      }, tone === "error" ? SPEECH_ERROR_DISPLAY_MS : SPEECH_INFO_DISPLAY_MS);
+    }
   }
 
   function speechUnavailableMessage() {
