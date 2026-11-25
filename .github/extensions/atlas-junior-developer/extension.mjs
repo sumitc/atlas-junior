@@ -128,6 +128,11 @@ Backend must use CORS * (origin whitelist breaks the app).
   causes a hydration mismatch, the second trips the React "setState in effect" lint rule.
 - \`savePremiumUnlocked()\` dispatches \`atlas-premium-changed\` so same-tab toggles update instantly.
 - Debug builds have a "Premium: on/off" toggle in the debug panel to test the ad-free layout.
+- AdMob app verification: the IAB `app-ads.txt` line lives at `backend/public/app-ads.txt`,
+  `backend/public/.well-known/app-ads.txt`, and `public/app-ads.txt` (deployed to `/game/app-ads.txt`).
+  ⚠️ It must be hosted at the ROOT of the developer website URL entered in Play Console — currently
+  `https://atlas-junior.vercel.app`. This line is NOT the App ID or banner Ad Unit ID; those come from
+  AdMob → Apps → app → App ID, and AdMob → Ad units → Banner → Ad unit ID.
 
 ### Turn timer & start-roll animation (2026-11)
 - \`TURN_TIME_LIMIT_SECONDS = 180\` (displayed as 3:00). The timer is deadline-based
