@@ -1,3 +1,5 @@
-🌍 Atlas Junior v1.0.39
+🌍 Atlas Junior v1.0.40
 
-• Fixed the turn timer disappearing after an on-screen message — messages now show briefly, then the countdown returns
+• Added a bottom banner slot for ads, placed below the navigation bar
+• Added Atlas Premium — a one-time unlock that removes the bottom ad banner for good
+• Added Restore purchase so premium can be recovered on the same device

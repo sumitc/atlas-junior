@@ -4,7 +4,15 @@ import { SpeechRecognition } from "@capacitor-community/speech-recognition";
 import { Capacitor } from "@capacitor/core";
 import { Share } from "@capacitor/share";
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FormEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { AD_BANNER_HEIGHT_PX, AdBanner } from "@/components/AdBanner";
 import {
   getLeaderboard,
   sendDebugNotification,
@@ -26,7 +34,16 @@ import {
   normalizeRequiredLetter,
   refreshPlacesDelta,
 } from "@/lib/places";
+import {
+  getIsPremium,
+  purchasePremium,
+  restorePremiumPurchase,
+  savePremiumUnlocked,
+  subscribeToPremium,
+} from "@/lib/premium";
 import { APP_VERSION } from "@/lib/version";
+
+const getServerPremium = () => false;
 
 type Player = {
   id: string;
@@ -536,7 +553,15 @@ export function AtlasGame() {
   const [duplicateChallenge, setDuplicateChallenge] = useState<DuplicateChallenge | null>(null);
   const [placeCheck, setPlaceCheck] = useState<PlaceCheckState | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const isPremium = useSyncExternalStore(
+    subscribeToPremium,
+    getIsPremium,
+    getServerPremium,
+  );
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [isPremiumOpen, setIsPremiumOpen] = useState(false);
+  const [premiumBusy, setPremiumBusy] = useState(false);
+  const [premiumMessage, setPremiumMessage] = useState("");
   const [nativeSpeechAvailable, setNativeSpeechAvailable] = useState<boolean | null>(null);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const [showDebug, setShowDebug] = useState(process.env.NEXT_PUBLIC_DEBUG_PANEL === "true");
@@ -629,6 +654,33 @@ export function AtlasGame() {
     clearNativeSpeechAutoSaveTimer();
     nativeSpeechAutoSaveHandledRef.current = false;
     latestTranscriptRef.current = "";
+  }
+
+  async function handlePurchasePremium() {
+    setPremiumBusy(true);
+    setPremiumMessage("");
+    const result = await purchasePremium();
+    setPremiumMessage(result.message);
+    if (result.success) {
+      savePremiumUnlocked(true);
+    }
+    setPremiumBusy(false);
+  }
+
+  async function handleRestorePremium() {
+    setPremiumBusy(true);
+    setPremiumMessage("");
+    const result = await restorePremiumPurchase();
+    setPremiumMessage(result.message);
+    if (result.success) {
+      savePremiumUnlocked(true);
+    }
+    setPremiumBusy(false);
+  }
+
+  // Debug builds can toggle the ad-free layout before payments are connected.
+  function handleDebugTogglePremium() {
+    savePremiumUnlocked(!isPremium);
   }
 
   const speechSupported = isNativeApp ? nativeSpeechAvailable !== false : browserSpeechSupported;
@@ -1632,7 +1684,7 @@ export function AtlasGame() {
         className="app-safe-area-shell min-h-screen bg-[radial-gradient(circle_at_top,_#fde68a,_#f5d0fe_42%,_#bfdbfe_78%,_#ffffff)] sm:px-6"
         data-testid="atlas-game-root"
       >
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 pb-36">
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 pb-48">
           <header className="relative flex items-start justify-between gap-3 rounded-[2rem] bg-white/75 px-5 py-4 pr-16 shadow-lg shadow-violet-200/50 backdrop-blur sm:px-6">
             <div className="min-w-0 flex-1">
               <p className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
@@ -1661,6 +1713,16 @@ export function AtlasGame() {
               type="button"
             >
               ℹ
+            </button>
+
+            <button
+              aria-label="Atlas Premium"
+              className="absolute right-2 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-amber-400 text-lg font-black text-amber-950 shadow-lg shadow-amber-200/60 transition hover:bg-amber-300"
+              onClick={() => setIsPremiumOpen(true)}
+              type="button"
+              data-testid="premium-button"
+            >
+              {isPremium ? "★" : "♛"}
             </button>
           </header>
 
@@ -1999,7 +2061,10 @@ export function AtlasGame() {
       </main>
 
       {/* ── Navigation links ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center bg-white/70 py-2 backdrop-blur text-xs text-slate-400">
+      <div
+        className="fixed left-0 right-0 z-30 flex items-center bg-white/70 py-2 backdrop-blur text-xs text-slate-400"
+        style={{ bottom: isPremium ? 0 : AD_BANNER_HEIGHT_PX }}
+      >
         <div className="flex flex-1 justify-center gap-6">
           <Link href="/leaderboard" className="hover:text-fuchsia-600 transition" data-testid="leaderboard-link">
             🏆 Leaderboard
@@ -2019,8 +2084,15 @@ export function AtlasGame() {
         <span className="pr-3 text-slate-300">v{APP_VERSION}</span>
       </div>
 
+      {/* ── Bottom ad placement — hidden entirely for premium users ── */}
+      <AdBanner hidden={isPremium} />
+
       {/* ── Debug panel (debug builds only) ── */}
-      {process.env.NEXT_PUBLIC_DEBUG_PANEL === "true" && <div className="fixed bottom-7 left-0 right-0 z-40">
+      {process.env.NEXT_PUBLIC_DEBUG_PANEL === "true" && (
+        <div
+          className="fixed left-0 right-0 z-40"
+          style={{ bottom: (isPremium ? 0 : AD_BANNER_HEIGHT_PX) + 28 }}
+        >
         <button
           className="w-full bg-slate-800 py-1 text-xs font-mono text-slate-300"
           onClick={() => setShowDebug((v) => !v)}
@@ -2059,6 +2131,14 @@ export function AtlasGame() {
             >
               Clear
             </button>
+            <button
+              className="rounded bg-amber-700 px-3 py-1 text-xs font-mono text-white"
+              onClick={handleDebugTogglePremium}
+              type="button"
+              data-testid="debug-premium-toggle"
+            >
+              Premium: {isPremium ? "on" : "off"}
+            </button>
           </div>
         )}
         {showDebug && (
@@ -2093,7 +2173,8 @@ export function AtlasGame() {
             </button>
           </div>
         )}
-      </div>}
+        </div>
+      )}
 
       {/* ── End Game modal ── */}
       {showEndGame ? (
@@ -2222,6 +2303,75 @@ export function AtlasGame() {
               <p>3. If the same place was already saved before, the app will show an error.</p>
               <p>4. Tap the <strong>microphone</strong> button to speak the place name, then tap <strong>Save</strong>.</p>
               <p>5. If speech is not available, just type the place name instead.</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isPremiumOpen ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center">
+          <div className="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900">Atlas Premium</h2>
+                <p className="mt-1 text-sm text-slate-600">One-time unlock. No subscription.</p>
+              </div>
+
+              <button
+                aria-label="Close premium"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-lg font-black text-slate-700"
+                onClick={() => setIsPremiumOpen(false)}
+                type="button"
+              >
+                ×
+              </button>
+            </div>
+
+            {isPremium ? (
+              <div className="mt-5 rounded-2xl bg-emerald-50 p-4 text-sm font-semibold text-emerald-700">
+                ★ Premium is active — the bottom ad banner is hidden.
+              </div>
+            ) : (
+              <div className="mt-5 space-y-3 text-sm leading-6 text-slate-700">
+                <p>
+                  Pay once to remove the bottom ad banner for good. Your support keeps Atlas Junior
+                  free for everyone.
+                </p>
+                <ul className="list-inside list-disc space-y-1">
+                  <li>No ads at the bottom of the screen</li>
+                  <li>One-time payment, not a subscription</li>
+                  <li>Restore your purchase any time</li>
+                </ul>
+              </div>
+            )}
+
+            {premiumMessage ? (
+              <p className="mt-4 rounded-xl bg-slate-100 p-3 text-xs font-semibold text-slate-600">
+                {premiumMessage}
+              </p>
+            ) : null}
+
+            <div className="mt-5 flex flex-col gap-2">
+              {!isPremium ? (
+                <button
+                  className="w-full rounded-full bg-amber-400 px-5 py-3 text-sm font-black text-amber-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => void handlePurchasePremium()}
+                  type="button"
+                  disabled={premiumBusy}
+                  data-testid="premium-purchase-button"
+                >
+                  {premiumBusy ? "Opening checkout…" : "Unlock premium"}
+                </button>
+              ) : null}
+              <button
+                className="w-full rounded-full bg-slate-100 px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => void handleRestorePremium()}
+                type="button"
+                disabled={premiumBusy}
+                data-testid="premium-restore-button"
+              >
+                Restore purchase
+              </button>
             </div>
           </div>
         </div>

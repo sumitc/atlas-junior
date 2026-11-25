@@ -112,6 +112,23 @@ Backend must use CORS * (origin whitelist breaks the app).
   every message (\`SPEECH_ERROR_DISPLAY_MS\` 5s, \`SPEECH_INFO_DISPLAY_MS\` 2s) so the timer always
   comes back. Never leave a speech message set indefinitely — users see it as "the timer went away".
 
+### Bottom ad banner & premium (2026-11)
+- \`components/AdBanner.tsx\` is the reserved bottom ad slot, fixed at \`bottom-0\` and 50px tall
+  (\`AD_BANNER_HEIGHT_PX\`). It renders below the fixed nav footer, NOT inside the scrolling content.
+- The footer is pushed up with an inline \`style={{ bottom: isPremium ? 0 : AD_BANNER_HEIGHT_PX }}\`;
+  the debug panel offset adds another 28px. Keep all three in sync when changing banner height.
+- Main content uses \`pb-48\` so neither the footer nor the banner covers the last card.
+- \`<AdBanner hidden={isPremium} />\` — premium users render NO banner element at all, they do not
+  just get a blank/hidden div.
+- \`lib/premium.ts\` owns the one-time premium flag in \`localStorage\` (\`atlas-premium\`). Purchase
+  and restore hooks are PLACEHOLDERS — no provider is connected, so no user can be charged yet.
+  Android should use Play Billing one-time product; web should use Stripe Checkout + verified webhook.
+- Premium state uses \`useSyncExternalStore(subscribeToPremium, getIsPremium, getServerPremium)\`.
+  ⚠️ Do NOT read localStorage in a \`useState\` initializer or \`setState\` in an effect — the first
+  causes a hydration mismatch, the second trips the React "setState in effect" lint rule.
+- \`savePremiumUnlocked()\` dispatches \`atlas-premium-changed\` so same-tab toggles update instantly.
+- Debug builds have a "Premium: on/off" toggle in the debug panel to test the ad-free layout.
+
 ### Turn timer & start-roll animation (2026-11)
 - \`TURN_TIME_LIMIT_SECONDS = 180\` (displayed as 3:00). The timer is deadline-based
   (\`turnDeadlineRef\`), not a decrementing counter.
@@ -319,6 +336,13 @@ Destructure:    [,        ,     ,                  rank  ]  → index [3]
     Delay the "couldn't hear you" error by SPEECH_RESULT_GRACE_MS and cancel it when a real
     partialResults event arrives — otherwise every successful mic input flashes a false red error.
 
+16. Ad banner GOTCHA: the footer and debug panel are fixed at the bottom. When the banner is shown,
+    offset them by AD_BANNER_HEIGHT_PX (50) or the banner covers the nav links. Premium must remove
+    the banner element entirely and reset both offsets to zero.
+
+17. Premium state GOTCHA: use useSyncExternalStore with a server snapshot of false. Reading
+    localStorage during render or in a useEffect causes hydration mismatch or lint errors.
+
 ---
 
 ## Common commands
@@ -409,6 +433,8 @@ Key facts:
 - DICTIONARY LOAD GOTCHA: keep normalizeDictionaryData() O(n) — bucket.includes() over 356k keys freezes the UI and swallows Start taps.
 - SPEECH GOTCHA: "stopped" fires before onResults — delay the red "couldn't hear you" error, cancel it on a real transcript.
 - MIC MESSAGE GOTCHA: speech messages replace the timer display; always auto-clear them so the countdown returns.
+- AD BANNER GOTCHA: footer/debug offsets must track AD_BANNER_HEIGHT_PX; premium removes the banner entirely.
+- PREMIUM GOTCHA: useSyncExternalStore + server snapshot false — no localStorage in render/effect.
 Call atlas_junior_get_context for the full architecture reference including all gotchas.
 `,
       };

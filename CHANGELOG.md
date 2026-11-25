@@ -1,5 +1,14 @@
 # Atlas Junior — Changelog
 
+## v1.0.40 (versionCode 41) — 2026-11-25
+
+- Added a reserved bottom banner section directly below the fixed footer for AdMob placement
+- Added Atlas Premium: one-time unlock that removes the bottom ad banner and persists across restarts
+- Added Restore purchase, a premium info modal, and a debug-only premium toggle for testing the ad-free layout
+- Premium checkout and AdMob IDs are intentionally not connected yet — placeholder hooks are documented in `lib/premium.ts` and `components/AdBanner.tsx`
+
+---
+
 ## v1.0.39 (versionCode 40) — 2026-11-22
 
 - Messages under the mic now auto-clear (errors after 5s, info after 2s) so the turn timer always reappears
